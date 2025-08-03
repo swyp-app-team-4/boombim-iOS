@@ -20,7 +20,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		CF820C992E3B72760048B51C /* Exceptions for "SwypTeam4" folder in "SwypTeam4" target */ = {
+		CFEC5EF32E3DA6AF00829484 /* Exceptions for "SwypTeam4" folder in "SwypTeam4" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Info.plist,
@@ -33,7 +33,7 @@
 		CF820C892E3B72750048B51C /* SwypTeam4 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				CF820C992E3B72760048B51C /* Exceptions for "SwypTeam4" folder in "SwypTeam4" target */,
+				CFEC5EF32E3DA6AF00829484 /* Exceptions for "SwypTeam4" folder in "SwypTeam4" target */,
 			);
 			path = SwypTeam4;
 			sourceTree = "<group>";
@@ -172,8 +172,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5G6N83PM9C;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SwypTeam4/Info.plist;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_FILE = SwypTeam4/App/Info.plist;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -199,8 +198,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5G6N83PM9C;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SwypTeam4/Info.plist;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_FILE = SwypTeam4/App/Info.plist;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
