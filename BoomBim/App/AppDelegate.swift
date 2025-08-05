@@ -9,14 +9,23 @@ import UIKit
 import RxKakaoSDKCommon
 import RxKakaoSDKAuth
 import KakaoSDKAuth
+import NidThirdPartyLogin
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        // Kakao
         let NATIVE_APP_KEY: String = "b9ee6084b39af730b1819a79e3e29d65"
         RxKakaoSDK.initSDK(appKey: NATIVE_APP_KEY)
+        
+        // Naver
+        NidOAuth.shared.initialize()
+//        NidOAuth.shared.setLoginBehavior(.app)
+//        NidOAuth.shared.setLoginBehavior(.inAppBrowser)
+//        NidOAuth.shared.setLoginBehavior(.appPreferredWithInAppBrowserFallback) // default
         
         return true
     }
@@ -25,6 +34,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
         if (AuthApi.isKakaoTalkLoginUrl(url)) {
             return AuthController.rx.handleOpenUrl(url: url)
+        }
+        
+        if (NidOAuth.shared.handleURL(url) == true) { // 네이버앱에서 전달된 Url인 경우
+          return true
         }
         
         return false

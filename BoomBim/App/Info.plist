@@ -2,6 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NaverThirdPartyLogin</key>
+	<dict>
+		<key>NidAppName</key>
+		<string>붐빔(BoomBim)</string>
+		<key>NidClientID</key>
+		<string>e5_vzs7IMKSsI5TxVDWl</string>
+		<key>NidClientSecret</key>
+		<string>rbDMz_Tj8d</string>
+		<key>NidUrlScheme</key>
+		<string>navere5_vzs7IMKSsI5TxVDWl</string>
+	</dict>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -10,6 +21,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>kakaob9ee6084b39af730b1819a79e3e29d65</string>
+				<string>e5_vzs7IMKSsI5TxVDWl</string>
 			</array>
 		</dict>
 	</array>

@@ -25,9 +25,9 @@ final class LoginViewModel {
         let kakao = input.kakaoTap
             .flatMapLatest { KakaoLoginService().login().map(Result.success).catch { .just(.failure($0)) } }
 
-//        let naver = input.naverTap
-//            .flatMapLatest { NaverLoginService().login().map(Result.success).catch { .just(.failure($0)) } }
-//
+        let naver = input.naverTap
+            .flatMapLatest { NaverLoginService().login().map(Result.success).catch { .just(.failure($0)) } }
+
 //        let apple = input.appleTap
 //            .flatMapLatest { AppleLoginService().login().map(Result.success).catch { .just(.failure($0)) } }
 
