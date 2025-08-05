@@ -16,26 +16,26 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		CF820C872E3B72750048B51C /* SwypTeam4.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwypTeam4.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CF820C872E3B72750048B51C /* BoomBim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoomBim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		CFEC5EF32E3DA6AF00829484 /* Exceptions for "SwypTeam4" folder in "SwypTeam4" target */ = {
+		CFEC5EF32E3DA6AF00829484 /* Exceptions for "BoomBim" folder in "BoomBim" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Info.plist,
 			);
-			target = CF820C862E3B72750048B51C /* SwypTeam4 */;
+			target = CF820C862E3B72750048B51C /* BoomBim */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		CF820C892E3B72750048B51C /* SwypTeam4 */ = {
+		CF820C892E3B72750048B51C /* BoomBim */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				CFEC5EF32E3DA6AF00829484 /* Exceptions for "SwypTeam4" folder in "SwypTeam4" target */,
+				CFEC5EF32E3DA6AF00829484 /* Exceptions for "BoomBim" folder in "BoomBim" target */,
 			);
-			path = SwypTeam4;
+			path = BoomBim;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -60,7 +60,7 @@
 		CF820C7E2E3B72750048B51C = {
 			isa = PBXGroup;
 			children = (
-				CF820C892E3B72750048B51C /* SwypTeam4 */,
+				CF820C892E3B72750048B51C /* BoomBim */,
 				CF820C882E3B72750048B51C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -68,7 +68,7 @@
 		CF820C882E3B72750048B51C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CF820C872E3B72750048B51C /* SwypTeam4.app */,
+				CF820C872E3B72750048B51C /* BoomBim.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -76,9 +76,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CF820C862E3B72750048B51C /* SwypTeam4 */ = {
+		CF820C862E3B72750048B51C /* BoomBim */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CF820C9A2E3B72760048B51C /* Build configuration list for PBXNativeTarget "SwypTeam4" */;
+			buildConfigurationList = CF820C9A2E3B72760048B51C /* Build configuration list for PBXNativeTarget "BoomBim" */;
 			buildPhases = (
 				CF820C832E3B72750048B51C /* Sources */,
 				CF820C842E3B72750048B51C /* Frameworks */,
@@ -89,9 +89,9 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				CF820C892E3B72750048B51C /* SwypTeam4 */,
+				CF820C892E3B72750048B51C /* BoomBim */,
 			);
-			name = SwypTeam4;
+			name = BoomBim;
 			packageProductDependencies = (
 				CF820D102E3B7A8D0048B51C /* NidThirdPartyLogin */,
 				CF820D132E3B7B5A0048B51C /* RxKakaoSDK */,
@@ -101,7 +101,7 @@
 				CF820D1B2E3B7B5A0048B51C /* RxKakaoSDKUser */,
 			);
 			productName = SwypTeam4;
-			productReference = CF820C872E3B72750048B51C /* SwypTeam4.app */;
+			productReference = CF820C872E3B72750048B51C /* BoomBim.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -119,7 +119,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CF820C822E3B72750048B51C /* Build configuration list for PBXProject "SwypTeam4" */;
+			buildConfigurationList = CF820C822E3B72750048B51C /* Build configuration list for PBXProject "BoomBim" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -137,7 +137,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CF820C862E3B72750048B51C /* SwypTeam4 */,
+				CF820C862E3B72750048B51C /* BoomBim */,
 			);
 		};
 /* End PBXProject section */
@@ -181,7 +181,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yhjo.SwypTeam4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yhjo.BoomBim;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -207,7 +207,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yhjo.SwypTeam4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yhjo.BoomBim;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -337,7 +337,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CF820C822E3B72750048B51C /* Build configuration list for PBXProject "SwypTeam4" */ = {
+		CF820C822E3B72750048B51C /* Build configuration list for PBXProject "BoomBim" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CF820C9D2E3B72760048B51C /* Debug */,
@@ -346,7 +346,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CF820C9A2E3B72760048B51C /* Build configuration list for PBXNativeTarget "SwypTeam4" */ = {
+		CF820C9A2E3B72760048B51C /* Build configuration list for PBXNativeTarget "BoomBim" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CF820C9B2E3B72760048B51C /* Debug */,
