@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "btnD_완성형.png",
+      "filename" : "naver_login_dark 1.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "btnD_완성형 1.png",
+      "filename" : "naver_login_dark 2.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "btnD_완성형 2.png",
+      "filename" : "naver_login_dark.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
