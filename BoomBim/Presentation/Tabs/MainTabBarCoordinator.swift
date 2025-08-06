@@ -13,26 +13,26 @@ final class MainTabBarCoordinator: Coordinator {
 
     func start() {
         let homeNC = UINavigationController()
-        let communityNC = UINavigationController()
+        let mapNC = UINavigationController()
         let chatNC = UINavigationController()
         let myPageNC = UINavigationController()
 
         let homeCoordinator = HomeCoordinator(navigationController: homeNC)
-        let communityCoordinator = MapCoordinator(navigationController: communityNC)
+        let mapCoordinator = MapCoordinator(navigationController: mapNC)
         let chatCoordinator = ChatCoordinator(navigationController: chatNC)
         let myPageCoordinator = MyPageCoordinator(navigationController: myPageNC)
+        
+        homeNC.tabBarItem = UITabBarItem(title: "홈", image: UIImage.iconHome, selectedImage: UIImage.iconHome)
+        mapNC.tabBarItem = UITabBarItem(title: "지도", image: UIImage.iconMap, selectedImage: UIImage.iconMap)
+        chatNC.tabBarItem = UITabBarItem(title: "소통", image: UIImage.iconChat, selectedImage: UIImage.iconChat)
+        myPageNC.tabBarItem = UITabBarItem(title: "마이", image: UIImage.iconProfile, selectedImage: UIImage.iconProfile)
 
         homeCoordinator.start()
-        communityCoordinator.start()
+        mapCoordinator.start()
         chatCoordinator.start()
         myPageCoordinator.start()
 
-        tabBarController.viewControllers = [homeNC, communityNC, chatNC, myPageNC]
-        
-        tabBarController.tabBar.items?[0].title = "홈"
-        tabBarController.tabBar.items?[1].title = "지도"
-        tabBarController.tabBar.items?[2].title = "소통"
-        tabBarController.tabBar.items?[3].title = "마이"
+        tabBarController.viewControllers = [homeNC, mapNC, chatNC, myPageNC]
     }
 }
 
