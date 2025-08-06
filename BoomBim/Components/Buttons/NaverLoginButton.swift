@@ -1,13 +1,13 @@
 //
-//  KakaoLoginButton.swift
-//  SwypTeam4
+//  NaverLoginButton.swift
+//  BoomBim
 //
-//  Created by 조영현 on 8/1/25.
+//  Created by 조영현 on 8/6/25.
 //
 
 import UIKit
 
-final class KakaoLoginButton: UIButton {
+final class NaverLoginButton: UIButton {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupButton()
@@ -19,8 +19,8 @@ final class KakaoLoginButton: UIButton {
     }
     
     private func setupButton() {
-        let image = UIImage.kakaoLoginLargeWide
+        let image = UIImage.naverLoginGreen
         self.setBackgroundImage(image, for: .normal)
-        self.adjustsImageWhenHighlighted = false // 눌렸을 때 흐려지는 효과 제거
+        self.adjustsImageWhenHighlighted = false
     }
 }

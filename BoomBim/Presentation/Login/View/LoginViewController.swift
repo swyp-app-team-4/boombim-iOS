@@ -7,14 +7,14 @@
 
 import UIKit
 import RxSwift
+import NidThirdPartyLogin
 
 final class LoginViewController: UIViewController {
     private let viewModel = LoginViewModel()
     private let disposeBag = DisposeBag()
 
-    // 버튼들
     private let kakaoButton = KakaoLoginButton()
-    private let naverButton = UIButton()
+    private let naverButton = NaverLoginButton()
     private let appleButton = UIButton()
 
     override func viewDidLoad() {
@@ -24,17 +24,35 @@ final class LoginViewController: UIViewController {
         
         setupUI()
         bind()
+        
+        // 네이버 로그인 초기화 용
+//        NidOAuth.shared.disconnect { [weak self] result in
+//            switch result {
+//            case .success:
+//                print("disconnect result : \(result)")
+//            case .failure(let error):
+//                print("disconnect error : \(error)")
+//            }
+//        }
     }
     
     private func setupUI() {
-        view.addSubview(kakaoButton)
-
-        kakaoButton.translatesAutoresizingMaskIntoConstraints = false
+        [kakaoButton, naverButton].forEach { button in
+            button.translatesAutoresizingMaskIntoConstraints = false
+            
+            view.addSubview(button)
+        }
+        
         NSLayoutConstraint.activate([
             kakaoButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            kakaoButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
-            kakaoButton.widthAnchor.constraint(equalToConstant: 300),
-            kakaoButton.heightAnchor.constraint(equalToConstant: 45)
+            kakaoButton.bottomAnchor.constraint(equalTo: naverButton.topAnchor, constant: -20),
+//            kakaoButton.widthAnchor.constraint(equalToConstant: 300),
+//            kakaoButton.heightAnchor.constraint(equalToConstant: 45),
+            
+            naverButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            naverButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
+//            naverButton.widthAnchor.constraint(equalToConstant: 300),
+//            naverButton.heightAnchor.constraint(equalToConstant: 45)
         ])
     }
     
@@ -52,10 +70,10 @@ final class LoginViewController: UIViewController {
             .subscribe(onNext: { result in
                 switch result {
                 case .success(let token):
-                    print("🎉 로그인 성공: \(token)")
-                    // 👉 백엔드에 token 전달 후 JWT 저장
+                    print("로그인 성공: \(token)")
+                    // 백엔드에 token 전달
                 case .failure(let error):
-                    print("❌ 로그인 실패: \(error.localizedDescription)")
+                    print("로그인 실패: \(error.localizedDescription)")
                 }
             })
             .disposed(by: disposeBag)

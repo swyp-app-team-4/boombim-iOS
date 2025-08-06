@@ -10,6 +10,7 @@ import RxSwift
 import NidThirdPartyLogin
 
 final class NaverLoginService: SocialLoginService {
+    // TODO: Login token 유효성 구현
     func login() -> Observable<String> {
         return Observable.create { observer in
             NidOAuth.shared.requestLogin { result in

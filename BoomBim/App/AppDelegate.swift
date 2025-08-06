@@ -30,19 +30,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
     
-    /* Kakao */
-    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
-        if (AuthApi.isKakaoTalkLoginUrl(url)) {
-            return AuthController.rx.handleOpenUrl(url: url)
-        }
-        
-        if (NidOAuth.shared.handleURL(url) == true) { // 네이버앱에서 전달된 Url인 경우
-          return true
-        }
-        
-        return false
-    }
-
     // MARK: UISceneSession Lifecycle
 
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
