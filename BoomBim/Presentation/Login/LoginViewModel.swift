@@ -18,6 +18,8 @@ final class LoginViewModel {
     struct Output {
         let loginResult: Observable<Result<String, Error>>
     }
+    
+    var didLoginSuccess: (() -> Void)?
 
     private let disposeBag = DisposeBag()
 

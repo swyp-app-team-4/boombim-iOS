@@ -11,13 +11,22 @@ import NidThirdPartyLogin
 import AuthenticationServices
 
 final class LoginViewController: UIViewController {
-    private let viewModel = LoginViewModel()
+    private let viewModel: LoginViewModel
     private let disposeBag = DisposeBag()
 
     private let kakaoButton = KakaoLoginButton()
     private let naverButton = NaverLoginButton()
     private let appleButton = ASAuthorizationAppleIDButton(type: .signIn, style: .white)
-
+    
+    init(viewModel: LoginViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -76,6 +85,9 @@ final class LoginViewController: UIViewController {
                 case .success(let token):
                     print("로그인 성공: \(token)")
                     // 백엔드에 token 전달
+                    self.viewModel.didLoginSuccess?() // 화면 이동
+                    // UserDefaults 저장
+                    TokenManager.shared.accessToken = token
                 case .failure(let error):
                     print("로그인 실패: \(error.localizedDescription)")
                 }
