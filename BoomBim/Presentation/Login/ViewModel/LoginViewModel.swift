@@ -28,10 +28,10 @@ final class LoginViewModel {
         let naver = input.naverTap
             .flatMapLatest { NaverLoginService().login().map(Result.success).catch { .just(.failure($0)) } }
 
-//        let apple = input.appleTap
-//            .flatMapLatest { AppleLoginService().login().map(Result.success).catch { .just(.failure($0)) } }
+        let apple = input.appleTap
+            .flatMapLatest { AppleLoginService().login().map(Result.success).catch { .just(.failure($0)) } }
 
-        let merged = Observable.merge(kakao, naver/*,( apple*/)
+        let merged = Observable.merge(kakao, naver, apple)
 
         return Output(loginResult: merged)
     }

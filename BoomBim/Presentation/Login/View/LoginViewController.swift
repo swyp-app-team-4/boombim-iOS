@@ -8,6 +8,7 @@
 import UIKit
 import RxSwift
 import NidThirdPartyLogin
+import AuthenticationServices
 
 final class LoginViewController: UIViewController {
     private let viewModel = LoginViewModel()
@@ -15,7 +16,7 @@ final class LoginViewController: UIViewController {
 
     private let kakaoButton = KakaoLoginButton()
     private let naverButton = NaverLoginButton()
-    private let appleButton = UIButton()
+    private let appleButton = ASAuthorizationAppleIDButton(type: .signIn, style: .white)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,7 +38,7 @@ final class LoginViewController: UIViewController {
     }
     
     private func setupUI() {
-        [kakaoButton, naverButton].forEach { button in
+        [kakaoButton, naverButton, appleButton].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             
             view.addSubview(button)
@@ -50,9 +51,12 @@ final class LoginViewController: UIViewController {
 //            kakaoButton.heightAnchor.constraint(equalToConstant: 45),
             
             naverButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            naverButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
+            naverButton.bottomAnchor.constraint(equalTo: appleButton.topAnchor, constant: -20),
 //            naverButton.widthAnchor.constraint(equalToConstant: 300),
 //            naverButton.heightAnchor.constraint(equalToConstant: 45)
+            
+            appleButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            appleButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
         ])
     }
     
@@ -60,7 +64,7 @@ final class LoginViewController: UIViewController {
         let input = LoginViewModel.Input(
             kakaoTap: kakaoButton.rx.tap.asObservable(),
             naverTap: naverButton.rx.tap.asObservable(),
-            appleTap: appleButton.rx.tap.asObservable()
+            appleTap: appleButton.rx.controlEvent(.touchUpInside).asObservable()
         )
         
         let output = viewModel.transform(input: input)
