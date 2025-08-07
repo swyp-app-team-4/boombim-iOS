@@ -22,6 +22,30 @@ final class HomeViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        setupNavigationBar()
+        setupView()
+    }
+    
+    // MARK: Setup UI
+    private func setupNavigationBar() {
+        title = "홈"
+
+        let searchButton = UIBarButtonItem(
+            image: UIImage(systemName: "magnifyingglass"),
+            style: .plain,
+            target: self,
+            action: #selector(didTapSearchButton)
+        )
+        
+        navigationItem.rightBarButtonItem = searchButton
+    }
+    
+    private func setupView() {
         view.backgroundColor = .systemBackground
     }
-}
+
+    // MARK: Action
+    @objc private func didTapSearchButton() {
+        viewModel.didTapSearch()
+    }}
