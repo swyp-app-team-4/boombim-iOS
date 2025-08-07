@@ -16,7 +16,7 @@ final class LoginViewModel {
     }
 
     struct Output {
-        let loginResult: Observable<Result<String, Error>>
+        let loginResult: Observable<Result<TokenInfo, Error>>
     }
     
     var didLoginSuccess: (() -> Void)?

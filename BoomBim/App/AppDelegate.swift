@@ -18,7 +18,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Override point for customization after application launch.
         
         // Kakao
-        let NATIVE_APP_KEY: String = "b9ee6084b39af730b1819a79e3e29d65"
+        let NATIVE_APP_KEY: String = "15beddeb998ebfb5407b1501bf0b2259"
         RxKakaoSDK.initSDK(appKey: NATIVE_APP_KEY)
         
         // Naver

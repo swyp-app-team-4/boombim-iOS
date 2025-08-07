@@ -11,7 +11,7 @@
 			<string>KakaoLogin</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>kakaob9ee6084b39af730b1819a79e3e29d65</string>
+				<string>kakao15beddeb998ebfb5407b1501bf0b2259</string>
 			</array>
 		</dict>
 		<dict>
@@ -21,7 +21,7 @@
 			<string>NaverLogin</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>naveroMBxvM7HKGBkm4HwW2c3</string>
+				<string>naverWFRKsx3t7gMMESxx7Vth</string>
 			</array>
 		</dict>
 	</array>
@@ -34,11 +34,11 @@
 	<key>NidAppName</key>
 	<string>붐빔</string>
 	<key>NidClientID</key>
-	<string>oMBxvM7HKGBkm4HwW2c3</string>
+	<string>WFRKsx3t7gMMESxx7Vth</string>
 	<key>NidClientSecret</key>
-	<string>quwJ8JKqPT</string>
+	<string>T3SCqoevVy</string>
 	<key>NidUrlScheme</key>
-	<string>naveroMBxvM7HKGBkm4HwW2c3</string>
+	<string>naverWFRKsx3t7gMMESxx7Vth</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

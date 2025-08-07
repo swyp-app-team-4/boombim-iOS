@@ -82,12 +82,11 @@ final class LoginViewController: UIViewController {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { result in
                 switch result {
-                case .success(let token):
-                    print("로그인 성공: \(token)")
+                case .success(let tokenInfo):
+                    print("로그인 성공: \(tokenInfo)")
                     // 백엔드에 token 전달
+                    TokenManager.shared.save(tokenInfo: tokenInfo) // UserDefaults 저장
                     self.viewModel.didLoginSuccess?() // 화면 이동
-                    // UserDefaults 저장
-                    TokenManager.shared.accessToken = token
                 case .failure(let error):
                     print("로그인 실패: \(error.localizedDescription)")
                 }

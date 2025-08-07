@@ -10,10 +10,10 @@ import RxSwift
 import AuthenticationServices
 
 final class AppleLoginService: NSObject, SocialLoginService {
-    private var observer: AnyObserver<String>?  // 👈 관찰자 저장
-    private let nonce = UUID().uuidString  // optional: 나중에 secure하게 만들 수도 있음
+    private var observer: AnyObserver<TokenInfo>?
+    private let nonce = UUID().uuidString
 
-    func login() -> Observable<String> {
+    func login() -> Observable<TokenInfo> {
         return Observable.create { observer in
             self.observer = observer
 
@@ -43,6 +43,8 @@ extension AppleLoginService: ASAuthorizationControllerDelegate, ASAuthorizationC
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         guard let credentials = authorization.credential as? ASAuthorizationAppleIDCredential,
               let fullName = credentials.fullName,
+              let authorizationCode = credentials.authorizationCode,
+              let authorizationCodeString = String(data: authorizationCode, encoding: .utf8),
               let identityToken = credentials.identityToken,
               let identityTokenString = String(data: identityToken, encoding: .utf8) else {
             return
@@ -51,7 +53,13 @@ extension AppleLoginService: ASAuthorizationControllerDelegate, ASAuthorizationC
         print("fullName : \(fullName)")
         print("identityTokenString : \(identityTokenString)")
         
-        observer?.onNext(identityTokenString)
+        let tokenInfo = TokenInfo(
+            accessToken: "",
+            refreshToken: "",
+            expiresIn: 3600,
+            idToken: identityTokenString)
+        
+        observer?.onNext(tokenInfo)
         observer?.onCompleted()
     }
 

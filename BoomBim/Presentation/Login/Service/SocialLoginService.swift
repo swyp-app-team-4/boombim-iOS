@@ -8,5 +8,5 @@
 import RxSwift
 
 protocol SocialLoginService {
-    func login() -> Observable<String>  // accessToken or idToken
+    func login() -> Observable<TokenInfo>  // accessToken or idToken
 }

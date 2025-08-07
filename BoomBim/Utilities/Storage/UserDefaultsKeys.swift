@@ -8,5 +8,8 @@
 enum UserDefaultsKeys {
     enum Auth {
         static let accessToken = "accessToken"
+        static let refreshToken = "refreshToken"
+        static let expiresIn = "expiresIn"
+        static let idToken = "idToken"
     }
 }

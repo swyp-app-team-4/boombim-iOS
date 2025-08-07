@@ -11,12 +11,17 @@ import KakaoSDKAuth
 import KakaoSDKUser
 
 final class KakaoLoginService: SocialLoginService {
-    func login() -> Observable<String> {
+    func login() -> Observable<TokenInfo> {
         return Observable.create { observer in
             if UserApi.isKakaoTalkLoginAvailable() {
                 UserApi.shared.loginWithKakaoTalk { token, error in
                     if let token = token {
-                        observer.onNext(token.accessToken)
+                        let tokenInfo = TokenInfo(
+                            accessToken: token.accessToken,
+                            refreshToken: token.refreshToken,
+                            expiresIn: token.expiresIn,
+                            idToken: "") // idToken 보류
+                        observer.onNext(tokenInfo)
                         observer.onCompleted()
                     } else {
                         observer.onError(error ?? NSError(domain: "Kakao", code: -1))
@@ -25,7 +30,12 @@ final class KakaoLoginService: SocialLoginService {
             } else {
                 UserApi.shared.loginWithKakaoAccount { token, error in
                     if let token = token {
-                        observer.onNext(token.accessToken)
+                        let tokenInfo = TokenInfo(
+                            accessToken: token.accessToken,
+                            refreshToken: token.refreshToken,
+                            expiresIn: token.expiresIn,
+                            idToken: token.idToken)
+                        observer.onNext(tokenInfo)
                         observer.onCompleted()
                     } else {
                         observer.onError(error ?? NSError(domain: "Kakao", code: -1))
