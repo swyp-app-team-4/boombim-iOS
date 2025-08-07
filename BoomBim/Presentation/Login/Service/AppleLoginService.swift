@@ -26,10 +26,7 @@ final class AppleLoginService: NSObject, SocialLoginService {
 
             controller.performRequests()
 
-            return Disposables.create {
-                // retain release
-                _ = self
-            }
+            return Disposables.create()
         }
     }
 }
@@ -37,21 +34,21 @@ final class AppleLoginService: NSObject, SocialLoginService {
 extension AppleLoginService: ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         
-        return UIApplication.shared.windows.first { $0.isKeyWindow } ?? UIWindow()
+        return UIApplication.shared
+                .connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .first { $0.isKeyWindow } ?? UIWindow()
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         guard let credentials = authorization.credential as? ASAuthorizationAppleIDCredential,
-              let fullName = credentials.fullName,
-              let authorizationCode = credentials.authorizationCode,
-              let authorizationCodeString = String(data: authorizationCode, encoding: .utf8),
+              let _ = credentials.fullName,
+              let _ = credentials.authorizationCode,
               let identityToken = credentials.identityToken,
               let identityTokenString = String(data: identityToken, encoding: .utf8) else {
             return
         }
-        
-        print("fullName : \(fullName)")
-        print("identityTokenString : \(identityTokenString)")
         
         let tokenInfo = TokenInfo(
             accessToken: "",

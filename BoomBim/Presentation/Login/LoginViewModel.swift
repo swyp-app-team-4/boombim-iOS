@@ -16,7 +16,7 @@ final class LoginViewModel {
     }
 
     struct Output {
-        let loginResult: Observable<Result<TokenInfo, Error>>
+        let loginResult: Observable<Result<TokenResponse, Error>>
     }
     
     var didLoginSuccess: (() -> Void)?
@@ -25,13 +25,28 @@ final class LoginViewModel {
 
     func transform(input: Input) -> Output {
         let kakao = input.kakaoTap
-            .flatMapLatest { KakaoLoginService().login().map(Result.success).catch { .just(.failure($0)) } }
-
+            .flatMapLatest {
+                KakaoLoginService().login()
+                    .flatMapLatest({ tokenInfo in
+                        AuthService.shared.requestLogin(type: .kakao, tokenInfo: tokenInfo)
+                    })
+                .catch { .just(.failure($0)) } }
+        
         let naver = input.naverTap
-            .flatMapLatest { NaverLoginService().login().map(Result.success).catch { .just(.failure($0)) } }
-
+            .flatMapLatest {
+                NaverLoginService().login()
+                    .flatMapLatest({ tokenInfo in
+                        AuthService.shared.requestLogin(type: .naver, tokenInfo: tokenInfo)
+                    })
+                .catch { .just(.failure($0)) } }
+        
         let apple = input.appleTap
-            .flatMapLatest { AppleLoginService().login().map(Result.success).catch { .just(.failure($0)) } }
+            .flatMapLatest {
+                AppleLoginService().login()
+                    .flatMapLatest({ tokenInfo in
+                        AuthService.shared.requestLogin(type: .apple, tokenInfo: tokenInfo)
+                    })
+                .catch { .just(.failure($0)) } }
 
         let merged = Observable.merge(kakao, naver, apple)
 

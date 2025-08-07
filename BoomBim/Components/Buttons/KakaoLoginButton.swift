@@ -21,6 +21,5 @@ final class KakaoLoginButton: UIButton {
     private func setupButton() {
         let image = UIImage.kakaoLoginLargeWide
         self.setBackgroundImage(image, for: .normal)
-        self.adjustsImageWhenHighlighted = false // 눌렸을 때 흐려지는 효과 제거
     }
 }

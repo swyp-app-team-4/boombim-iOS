@@ -21,6 +21,5 @@ final class NaverLoginButton: UIButton {
     private func setupButton() {
         let image = UIImage.naverLoginGreen
         self.setBackgroundImage(image, for: .normal)
-        self.adjustsImageWhenHighlighted = false
     }
 }
