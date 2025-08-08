@@ -22,12 +22,22 @@ final class HomeCoordinator: Coordinator {
             self?.showSearch()
         }
         
+        viewModel.goToNotificationView = { [weak self] in
+            self?.showNotification()
+        }
+        
         navigationController.setViewControllers([viewController], animated: false)
     }
     
     func showSearch() {
         let viewModel = SearchViewModel()
         let viewController = SearchViewController(viewModel: viewModel)
+        navigationController.pushViewController(viewController, animated: true)
+    }
+    
+    func showNotification() {
+        let viewModel = NotificationViewModel()
+        let viewController = NotificationViewController(viewModel: viewModel)
         navigationController.pushViewController(viewController, animated: true)
     }
 }

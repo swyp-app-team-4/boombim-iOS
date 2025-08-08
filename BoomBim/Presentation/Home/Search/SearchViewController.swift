@@ -11,7 +11,6 @@ import RxCocoa
 
 final class SearchViewController: UIViewController {
     private let viewModel: SearchViewModel
-    weak var coordinator: SearchCoordinator?
     
     private let disposeBag = DisposeBag()
 

@@ -7,8 +7,13 @@
 
 final class HomeViewModel {
     var goToSearchView: (() -> Void)?
+    var goToNotificationView: (() -> Void)?
     
     func didTapSearch() {
         goToSearchView?()
+    }
+    
+    func didTapNotification() {
+        goToNotificationView?()
     }
 }
