@@ -6,5 +6,9 @@
 //
 
 final class HomeViewModel {
+    var goToSearchView: (() -> Void)?
     
+    func didTapSearch() {
+        goToSearchView?()
+    }
 }
