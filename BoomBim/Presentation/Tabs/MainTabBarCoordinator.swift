@@ -10,6 +10,12 @@ import UIKit
 final class MainTabBarCoordinator: Coordinator {
     var navigationController = UINavigationController()
     let tabBarController = UITabBarController()
+    
+    // 🔽 여기에 Coordinator들을 프로퍼티로 보관
+    private var homeCoordinator: HomeCoordinator?
+    private var mapCoordinator: MapCoordinator?
+    private var chatCoordinator: ChatCoordinator?
+    private var myPageCoordinator: MyPageCoordinator?
 
     func start() {
         let homeNC = UINavigationController()
@@ -21,6 +27,11 @@ final class MainTabBarCoordinator: Coordinator {
         let mapCoordinator = MapCoordinator(navigationController: mapNC)
         let chatCoordinator = ChatCoordinator(navigationController: chatNC)
         let myPageCoordinator = MyPageCoordinator(navigationController: myPageNC)
+        
+        self.homeCoordinator = homeCoordinator
+        self.mapCoordinator = mapCoordinator
+        self.chatCoordinator = chatCoordinator
+        self.myPageCoordinator = myPageCoordinator
         
         homeNC.tabBarItem = UITabBarItem(title: "홈", image: UIImage.iconHome, selectedImage: UIImage.iconHome)
         mapNC.tabBarItem = UITabBarItem(title: "지도", image: UIImage.iconMap, selectedImage: UIImage.iconMap)

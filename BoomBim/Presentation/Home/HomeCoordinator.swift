@@ -17,6 +17,17 @@ final class HomeCoordinator: Coordinator {
     func start() {
         let viewModel = HomeViewModel()
         let viewController = HomeViewController(viewModel: viewModel)
+        
+        viewModel.goToSearchView = { [weak self] in
+            self?.showSearch()
+        }
+        
         navigationController.setViewControllers([viewController], animated: false)
+    }
+    
+    func showSearch() {
+        let viewModel = SearchViewModel()
+        let viewController = SearchViewController(viewModel: viewModel)
+        navigationController.pushViewController(viewController, animated: true)
     }
 }
