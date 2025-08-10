@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		CF2142312E48A65900F05030 /* KakaoMapsSDK-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = CF2142302E48A65900F05030 /* KakaoMapsSDK-SPM */; };
-		CF2142332E48A65900F05030 /* KakaoMapsSDK-SPM-Dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = CF2142322E48A65900F05030 /* KakaoMapsSDK-SPM-Dynamic */; };
 		CF820D112E3B7A8D0048B51C /* NidThirdPartyLogin in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D102E3B7A8D0048B51C /* NidThirdPartyLogin */; };
 		CF820D142E3B7B5A0048B51C /* RxKakaoSDK in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D132E3B7B5A0048B51C /* RxKakaoSDK */; };
 		CF820D162E3B7B5A0048B51C /* RxKakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D152E3B7B5A0048B51C /* RxKakaoSDKAuth */; };
@@ -48,7 +47,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				CF820D1C2E3B7B5A0048B51C /* RxKakaoSDKUser in Frameworks */,
-				CF2142332E48A65900F05030 /* KakaoMapsSDK-SPM-Dynamic in Frameworks */,
 				CF820D1A2E3B7B5A0048B51C /* RxKakaoSDKShare in Frameworks */,
 				CF820D182E3B7B5A0048B51C /* RxKakaoSDKCommon in Frameworks */,
 				CF820D162E3B7B5A0048B51C /* RxKakaoSDKAuth in Frameworks */,
@@ -104,7 +102,6 @@
 				CF820D192E3B7B5A0048B51C /* RxKakaoSDKShare */,
 				CF820D1B2E3B7B5A0048B51C /* RxKakaoSDKUser */,
 				CF2142302E48A65900F05030 /* KakaoMapsSDK-SPM */,
-				CF2142322E48A65900F05030 /* KakaoMapsSDK-SPM-Dynamic */,
 			);
 			productName = SwypTeam4;
 			productReference = CF820C872E3B72750048B51C /* BoomBim.app */;
@@ -398,11 +395,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CF21422F2E48A65900F05030 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */;
 			productName = "KakaoMapsSDK-SPM";
-		};
-		CF2142322E48A65900F05030 /* KakaoMapsSDK-SPM-Dynamic */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CF21422F2E48A65900F05030 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */;
-			productName = "KakaoMapsSDK-SPM-Dynamic";
 		};
 		CF820D102E3B7A8D0048B51C /* NidThirdPartyLogin */ = {
 			isa = XCSwiftPackageProductDependency;
