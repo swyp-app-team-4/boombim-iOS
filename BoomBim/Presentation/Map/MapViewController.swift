@@ -19,6 +19,9 @@ final class MapViewController: UIViewController {
     private var mapController: KMController!
     private var authed = false
     
+    private var didAddSamplePOIs = false
+    private var registeredStyleIDs = Set<String>() // map 인스턴스 기준으로 관리
+    
     init(viewModel: MapViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -174,6 +177,8 @@ extension MapViewController: MapControllerDelegate {
         }
         
         setLocation()
+        
+        addSamplePOIs()
     }
     
     // addView 실패 이벤트 delegate. 실패에 대한 오류 처리를 진행한다.
@@ -189,3 +194,74 @@ extension MapViewController: MapControllerDelegate {
     }
 }
 
+// MARK: 임의로 좌표를 생성해서 확인
+extension MapViewController {
+
+    private func makeRandomSeoulCoords(_ count: Int) -> [CLLocationCoordinate2D] {
+        // 대략 서울 바운딩 박스(필요시 조정)
+        let latRange: ClosedRange<Double> = 37.4133...37.7151
+        let lonRange: ClosedRange<Double> = 126.7341...127.2693
+
+        func rand(_ r: ClosedRange<Double>) -> Double {
+            let t = Double.random(in: 0...1)
+            return r.lowerBound + (r.upperBound - r.lowerBound) * t
+        }
+
+        return (0..<count).map { _ in
+            CLLocationCoordinate2D(latitude: rand(latRange), longitude: rand(lonRange))
+        }
+    }
+
+    // POI 추가 (addViewSucceeded에서 호출 권장)
+    private func addSamplePOIs() {
+        guard !didAddSamplePOIs else { return } // 중복 추가 방지
+        guard let mapView = mapController?.getView("mapview") as? KakaoMap else { return }
+
+        let labelMgr = mapView.getLabelManager()
+        let layerID = "PoiLayer"
+        let styleID = "BasicPoi"
+
+        // (1) 레이어 보장
+        if labelMgr.getLabelLayer(layerID: layerID) == nil {
+            let opt = LabelLayerOptions(
+                layerID: layerID,
+                competitionType: .none,
+                competitionUnit: .symbolFirst,
+                orderType: .rank,
+                zOrder: 0
+            )
+            _ = labelMgr.addLabelLayer(option: opt)
+        }
+        guard let layer = labelMgr.getLabelLayer(layerID: layerID) else { return }
+
+        // (2) 스타일 보장 (PNG 에셋 사용! SF Symbols 금지)
+        if !registeredStyleIDs.contains(styleID) {
+            let image = UIImage.iconStar
+            let icon = PoiIconStyle(
+                symbol: image,
+                anchorPoint: CGPoint(x: 0.5, y: 1.0),
+                badges: []
+            )
+            // 줌 레벨 12부터 보이게(원하시면 조정)
+            let perLevel = PerLevelPoiStyle(iconStyle: icon, level: 12)
+            let style = PoiStyle(styleID: styleID, styles: [perLevel])
+            labelMgr.addPoiStyle(style)
+            registeredStyleIDs.insert(styleID)
+        }
+
+        // (3) 임의 좌표 50개 추가
+        let coords = makeRandomSeoulCoords(50)
+        print("coords : \(coords.count)")
+        for (idx, c) in coords.enumerated() {
+            var opt = PoiOptions(styleID: styleID)
+            opt.rank = 0
+
+            let pt = MapPoint(longitude: c.longitude, latitude: c.latitude)
+            let poi = layer.addPoi(option: opt, at: pt)
+            poi?.show()
+        }
+
+        didAddSamplePOIs = true
+    }
+
+}
