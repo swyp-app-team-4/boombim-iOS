@@ -52,8 +52,6 @@ final class MapViewController: UIViewController {
         mapController.delegate = self
         
         mapController.prepareEngine() // 엔진 prepare
-        
-        //        setLocation() // 현재 위치 설정
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -91,32 +89,34 @@ final class MapViewController: UIViewController {
             mapContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
-    //    private func setLocation() {
-    //        AppLocationManager.shared.requestWhenInUseAuthorization()
-    //
-    //        // 최초 한 번만 받아서 카메라 이동
-    //        AppLocationManager.shared.requestOneShotLocation(timeout: 5)
-    //            .observe(on: MainScheduler.instance)
-    //            .subscribe(onSuccess: { [weak self] loc in
-    //                self?.moveCamera(to: loc.coordinate, level: 7)
-    //            }, onFailure: { error in
-    //                print("현재 위치 실패:", error.localizedDescription)
-    //            })
-    //            .disposed(by: disposeBag)
-    //
-    //        // 지속 추적이 필요하면:
-    //        AppLocationManager.shared.startUpdatingLocation()
-    //    }
-    //
-    //    private func moveCamera(to coord: CLLocationCoordinate2D, level: Int32) {
-    //        guard let mapView = controller?.getView("mapview") as? KakaoMap else { return }
-    //        let update = CameraUpdate.make(
-    //            target: MapPoint(longitude: coord.longitude, latitude: coord.latitude),
-    //            zoomLevel: Int(level),
-    //            mapView: mapView
-    //        )
-    //        mapView.moveCamera(update)
-    //    }
+    
+    private func setLocation() {
+        AppLocationManager.shared.requestWhenInUseAuthorization()
+        
+        // 최초 한 번만 받아서 카메라 이동
+        AppLocationManager.shared.requestOneShotLocation(timeout: 5)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onSuccess: { [weak self] loc in
+                print("loc : \(loc)")
+                print("loc : \(loc.coordinate.latitude), \(loc.coordinate.longitude)")
+                self?.moveCamera(to: loc.coordinate, level: 14)
+            }, onFailure: { error in
+                print("현재 위치 실패:", error.localizedDescription)
+            })
+            .disposed(by: disposeBag)
+        
+        AppLocationManager.shared.startUpdatingLocation()
+    }
+    
+    private func moveCamera(to coord: CLLocationCoordinate2D, level: Int32) {
+        guard let mapView = mapController?.getView("mapview") as? KakaoMap else { return }
+        let update = CameraUpdate.make(
+            target: MapPoint(longitude: coord.longitude, latitude: coord.latitude),
+            zoomLevel: Int(level),
+            mapView: mapView
+        )
+        mapView.moveCamera(update)
+    }
 }
 
 extension MapViewController: MapControllerDelegate {
@@ -159,34 +159,33 @@ extension MapViewController: MapControllerDelegate {
     }
     
     func addViews() {
-        //여기에서 그릴 View(KakaoMap, Roadview)들을 추가한다.
         let defaultPosition: MapPoint = MapPoint(longitude: 127.108678, latitude: 37.402001)
-        //지도(KakaoMap)를 그리기 위한 viewInfo를 생성
         let mapviewInfo: MapviewInfo = MapviewInfo(viewName: "mapview", viewInfoName: "map", defaultPosition: defaultPosition, defaultLevel: 7)
         
-        //KakaoMap 추가.
         mapController?.addView(mapviewInfo)
     }
     
-    //addView 성공 이벤트 delegate. 추가적으로 수행할 작업을 진행한다.
+    // addView 성공 이벤트 delegate. 추가적으로 수행할 작업을 진행한다.
     func addViewSucceeded(_ viewName: String, viewInfoName: String) {
         print("OK") //추가 성공. 성공시 추가적으로 수행할 작업을 진행한다.
         
         if let mapView = mapController?.getView("mapview") as? KakaoMap {
             mapView.viewRect = mapContainer.bounds
         }
+        
+        setLocation()
     }
     
-    //addView 실패 이벤트 delegate. 실패에 대한 오류 처리를 진행한다.
+    // addView 실패 이벤트 delegate. 실패에 대한 오류 처리를 진행한다.
     func addViewFailed(_ viewName: String, viewInfoName: String) {
         print("Failed")
     }
     
-    //Container 뷰가 리사이즈 되었을때 호출된다. 변경된 크기에 맞게 ViewBase들의 크기를 조절할 필요가 있는 경우 여기에서 수행한다.
+    // Container 뷰가 리사이즈 되었을때 호출된다. 변경된 크기에 맞게 ViewBase들의 크기를 조절할 필요가 있는 경우 여기에서 수행한다.
     func containerDidResized(_ size: CGSize) {
         if let mapView = mapController?.getView("mapview") as? KakaoMap {
-            mapView.viewRect = CGRect(origin: .zero, size: size)
-        }   //지도뷰의 크기를 리사이즈된 크기로 지정한다.
+            mapView.viewRect = CGRect(origin: .zero, size: size) // 지도뷰의 크기를 리사이즈된 크기로 지정한다.
+        }
     }
 }
 

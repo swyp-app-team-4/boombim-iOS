@@ -33,8 +33,6 @@
 		<string>naversearchapp</string>
 		<string>naversearchthirdlogin</string>
 	</array>
-	<key>Location When In Use Usage Description</key>
-	<string>"지도 표시를 위해 위치 정보가 필요합니다."</string>
 	<key>NidAppName</key>
 	<string>Boombim</string>
 	<key>NidClientID</key>
