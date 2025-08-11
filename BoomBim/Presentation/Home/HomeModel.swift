@@ -24,7 +24,7 @@ struct PlaceItem: Hashable {
     let id = UUID()
     let name: String
     let detail: String
-    let badgeText: String? // e.g., 혼잡도
+    let congestion: String // 혼잡도
 }
 
 enum HomeSection: Int, CaseIterable {

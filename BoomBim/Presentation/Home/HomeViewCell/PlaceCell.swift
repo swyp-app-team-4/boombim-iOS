@@ -64,11 +64,6 @@ final class PlaceCell: UICollectionViewCell {
     func configure(_ item: PlaceItem) {
         titleLabel.text = item.name
         subtitleLabel.text = item.detail
-        if let t = item.badgeText, !t.isEmpty {
-            badge.isHidden = false
-            badge.text = "  \(t)  "
-        } else {
-            badge.isHidden = true
-        }
+        badge.text = "  \(item.congestion)  "
     }
 }

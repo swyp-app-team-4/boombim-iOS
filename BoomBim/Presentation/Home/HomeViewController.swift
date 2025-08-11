@@ -153,13 +153,13 @@ final class HomeViewController: UIViewController {
         ]
         
         let favorites: [PlaceItem] = [
-            .init(name: "선릉 카페", detail: "450m · 테라스", badgeText: "여유"),
-            .init(name: "역삼 맛집", detail: "1.2km · 웨이팅", badgeText: "보통")
+            .init(name: "선릉 카페", detail: "450m · 테라스", congestion: "여유"),
+            .init(name: "역삼 맛집", detail: "1.2km · 웨이팅", congestion: "보통")
         ]
         
         let crowded: [PlaceItem] = [
-            .init(name: "코엑스", detail: "2.1km · 행사 중", badgeText: "혼잡"),
-            .init(name: "롯데월드", detail: "6.4km · 주말 피크", badgeText: "매우 혼잡")
+            .init(name: "코엑스", detail: "2.1km · 행사 중", congestion: "혼잡"),
+            .init(name: "롯데월드", detail: "6.4km · 주말 피크", congestion: "매우 혼잡")
         ]
         
         var snapshot = NSDiffableDataSourceSnapshot<HomeSection, HomeItem>()
@@ -289,5 +289,15 @@ extension HomeViewController: UICollectionViewDelegate {
     
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         if !decelerate { isUserDraggingRegion = false }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
+        switch item {
+        case .place(let place):
+            viewModel.didSelectPlace(place)
+        default:
+            break
+        }
     }
 }

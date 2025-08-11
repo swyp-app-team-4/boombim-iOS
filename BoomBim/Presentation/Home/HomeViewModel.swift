@@ -8,6 +8,7 @@
 final class HomeViewModel {
     var goToSearchView: (() -> Void)?
     var goToNotificationView: (() -> Void)?
+    var goToPlaceView: ((PlaceItem) -> Void)?
     
     func didTapSearch() {
         goToSearchView?()
@@ -15,5 +16,9 @@ final class HomeViewModel {
     
     func didTapNotification() {
         goToNotificationView?()
+    }
+    
+    func didSelectPlace(_ place: PlaceItem) {
+        goToPlaceView?(place)
     }
 }
