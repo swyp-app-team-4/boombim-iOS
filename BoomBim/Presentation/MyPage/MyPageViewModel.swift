@@ -6,5 +6,14 @@
 //
 
 final class MyPageViewModel {
+    var goToSettingsView: (() -> Void)?
+    var goToProfileView: (() -> Void)?
     
+    func didTapSettings() {
+        goToSettingsView?()
+    }
+    
+    func didTapProfile() {
+        goToProfileView?()
+    }
 }
