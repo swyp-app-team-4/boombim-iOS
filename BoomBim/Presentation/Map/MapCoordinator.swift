@@ -15,7 +15,8 @@ final class MapCoordinator: Coordinator {
     }
 
     func start() {
-        let viewModel = MapViewModel()
+        let service = KakaoLocalService()
+        let viewModel = MapViewModel(service: service)
         let viewController = MapViewController(viewModel: viewModel)
         navigationController.setViewControllers([viewController], animated: false)
     }

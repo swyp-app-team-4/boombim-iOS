@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CF2142312E48A65900F05030 /* KakaoMapsSDK-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = CF2142302E48A65900F05030 /* KakaoMapsSDK-SPM */; };
 		CF820D112E3B7A8D0048B51C /* NidThirdPartyLogin in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D102E3B7A8D0048B51C /* NidThirdPartyLogin */; };
 		CF820D142E3B7B5A0048B51C /* RxKakaoSDK in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D132E3B7B5A0048B51C /* RxKakaoSDK */; };
 		CF820D162E3B7B5A0048B51C /* RxKakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D152E3B7B5A0048B51C /* RxKakaoSDKAuth */; };
@@ -51,6 +52,7 @@
 				CF820D162E3B7B5A0048B51C /* RxKakaoSDKAuth in Frameworks */,
 				CF820D112E3B7A8D0048B51C /* NidThirdPartyLogin in Frameworks */,
 				CF820D142E3B7B5A0048B51C /* RxKakaoSDK in Frameworks */,
+				CF2142312E48A65900F05030 /* KakaoMapsSDK-SPM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,6 +101,7 @@
 				CF820D172E3B7B5A0048B51C /* RxKakaoSDKCommon */,
 				CF820D192E3B7B5A0048B51C /* RxKakaoSDKShare */,
 				CF820D1B2E3B7B5A0048B51C /* RxKakaoSDKUser */,
+				CF2142302E48A65900F05030 /* KakaoMapsSDK-SPM */,
 			);
 			productName = SwypTeam4;
 			productReference = CF820C872E3B72750048B51C /* BoomBim.app */;
@@ -131,6 +134,7 @@
 			packageReferences = (
 				CF820D0F2E3B7A8D0048B51C /* XCRemoteSwiftPackageReference "naveridlogin-sdk-ios-swift" */,
 				CF820D122E3B7B5A0048B51C /* XCRemoteSwiftPackageReference "kakao-ios-sdk-rx" */,
+				CF21422F2E48A65900F05030 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CF820C882E3B72750048B51C /* Products */;
@@ -174,6 +178,7 @@
 				DEVELOPMENT_TEAM = 5G6N83PM9C;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BoomBim/App/Info.plist;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"지도 표시를 위해 위치 정보가 필요합니다.\"";
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -201,6 +206,7 @@
 				DEVELOPMENT_TEAM = 5G6N83PM9C;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BoomBim/App/Info.plist;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"지도 표시를 위해 위치 정보가 필요합니다.\"";
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -360,6 +366,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		CF21422F2E48A65900F05030 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kakao-mapsSDK/KakaoMapsSDK-SPM.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.12.9;
+			};
+		};
 		CF820D0F2E3B7A8D0048B51C /* XCRemoteSwiftPackageReference "naveridlogin-sdk-ios-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/naver/naveridlogin-sdk-ios-swift";
@@ -379,6 +393,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		CF2142302E48A65900F05030 /* KakaoMapsSDK-SPM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CF21422F2E48A65900F05030 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */;
+			productName = "KakaoMapsSDK-SPM";
+		};
 		CF820D102E3B7A8D0048B51C /* NidThirdPartyLogin */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = CF820D0F2E3B7A8D0048B51C /* XCRemoteSwiftPackageReference "naveridlogin-sdk-ios-swift" */;

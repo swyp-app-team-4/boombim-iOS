@@ -26,6 +26,10 @@ final class HomeCoordinator: Coordinator {
             self?.showNotification()
         }
         
+        viewModel.goToPlaceView = { [weak self] place in
+            self?.showPlaceDetail(place)
+        }
+        
         navigationController.setViewControllers([viewController], animated: false)
     }
     
@@ -38,6 +42,12 @@ final class HomeCoordinator: Coordinator {
     func showNotification() {
         let viewModel = NotificationViewModel()
         let viewController = NotificationViewController(viewModel: viewModel)
+        navigationController.pushViewController(viewController, animated: true)
+    }
+    
+    func showPlaceDetail(_ place: PlaceItem) {
+        let viewModel = PlaceViewModel(place: place)
+        let viewController = PlaceViewController(viewModel: viewModel)
         navigationController.pushViewController(viewController, animated: true)
     }
 }
