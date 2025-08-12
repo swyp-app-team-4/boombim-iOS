@@ -10,6 +10,8 @@ import UIKit
 final class CongestionReportViewController: UIViewController {
     private let viewModel: CongestionReportViewModel
     
+    private let locationSearchView = LocationSearchFieldView()
+    
     init(viewModel: CongestionReportViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)

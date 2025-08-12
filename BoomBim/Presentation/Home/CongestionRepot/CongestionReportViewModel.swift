@@ -6,5 +6,9 @@
 //
 
 final class CongestionReportViewModel {
+    var goToMapPickerView: (() -> Void)?
     
+    func didTapSearch() {
+        goToMapPickerView?()
+    }
 }
