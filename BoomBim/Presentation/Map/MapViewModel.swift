@@ -23,13 +23,12 @@ final class MapViewModel {
     }
 
     func transform(input: Input) -> Output {
-        // 줌 레벨 하한(예: 11 이상일 때만 검색)
         let rectWhenZoomOK = Observable
-            .combineLatest(input.cameraRect, input.zoomLevel.startWith(13))
-            .filter { _, zoom in zoom >= 11 }
+            .combineLatest(input.cameraRect, input.zoomLevel.startWith(14))
+            .filter { _, zoom in zoom >= 11 } // 줌 레벨 11 이상인 경우, 단 현재는 zoom Level 14로 고정
             .map { rect, _ in rect }
             .distinctUntilChanged { a, b in
-                // 너무 미세한 움직임은 무시하고 싶다면 적당히 반올림 비교
+                // 카메라 움직임 조절
                 func round6(_ d: Double) -> Double { (d * 1e6).rounded() / 1e6 }
                 return round6(a.left) == round6(b.left)
                     && round6(a.right) == round6(b.right)
