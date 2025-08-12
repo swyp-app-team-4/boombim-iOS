@@ -18,6 +18,10 @@ final class HomeCoordinator: Coordinator {
         let viewModel = HomeViewModel()
         let viewController = HomeViewController(viewModel: viewModel)
         
+        viewModel.goToCongestionReportView = { [weak self] in
+            self?.showCongestionReport()
+        }
+        
         viewModel.goToSearchView = { [weak self] in
             self?.showSearch()
         }
@@ -31,6 +35,23 @@ final class HomeCoordinator: Coordinator {
         }
         
         navigationController.setViewControllers([viewController], animated: false)
+    }
+    
+    func showCongestionReport() {
+        let viewModel = CongestionReportViewModel()
+        let viewController = CongestionReportViewController(viewModel: viewModel)
+//        navigationController.pushViewController(viewController, animated: true)
+        
+        // 모달 형식 구현시 사용 예정
+        let navigationController = UINavigationController(rootViewController: viewController)
+        navigationController.modalPresentationStyle = .pageSheet
+        
+        if let sheet = navigationController.sheetPresentationController {
+            sheet.detents = [.large()]
+            sheet.prefersGrabberVisible = true
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+        }
+        self.navigationController.present(navigationController, animated: true)
     }
     
     func showSearch() {
