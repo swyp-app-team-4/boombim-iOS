@@ -23,13 +23,38 @@ final class CongestionReportViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
         
-        setupNavigationBar()
+        setupUI()
+        
+        bindAction()
     }
     
     // MARK: Setup UI
-    private func setupNavigationBar() {
+    private func setupUI() {
+        view.backgroundColor = .systemBackground
+        
+        configureNavigationBar()
+        configureSearchView()
+    }
+    
+    private func configureNavigationBar() {
         title = "혼잡도 공유"
+    }
+    
+    private func configureSearchView() {
+        view.addSubview(locationSearchView)
+        locationSearchView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            locationSearchView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            locationSearchView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            locationSearchView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+        ])
+    }
+    
+    // MARK: Bind Action
+    private func bindAction() {
+        locationSearchView.onTapSearch = { [weak self] in
+            self?.viewModel.didTapSearch()
+        }
     }
 }

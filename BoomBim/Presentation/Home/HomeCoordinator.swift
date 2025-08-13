@@ -9,6 +9,8 @@ import UIKit
 
 final class HomeCoordinator: Coordinator {
     var navigationController: UINavigationController
+    
+    var childCoordinators: [Coordinator] = []
 
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -44,13 +46,18 @@ final class HomeCoordinator: Coordinator {
         
         // 모달 형식 구현시 사용 예정
         let navigationController = UINavigationController(rootViewController: viewController)
-        navigationController.modalPresentationStyle = .pageSheet
         
-        if let sheet = navigationController.sheetPresentationController {
-            sheet.detents = [.large()]
-            sheet.prefersGrabberVisible = true
-            sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+        let childCoordinator = CongestionReportCoordinator(navigationController: navigationController)
+        childCoordinator.onFinish = { [weak self, weak childCoordinator] in
+            guard let self, let childCoordinator else { return }
+            self.childCoordinators.removeAll { $0 === childCoordinator }
+            self.navigationController.presentedViewController?.dismiss(animated: true)
         }
+        childCoordinators.append(childCoordinator)
+        childCoordinator.start()
+        
+        navigationController.modalPresentationStyle = .fullScreen
+        
         self.navigationController.present(navigationController, animated: true)
     }
     

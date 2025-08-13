@@ -42,8 +42,10 @@ final class KakaoLocalService {
             self.restApiKey = ""
         }
     }
+    
+    // 사용자의 위치 x,y 좌표로 카테고리 검사를 진행해서 반경 100m에 포함된 목록 중 가장 가까운 것을 표시
 
-    // 스타벅스 + 카페(CE7)만, rect로 검색
+    // MARK: TEST Code 스타벅스 + 카페(CE7)만, rect로 검색
     func searchStarbucks(in rect: ViewportRect, size: Int = 15) -> Single<[Place]> {
         let url = "https://dapi.kakao.com/v2/local/search/keyword.json"
         let headers: HTTPHeaders = ["Authorization": "KakaoAK \(restApiKey)"]

@@ -7,9 +7,29 @@
 
 import UIKit
 
-final class LocationSearchFieldView: UIView, UITextFieldDelegate {
+final class LocationSearchFieldView: UIView {
 
-    let textField = UITextField()
+    private let textField: UITextField = {
+        let textField = UITextField()
+        
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "검색",
+            attributes: [.foregroundColor: UIColor.systemGray3]
+        )
+        textField.font = .systemFont(ofSize: 16)
+        textField.backgroundColor = .systemBackground
+        textField.tintColor = .systemGray3
+        
+        textField.layer.cornerRadius = 16
+        textField.layer.borderWidth = 1
+        textField.layer.borderColor = UIColor.separator.cgColor
+        textField.clearButtonMode = .whileEditing
+        textField.returnKeyType = .search
+        
+        textField.setIcon(UIImage(systemName: "magnifyingglass") ?? .iconProfile)
+        
+        return textField
+    }()
 
     var onTapSearch: (() -> Void)?   // 탭 시 지도 열기
 
@@ -26,25 +46,6 @@ final class LocationSearchFieldView: UIView, UITextFieldDelegate {
     private func setup() {
         // 2) 검색 입력창
         textField.delegate = self
-        textField.attributedPlaceholder = NSAttributedString(
-            string: "검색",
-            attributes: [.foregroundColor: UIColor.systemGray3]
-        )
-        textField.font = .systemFont(ofSize: 16)
-        textField.backgroundColor = .systemBackground
-        textField.layer.cornerRadius = 16
-        textField.layer.borderWidth = 1
-        textField.layer.borderColor = UIColor.separator.cgColor
-        textField.clearButtonMode = .whileEditing
-        textField.returnKeyType = .search
-
-        // 좌측 돋보기 아이콘
-        let left = UIImageView(image: UIImage(systemName: "magnifyingglass"))
-        left.tintColor = .systemGray3
-        left.contentMode = .center
-        left.frame = CGRect(x: 0, y: 0, width: 36, height: 36)
-        textField.leftView = left
-        textField.leftViewMode = .always
 
         // 3) 레이아웃
         addSubview(textField)
@@ -58,9 +59,9 @@ final class LocationSearchFieldView: UIView, UITextFieldDelegate {
             textField.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
 
-        // 전체 뷰 탭해도 검색 열리게
-        let tap = UITapGestureRecognizer(target: self, action: #selector(openSearch))
-        addGestureRecognizer(tap)
+//        // 전체 뷰 탭해도 검색 열리게
+//        let tap = UITapGestureRecognizer(target: self, action: #selector(openSearch))
+//        addGestureRecognizer(tap)
     }
 
     /** 외부에서 텍스트 세팅 */
@@ -68,13 +69,14 @@ final class LocationSearchFieldView: UIView, UITextFieldDelegate {
         textField.text = text
     }
 
-    // 편집 시작을 가로채서 지도 화면으로
-    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+//    @objc private func openSearch() {
+//        onTapSearch?()
+//    }
+}
+
+extension LocationSearchFieldView: UITextFieldDelegate {
+    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool { // 편집 시작을 가로채서 지도 화면으로
         onTapSearch?()
         return false // 키보드 열지 않음, 지도 화면으로 전환
-    }
-
-    @objc private func openSearch() {
-        onTapSearch?()
     }
 }
