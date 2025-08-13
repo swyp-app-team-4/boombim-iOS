@@ -197,6 +197,18 @@ final class KakaoLocalService {
                 .catchAndReturn([]) // 일부 실패 무시
         }
         
+
+        // 여러 Single<[Place]> → Single<[[Place]]>로 합치기
+        Single.zip(calls)
+            .map { nestedArray in
+                // [[Place]] → [Place]로 평탄화
+                nestedArray.flatMap { $0 }
+            }
+            .subscribe(onSuccess: { places in
+                print("=== Places 결과 ===")
+                places.forEach { print($0) } // Place가 CustomStringConvertible 구현되어 있으면 보기 좋게 출력됨
+            })
+        
         // 핵심: Observable.zip로 바꾼 뒤 마지막에 asSingle()
             let zipped: Observable<[[Place]]> = Observable.zip(calls.map { $0.asObservable() })
 

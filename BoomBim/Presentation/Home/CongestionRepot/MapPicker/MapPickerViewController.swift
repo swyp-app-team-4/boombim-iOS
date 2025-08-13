@@ -224,72 +224,8 @@ final class MapPickerViewController: UIViewController {
     }
 }
 
-// MARK: 현재 위치 권한 설정 및 카메라 이동
+// MARK: 카메라 이동
 extension MapPickerViewController {
-    private func setLocation() {
-        if locationManager.authorization.value == .notDetermined { // 권한 설정이 안된 경우 권한 요청
-            locationManager.requestWhenInUseAuthorization()
-        }
-        
-        // 권한 상태 스트림에서 '최종 상태(허용/거부)'만 대기 → 1회 처리
-        locationManager.authorization
-            .asObservable()
-            .startWith(locationManager.authorization.value) // 현재 상태 먼저 흘려보내기
-            .distinctUntilChanged()
-            .filter { status in
-                switch status {
-                case .authorizedWhenInUse, .authorizedAlways, .denied, .restricted:
-                    return true // 최종 상태만 통과
-                default:
-                    return false // .notDetermined은 대기
-                }
-            }
-            .take(1) // 허용 or 거부 중 첫 결과 한 번만
-            .flatMapLatest { [weak self] status -> Observable<CLLocationCoordinate2D> in
-                guard let self else { return .empty() }
-                switch status {
-                case .authorizedWhenInUse, .authorizedAlways:
-                    return locationManager.requestOneShotLocation(timeout: 5)
-                        .asObservable()
-                        .map {
-                            print("위도 : \($0.coordinate.latitude), 경도 : \($0.coordinate.longitude)")
-                            return $0.coordinate
-                        }
-                case .denied, .restricted:
-                    self.showLocationDeniedAlert()
-                    return .empty()
-                default:
-                    return .empty()
-                }
-            }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] coord in
-                print("coord : \(coord)")
-                guard let self,
-                      let mapview = self.mapController?.getView("mapview") as? KakaoMap else { return }
-                
-                self.updateCurrentLocation(on: mapview, to: coord)
-                self.moveCamera(to: coord, level: self.zoomLevel)
-            })
-            .disposed(by: disposeBag)
-    }
-    
-    /** 위치 접근 안내 Alert */
-    private func showLocationDeniedAlert() {
-        let alert = UIAlertController(
-            title: "위치 접근이 꺼져 있어요",
-            message: "현재 위치를 기반으로 검색하려면 설정 > 앱 > 위치에서 허용해 주세요.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-            if let url = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(url)
-            }
-        })
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        present(alert, animated: true)
-    }
-    
     private func setHeading() {
         // 시작: 5도 이상 변화 시 콜백, 현재 UI 방향 반영(필요 시 조정)
         locationManager.startUpdatingHeading(
@@ -501,9 +437,6 @@ extension MapPickerViewController: MapControllerDelegate {
         
         updateCurrentLocation(on: mapview, to: coord)
         moveCamera(to: coord, level: zoomLevel)
-
-        // 현재 위치로 이동(옵션)
-//        setLocation()
     }
     
     // addView 실패 이벤트 delegate. 실패에 대한 오류 처리를 진행한다.
