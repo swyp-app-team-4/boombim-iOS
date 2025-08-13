@@ -6,10 +6,14 @@
 //
 
 import UIKit
+import CoreLocation
 
 final class CongestionReportCoordinator: Coordinator {
     var navigationController: UINavigationController
+    
     var onFinish: (() -> Void)?
+    
+    var service: KakaoLocalService?
     
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -17,12 +21,13 @@ final class CongestionReportCoordinator: Coordinator {
     
     func start() {
         print("CongestionReportCoordinator start")
-        let viewModel = CongestionReportViewModel()
+        guard let service = self.service else { return }
+        let viewModel = CongestionReportViewModel(service: service)
         let viewController = CongestionReportViewController(viewModel: viewModel)
         
-        viewModel.goToMapPickerView = { [weak self] in
+        viewModel.goToMapPickerView = { [weak self] location in
             print("goToMapPickerView")
-            self?.showMapPicker()
+            self?.showMapPicker(location)
         }
         
         viewModel.backToHome = { [weak self] in
@@ -34,9 +39,9 @@ final class CongestionReportCoordinator: Coordinator {
         debugPrint(navigationController)
     }
     
-    func showMapPicker() {
+    func showMapPicker(_ currentLocation: CLLocationCoordinate2D) {
         print("showMapPicker")
-        let viewModel = MapPickerViewModel()
+        let viewModel = MapPickerViewModel(currentLocation: currentLocation)
         let viewController = MapPickerViewController(viewModel: viewModel)
         
         navigationController.pushViewController(viewController, animated: true)

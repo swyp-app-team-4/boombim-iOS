@@ -103,69 +103,125 @@ final class MapPickerViewController: UIViewController {
 
     // 주황색 내부 원 + 흰색 외곽 원 + 그림자
     func makeCurrentBodyIcon(diameter: CGFloat = 15) -> UIImage {
-        let scale = UIScreen.main.scale
-        let size = CGSize(width: diameter, height: diameter)
+        let blur: CGFloat = 6
+        let offset = CGSize(width: 0, height: 2)
+
+        // 그림자가 잘리지 않도록 캔버스에 여유 공간을 확보
+        let padX = blur * 2 + abs(offset.width)
+        let padY = blur * 2 + abs(offset.height)
+        let canvas = CGSize(width: diameter + padX * 2, height: diameter + padY * 2)
+
         let outerR = diameter * 0.5
-        let innerR = diameter * 0.32
+        let innerR = diameter * 0.3
 
-        let renderer = UIGraphicsImageRenderer(size: size, format: UIGraphicsImageRendererFormat.default())
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = UIScreen.main.scale
+        format.opaque = false
+
+        let renderer = UIGraphicsImageRenderer(size: canvas, format: format)
         return renderer.image { ctx in
             let cg = ctx.cgContext
             cg.setAllowsAntialiasing(true)
             cg.setShouldAntialias(true)
 
-            // 그림자 (흰 원 뒤로 부드럽게)
-            cg.setShadow(offset: CGSize(width: 0, height: 2), blur: 6, color: UIColor.black.withAlphaComponent(0.25).cgColor)
+            // 실제 도형은 패딩만큼 안쪽으로 평행이동해서 그림
+            cg.translateBy(x: padX, y: padY)
 
-            // 바깥 흰 원
+            // 바깥 흰 원 + 그림자
+            let outerRect = CGRect(
+                x: (diameter / 2) - outerR,
+                y: (diameter / 2) - outerR,
+                width: outerR * 2,
+                height: outerR * 2
+            )
+            cg.setShadow(offset: offset, blur: blur, color: UIColor.black.withAlphaComponent(0.25).cgColor)
             cg.setFillColor(UIColor.white.cgColor)
-            cg.addEllipse(in: CGRect(x: size.width/2 - outerR,
-                                     y: size.height/2 - outerR,
-                                     width: outerR*2, height: outerR*2))
+            cg.addEllipse(in: outerRect)
             cg.fillPath()
 
-            // 그림자 이후 내부 원은 그림자 없이
+            // 내부 주황 원(그림자 없음)
             cg.setShadow(offset: .zero, blur: 0, color: nil)
-
-            // 안쪽 주황 원
+            let innerRect = CGRect(
+                x: (diameter / 2) - innerR,
+                y: (diameter / 2) - innerR,
+                width: innerR * 2,
+                height: innerR * 2
+            )
             cg.setFillColor(UIColor.systemOrange.cgColor)
-            cg.addEllipse(in: CGRect(x: size.width/2 - innerR,
-                                     y: size.height/2 - innerR,
-                                     width: innerR*2, height: innerR*2))
+            cg.addEllipse(in: innerRect)
             cg.fillPath()
-        }
+        }.withRenderingMode(.alwaysOriginal)
     }
 
-    // 바깥 방향을 가리키는 삼각형 (위쪽을 기본 0도 기준)
-    func makeDirectionArrowIcon(diameter: CGFloat = 15) -> UIImage {
-        // 원 밖으로 조금 튀어나오게 화살 길이를 잡음
-        let size = CGSize(width: diameter, height: diameter * 1.25)
-        let centerX = size.width / 2.0
-        let circleR = diameter * 0.5
-        let tipY = CGFloat(0) + 2    // 꼭짓점 (이미지 상단 소량 여백)
-        let baseY = circleR + 6      // 원 바깥쪽에서 삼각형 밑변이 맞닿게
-
-        // 삼각형 폭
-        let halfW: CGFloat = diameter * 0.18
-
-        let renderer = UIGraphicsImageRenderer(size: size)
+    func makeDirectionArrowIcon(
+        diameter: CGFloat = 15,
+        angle: CGFloat = 0,
+        gap: CGFloat = 2,
+        arrowLength: CGFloat = 6,
+        baseWidth: CGFloat = 5
+    ) -> UIImage {
+        let R = diameter * 0.5
+        let halfW = baseWidth * 0.5
+        
+        // 그림자 여유 공간
+        let shadowBlur: CGFloat = 3
+        let shadowOffset = CGSize(width: 0, height: 1)
+        let pad: CGFloat = gap + arrowLength + shadowBlur + max(abs(shadowOffset.width), abs(shadowOffset.height))
+        
+        let canvas = CGSize(width: diameter + pad * 2, height: diameter + pad * 2)
+        let center = CGPoint(x: canvas.width / 2, y: canvas.height / 2)
+        
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = UIScreen.main.scale
+        format.opaque = false
+        
+        let renderer = UIGraphicsImageRenderer(size: canvas, format: format)
         return renderer.image { ctx in
             let cg = ctx.cgContext
             cg.setAllowsAntialiasing(true)
             cg.setShouldAntialias(true)
-
+            
+            // 원 중심으로 이동 후 회전
+            cg.translateBy(x: center.x, y: center.y)
+            cg.rotate(by: angle)
+            
+            let baseY = -(R + gap)
+            let tipY  = baseY - arrowLength
+            
             let path = UIBezierPath()
-            path.move(to: CGPoint(x: centerX, y: tipY))
-            path.addLine(to: CGPoint(x: centerX - halfW, y: baseY))
-            path.addLine(to: CGPoint(x: centerX + halfW, y: baseY))
+            path.move(to: CGPoint(x: 0, y: tipY))
+            path.addLine(to: CGPoint(x: -halfW, y: baseY))
+            path.addLine(to: CGPoint(x:  halfW, y: baseY))
             path.close()
-
-            cg.setFillColor(UIColor.systemOrange.cgColor)
+            
+            // 그림자
+            cg.setShadow(offset: shadowOffset, blur: shadowBlur, color: UIColor.black.withAlphaComponent(0.25).cgColor)
+            
+            // 클리핑해서 그라디언트 채우기
+            cg.saveGState()
             cg.addPath(path.cgPath)
-            cg.fillPath()
+            cg.clip()
+            
+            let colors = [UIColor.systemOrange.withAlphaComponent(1).cgColor,
+                          UIColor.systemOrange.withAlphaComponent(0.85).cgColor] as CFArray
+            let locations: [CGFloat] = [0.0, 1.0]
+            let space = CGColorSpaceCreateDeviceRGB()
+            if let gradient = CGGradient(colorsSpace: space, colors: colors, locations: locations) {
+                cg.drawLinearGradient(gradient,
+                                      start: CGPoint(x: 0, y: tipY),
+                                      end: CGPoint(x: 0, y: baseY),
+                                      options: [])
+            }
+            cg.restoreGState()
+            
+            // 외곽선 얇게
+            cg.setShadow(offset: .zero, blur: 0)
+            cg.addPath(path.cgPath)
+            cg.setStrokeColor(UIColor.black.withAlphaComponent(0.15).cgColor)
+            cg.setLineWidth(0.5)
+            cg.strokePath()
         }
     }
-
 }
 
 // MARK: 현재 위치 권한 설정 및 카메라 이동
@@ -421,7 +477,11 @@ extension MapPickerViewController: MapControllerDelegate {
     
     func addViews() {
         // 여기에서 그릴 View(KakaoMap, Roadview)들을 추가한다.
-        let defaultPosition: MapPoint = MapPoint(longitude: 127.108678, latitude: 37.402001)
+        let defaultPosition: MapPoint = MapPoint(
+            longitude: viewModel.getCurrentLocation().longitude, latitude: viewModel.getCurrentLocation().latitude)
+        
+        print("viewModel.getCurrentLocation().longitude : \(viewModel.getCurrentLocation().longitude)")
+        print("viewModel.getCurrentLocation().latitude : \(viewModel.getCurrentLocation().latitude)")
         // 지도(KakaoMap)를 그리기 위한 viewInfo를 생성
         let mapviewInfo: MapviewInfo = MapviewInfo(viewName: "mapview", viewInfoName: "map", defaultPosition: defaultPosition, defaultLevel: zoomLevel)
         
@@ -432,12 +492,18 @@ extension MapPickerViewController: MapControllerDelegate {
     func addViewSucceeded(_ viewName: String, viewInfoName: String) {
         print("view Successed")
         // Kakao Map 위치 설정
-        guard let map = mapController?.getView("mapview") as? KakaoMap else { return }
-        map.viewRect = mapContainer.bounds
-        setupCurrentLocationLayersAndStyles(on: map)
+        guard let mapview = mapController?.getView("mapview") as? KakaoMap else { return }
+        mapview.viewRect = mapContainer.bounds
+        
+        let coord = viewModel.getCurrentLocation()
+        
+        setupCurrentLocationLayersAndStyles(on: mapview)
+        
+        updateCurrentLocation(on: mapview, to: coord)
+        moveCamera(to: coord, level: zoomLevel)
 
         // 현재 위치로 이동(옵션)
-        setLocation()
+//        setLocation()
     }
     
     // addView 실패 이벤트 delegate. 실패에 대한 오류 처리를 진행한다.

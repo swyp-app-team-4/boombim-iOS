@@ -18,6 +18,7 @@ final class MapViewModel {
     }
 
     private let service: KakaoLocalService
+    
     init(service: KakaoLocalService) {
         self.service = service
     }

@@ -98,7 +98,7 @@ final class MapViewController: UIViewController {
         mapController.prepareEngine()
     }
 
-    // MARK: VM binding
+    // MARK: ViewModel binding
     private func bindViewModel() {
         let input = MapViewModel.Input(
             cameraRect: cameraRectSubject.asObservable(),
