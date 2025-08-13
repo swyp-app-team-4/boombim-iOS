@@ -18,6 +18,8 @@ final class MapPickerViewController: UIViewController {
     private var mapContainer: KMViewContainer!
     private var mapController: KMController!
     
+    private var zoomLevel: Int = 18 // Default zoom
+    
     init(viewModel: MapPickerViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -128,7 +130,8 @@ extension MapPickerViewController {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] coord in
                 print("coord : \(coord)")
-                self?.moveCamera(to: coord, level: 14)
+                guard let zoomLevel = self?.zoomLevel else { return }
+                self?.moveCamera(to: coord, level: zoomLevel)
             })
             .disposed(by: disposeBag)
     }
@@ -152,15 +155,34 @@ extension MapPickerViewController {
 
 // MARK: Kakao Map Camera 동작
 extension MapPickerViewController {
-    private func moveCamera(to coord: CLLocationCoordinate2D, level: Int32) {
+    private func moveCamera(to coord: CLLocationCoordinate2D, level: Int) {
         guard let mapView = mapController?.getView("mapview") as? KakaoMap else { return }
         let update = CameraUpdate.make(
             target: MapPoint(longitude: coord.longitude, latitude: coord.latitude),
             zoomLevel: Int(level),
             mapView: mapView
         )
-        mapView.moveCamera(update)
+        
+        mapView.animateCamera(cameraUpdate: update, options: CameraAnimationOptions(autoElevation: false, consecutive: true, durationInMillis: 0)) { [weak self] in
+            guard let self else { return }
+            self.lockCamera(map: mapView)
+        }
     }
+    
+    func lockCamera(map: KakaoMap) {
+        guard let map = mapController?.getView("mapview") as? KakaoMap else { return }
+
+        let toDisable: [GestureType] = [
+            .pan, .zoom, .doubleTapZoomIn, .twoFingerTapZoomOut,
+            .oneFingerZoom, .rotate, .tilt, .rotateZoom
+        ]
+        toDisable.forEach { map.setGestureEnable(type: $0, enable: false) } // 제스처 OFF
+
+        let level = map.zoomLevel
+        map.cameraMinLevel = level
+        map.cameraMaxLevel = level
+    }
+
 }
 
 // MARK: Kakao Map Delegate
@@ -205,7 +227,7 @@ extension MapPickerViewController: MapControllerDelegate {
         // 여기에서 그릴 View(KakaoMap, Roadview)들을 추가한다.
         let defaultPosition: MapPoint = MapPoint(longitude: 127.108678, latitude: 37.402001)
         // 지도(KakaoMap)를 그리기 위한 viewInfo를 생성
-        let mapviewInfo: MapviewInfo = MapviewInfo(viewName: "mapview", viewInfoName: "map", defaultPosition: defaultPosition, defaultLevel: 14)
+        let mapviewInfo: MapviewInfo = MapviewInfo(viewName: "mapview", viewInfoName: "map", defaultPosition: defaultPosition, defaultLevel: zoomLevel)
         
         // KakaoMap 추가.
         mapController?.addView(mapviewInfo)
