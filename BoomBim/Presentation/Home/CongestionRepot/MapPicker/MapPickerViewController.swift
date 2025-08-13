@@ -15,10 +15,15 @@ final class MapPickerViewController: UIViewController {
     private let viewModel: MapPickerViewModel
     private let disposeBag = DisposeBag()
     
+    private let locationManager = AppLocationManager.shared
+    
     private var mapContainer: KMViewContainer!
     private var mapController: KMController!
     
     private var zoomLevel: Int = 18 // Default zoom
+    
+    private var currentBodyPoi: Poi?
+    private var currentArrowPoi: Poi?
     
     init(viewModel: MapPickerViewModel) {
         self.viewModel = viewModel
@@ -46,17 +51,27 @@ final class MapPickerViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if mapController?.isEngineActive == false { mapController?.activateEngine() }
+        
+        setHeading()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         mapController?.pauseEngine()
+        locationManager.stopUpdatingHeading()
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         if let map = mapController?.getView("mapview") as? KakaoMap {
             map.viewRect = mapContainer.bounds
+        }
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        coordinator.animate(alongsideTransition: nil) { _ in
+            self.locationManager.setHeadingOrientation(self.currentCLDeviceOrientation())
         }
     }
     
@@ -85,13 +100,77 @@ final class MapPickerViewController: UIViewController {
         mapController.delegate = self
         mapController.prepareEngine()
     }
+
+    // 주황색 내부 원 + 흰색 외곽 원 + 그림자
+    func makeCurrentBodyIcon(diameter: CGFloat = 15) -> UIImage {
+        let scale = UIScreen.main.scale
+        let size = CGSize(width: diameter, height: diameter)
+        let outerR = diameter * 0.5
+        let innerR = diameter * 0.32
+
+        let renderer = UIGraphicsImageRenderer(size: size, format: UIGraphicsImageRendererFormat.default())
+        return renderer.image { ctx in
+            let cg = ctx.cgContext
+            cg.setAllowsAntialiasing(true)
+            cg.setShouldAntialias(true)
+
+            // 그림자 (흰 원 뒤로 부드럽게)
+            cg.setShadow(offset: CGSize(width: 0, height: 2), blur: 6, color: UIColor.black.withAlphaComponent(0.25).cgColor)
+
+            // 바깥 흰 원
+            cg.setFillColor(UIColor.white.cgColor)
+            cg.addEllipse(in: CGRect(x: size.width/2 - outerR,
+                                     y: size.height/2 - outerR,
+                                     width: outerR*2, height: outerR*2))
+            cg.fillPath()
+
+            // 그림자 이후 내부 원은 그림자 없이
+            cg.setShadow(offset: .zero, blur: 0, color: nil)
+
+            // 안쪽 주황 원
+            cg.setFillColor(UIColor.systemOrange.cgColor)
+            cg.addEllipse(in: CGRect(x: size.width/2 - innerR,
+                                     y: size.height/2 - innerR,
+                                     width: innerR*2, height: innerR*2))
+            cg.fillPath()
+        }
+    }
+
+    // 바깥 방향을 가리키는 삼각형 (위쪽을 기본 0도 기준)
+    func makeDirectionArrowIcon(diameter: CGFloat = 15) -> UIImage {
+        // 원 밖으로 조금 튀어나오게 화살 길이를 잡음
+        let size = CGSize(width: diameter, height: diameter * 1.25)
+        let centerX = size.width / 2.0
+        let circleR = diameter * 0.5
+        let tipY = CGFloat(0) + 2    // 꼭짓점 (이미지 상단 소량 여백)
+        let baseY = circleR + 6      // 원 바깥쪽에서 삼각형 밑변이 맞닿게
+
+        // 삼각형 폭
+        let halfW: CGFloat = diameter * 0.18
+
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { ctx in
+            let cg = ctx.cgContext
+            cg.setAllowsAntialiasing(true)
+            cg.setShouldAntialias(true)
+
+            let path = UIBezierPath()
+            path.move(to: CGPoint(x: centerX, y: tipY))
+            path.addLine(to: CGPoint(x: centerX - halfW, y: baseY))
+            path.addLine(to: CGPoint(x: centerX + halfW, y: baseY))
+            path.close()
+
+            cg.setFillColor(UIColor.systemOrange.cgColor)
+            cg.addPath(path.cgPath)
+            cg.fillPath()
+        }
+    }
+
 }
 
 // MARK: 현재 위치 권한 설정 및 카메라 이동
 extension MapPickerViewController {
     private func setLocation() {
-        let locationManager = AppLocationManager.shared
-        
         if locationManager.authorization.value == .notDetermined { // 권한 설정이 안된 경우 권한 요청
             locationManager.requestWhenInUseAuthorization()
         }
@@ -130,8 +209,11 @@ extension MapPickerViewController {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] coord in
                 print("coord : \(coord)")
-                guard let zoomLevel = self?.zoomLevel else { return }
-                self?.moveCamera(to: coord, level: zoomLevel)
+                guard let self,
+                      let mapview = self.mapController?.getView("mapview") as? KakaoMap else { return }
+                
+                self.updateCurrentLocation(on: mapview, to: coord)
+                self.moveCamera(to: coord, level: self.zoomLevel)
             })
             .disposed(by: disposeBag)
     }
@@ -150,6 +232,33 @@ extension MapPickerViewController {
         })
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         present(alert, animated: true)
+    }
+    
+    private func setHeading() {
+        // 시작: 5도 이상 변화 시 콜백, 현재 UI 방향 반영(필요 시 조정)
+        locationManager.startUpdatingHeading(
+            filter: 5,
+            orientation: currentCLDeviceOrientation()
+        )
+        
+        // 구독: degree(0~360) → 카카오 POI 삼각형 회전
+        locationManager.headingDegrees
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] deg in
+                self?.updateHeading(deg)   // ← 이전에 구현한 "삼각형 POI 회전" 함수
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // UIDevice → CLDeviceOrientation 매핑
+    private func currentCLDeviceOrientation() -> CLDeviceOrientation {
+        switch UIDevice.current.orientation {
+        case .portrait: return .portrait
+        case .portraitUpsideDown: return .portraitUpsideDown
+        case .landscapeLeft: return .landscapeRight   // 카메라/센서 기준이 반대일 수 있어 교차 매핑 권장
+        case .landscapeRight: return .landscapeLeft
+        default: return .portrait
+        }
     }
 }
 
@@ -182,7 +291,94 @@ extension MapPickerViewController {
         map.cameraMinLevel = level
         map.cameraMaxLevel = level
     }
+}
 
+// MARK: Poi Layer 및 Style
+extension MapPickerViewController {
+    // 맵이 준비된 직후에 1회 호출
+    func setupCurrentLocationLayersAndStyles(on map: KakaoMap) {
+        let manager = map.getLabelManager()
+
+        // 1) 레이어 생성
+        if manager.getLabelLayer(layerID: CurrentMarkerConstants.bodyLayerID) == nil {
+            _ = manager.addLabelLayer(
+                option: LabelLayerOptions(layerID: CurrentMarkerConstants.bodyLayerID,
+                                          competitionType: .none,
+                                          competitionUnit: .symbolFirst,
+                                          orderType: .rank,
+                                          zOrder: 1000)
+            )
+        }
+        if manager.getLabelLayer(layerID: CurrentMarkerConstants.arrowLayerID) == nil {
+            _ = manager.addLabelLayer(
+                option: LabelLayerOptions(layerID: CurrentMarkerConstants.arrowLayerID,
+                                          competitionType: .none,
+                                          competitionUnit: .symbolFirst,
+                                          orderType: .rank,
+                                          zOrder: 1001) // 화살표가 위에 오도록
+            )
+        }
+
+        // 2) 스타일(아이콘) 등록 — 스타일은 preset처럼 재사용 권장
+        let bodyImage = makeCurrentBodyIcon()
+        let bodyIcon = PoiIconStyle(symbol: bodyImage,
+                                anchorPoint: CGPoint(x: 0.5, y: 0.5),
+                                badges: [])
+        let bodyPerLevel = PerLevelPoiStyle(iconStyle: bodyIcon, level: 0)
+        let bodyStyle = PoiStyle(styleID: CurrentMarkerConstants.bodyStyleID, styles: [bodyPerLevel])
+        manager.addPoiStyle(bodyStyle)
+        
+        let arrowImage = makeDirectionArrowIcon()
+        let arrowIcon = PoiIconStyle(symbol: arrowImage,
+                                anchorPoint: CGPoint(x: 0.5, y: 0.5),
+                                badges: [])
+        let arrowPerLevel = PerLevelPoiStyle(iconStyle: arrowIcon, level: 0)
+        let arrowStyle = PoiStyle(styleID: CurrentMarkerConstants.arrowStyleID, styles: [arrowPerLevel])
+        manager.addPoiStyle(arrowStyle)
+    }
+
+    func ensureCurrentLocationPois(on map: KakaoMap, at coord: CLLocationCoordinate2D) {
+        let manager = map.getLabelManager()
+        let bodyLayer = manager.getLabelLayer(layerID: CurrentMarkerConstants.bodyLayerID)
+        let arrowLayer = manager.getLabelLayer(layerID: CurrentMarkerConstants.arrowLayerID)
+        let mp = MapPoint(longitude: coord.longitude, latitude: coord.latitude)
+
+        if currentBodyPoi == nil {
+            var opt = PoiOptions(styleID: CurrentMarkerConstants.bodyStyleID, poiID: "current_body")
+            opt.rank = 1
+            opt.transformType = .decal
+            currentBodyPoi = bodyLayer?.addPoi(option: opt, at: mp)
+            currentBodyPoi?.show()
+        } else {
+            currentBodyPoi?.position = mp
+        }
+
+        if currentArrowPoi == nil {
+            var opt = PoiOptions(styleID: CurrentMarkerConstants.arrowStyleID, poiID: "current_arrow")
+            opt.rank = 2
+            opt.transformType = .absoluteRotationDecal // 카메라 회전에 영향받지 않는 절대 회전 :contentReference[oaicite:5]{index=5}
+            currentArrowPoi = arrowLayer?.addPoi(option: opt, at: mp)
+            currentArrowPoi?.show()
+
+            // 위치만 공유 (회전은 별도로 heading에서 갱신)
+            currentArrowPoi?.sharePositionWithPoi(currentBodyPoi!) // :contentReference[oaicite:6]{index=6}
+        } else {
+            currentArrowPoi?.position = mp
+        }
+    }
+
+    // 위치 갱신 (One-shot / 지속 갱신 공통)
+    func updateCurrentLocation(on map: KakaoMap, to coord: CLLocationCoordinate2D) {
+        ensureCurrentLocationPois(on: map, at: coord)
+    }
+
+    // 헤딩(방향) 갱신 — CLHeading의 각도를 라디안으로 바꿔서 arrow POI에만 적용
+    func updateHeading(_ degrees: CLLocationDirection) {
+        guard let arrow = currentArrowPoi else { return }
+
+        let rad = CGFloat(degrees) * .pi / 180.0
+        arrow.rotateAt(rad, duration: 150)
+    }
 }
 
 // MARK: Kakao Map Delegate
@@ -238,6 +434,7 @@ extension MapPickerViewController: MapControllerDelegate {
         // Kakao Map 위치 설정
         guard let map = mapController?.getView("mapview") as? KakaoMap else { return }
         map.viewRect = mapContainer.bounds
+        setupCurrentLocationLayersAndStyles(on: map)
 
         // 현재 위치로 이동(옵션)
         setLocation()
