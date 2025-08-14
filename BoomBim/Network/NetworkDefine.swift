@@ -6,7 +6,8 @@
 //
 
 enum NetworkDefine {
-    static let API_HOST = "https://api.boombim.p-e.kr/"
+    static let apiHost = "https://api.boombim.p-e.kr/"
+    static let apiKakao = "https://dapi.kakao.com/"
     
     enum Auth {
         enum AuthType: String {
@@ -16,5 +17,10 @@ enum NetworkDefine {
         }
         
         static let login = "api/oauth2/login/"
+    }
+    
+    enum Search {
+        static let keyword = "v2/local/search/keyword.json"
+        static let category = "v2/local/search/category.json"
     }
 }

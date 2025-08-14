@@ -15,7 +15,7 @@ final class AuthService {
     
     func requestLogin(type: SocialProvider, tokenInfo: TokenInfo) -> Observable<Result<TokenResponse, Error>> {
         return Observable.create { observer in
-            let url = NetworkDefine.API_HOST + NetworkDefine.Auth.login + type.rawValue
+            let url = NetworkDefine.apiHost + NetworkDefine.Auth.login + type.rawValue
             
             var headers:HTTPHeaders = ["Content-Type": "application/json"]
             headers["Accept"] = "application/json"

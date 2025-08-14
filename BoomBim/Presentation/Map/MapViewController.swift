@@ -12,8 +12,8 @@ import RxSwift
 import RxCocoa
 
 final class MapViewController: UIViewController {
-    private let disposeBag = DisposeBag()
     private let viewModel: MapViewModel
+    private let disposeBag = DisposeBag()
 
     private var mapContainer: KMViewContainer!
     private var mapController: KMController!
@@ -35,7 +35,10 @@ final class MapViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
         self.title = "지도"
     }
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     deinit {
         mapController?.pauseEngine()
@@ -43,15 +46,11 @@ final class MapViewController: UIViewController {
         NotificationCenter.default.removeObserver(self)
     }
 
-    // MARK: life cycle
+    // MARK: Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        setupMapUI()
-
-        mapController = KMController(viewContainer: mapContainer)
-        mapController.delegate = self
-        mapController.prepareEngine()
+        
+        setupUI()
 
         bindViewModel()
     }
@@ -60,10 +59,12 @@ final class MapViewController: UIViewController {
         super.viewWillAppear(animated)
         if mapController?.isEngineActive == false { mapController?.activateEngine() }
     }
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         mapController?.pauseEngine()
     }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         if let map = mapController?.getView("mapview") as? KakaoMap {
@@ -72,7 +73,13 @@ final class MapViewController: UIViewController {
     }
 
     // MARK: UI
-    private func setupMapUI() {
+    private func setupUI() {
+        view.backgroundColor = .systemBackground
+        configureMapUI()
+        configureKakaoMap()
+    }
+    
+    private func configureMapUI() {
         mapContainer = KMViewContainer()
         mapContainer.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(mapContainer)
@@ -84,8 +91,14 @@ final class MapViewController: UIViewController {
             mapContainer.bottomAnchor.constraint(equalTo: g.bottomAnchor)
         ])
     }
+    
+    private func configureKakaoMap() {
+        mapController = KMController(viewContainer: mapContainer)
+        mapController.delegate = self
+        mapController.prepareEngine()
+    }
 
-    // MARK: VM binding
+    // MARK: ViewModel binding
     private func bindViewModel() {
         let input = MapViewModel.Input(
             cameraRect: cameraRectSubject.asObservable(),

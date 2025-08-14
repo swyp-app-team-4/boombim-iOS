@@ -17,6 +17,9 @@ public final class AppLocationManager: NSObject, LocationProviding {
     public let authorization = BehaviorRelay<CLAuthorizationStatus>(value: .notDetermined)
     public let currentLocation = BehaviorRelay<CLLocation?>(value: nil)
     public let locationError = PublishRelay<Error>()
+    
+    public let heading = BehaviorRelay<CLHeading?>(value: nil)                  // 최신 CLHeading 보관
+    public let headingDegrees = PublishRelay<CLLocationDirection>()             // degree(0~360) 스트림
 
     // MARK: - Private
     private let manager = CLLocationManager()
@@ -34,7 +37,7 @@ public final class AppLocationManager: NSObject, LocationProviding {
         updateAuthRelay()
     }
 
-    // MARK: - Public API
+    // MARK: - Public API 현재 위치
     public func requestWhenInUseAuthorization() {
         manager.requestWhenInUseAuthorization()
     }
@@ -93,6 +96,25 @@ public final class AppLocationManager: NSObject, LocationProviding {
             }
         }
     }
+    
+    // MARK: - Public API Heading 방향
+    public func startUpdatingHeading(filter: CLLocationDegrees = 5,
+                                     orientation: CLDeviceOrientation? = nil) {
+        guard CLLocationManager.headingAvailable() else { return }
+        if let orientation { manager.headingOrientation = orientation }
+        manager.headingFilter = filter
+        manager.startUpdatingHeading()
+    }
+
+    public func stopUpdatingHeading() {
+        manager.stopUpdatingHeading()
+    }
+
+    /// 화면 회전 시 호출해 주면 좋습니다.
+    public func setHeadingOrientation(_ orientation: CLDeviceOrientation) {
+        manager.headingOrientation = orientation
+    }
+
 
     // MARK: - Helpers
     private func updateAuthRelay() {
@@ -127,6 +149,22 @@ extension AppLocationManager: CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         locationError.accept(error)
         finishOneShot(.failure(error))
+    }
+    
+    public func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        // 정확도 음수면 무시
+        guard newHeading.headingAccuracy >= 0 else { return }
+
+        // trueHeading(진북) 우선, 없으면 magneticHeading(자북)
+        let deg = newHeading.trueHeading > 0 ? newHeading.trueHeading : newHeading.magneticHeading
+
+        heading.accept(newHeading)
+        headingDegrees.accept(deg)
+    }
+
+    public func locationManagerShouldDisplayHeadingCalibration(_ manager: CLLocationManager) -> Bool {
+        // 보정 화면이 자주 뜨면 UX상 좋지 않으니 기본 false 권장
+        return false
     }
 }
 

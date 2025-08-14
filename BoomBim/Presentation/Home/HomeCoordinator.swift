@@ -9,6 +9,8 @@ import UIKit
 
 final class HomeCoordinator: Coordinator {
     var navigationController: UINavigationController
+    
+    var childCoordinators: [Coordinator] = []
 
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -17,6 +19,10 @@ final class HomeCoordinator: Coordinator {
     func start() {
         let viewModel = HomeViewModel()
         let viewController = HomeViewController(viewModel: viewModel)
+        
+        viewModel.goToCongestionReportView = { [weak self] in
+            self?.showCongestionReport()
+        }
         
         viewModel.goToSearchView = { [weak self] in
             self?.showSearch()
@@ -31,6 +37,30 @@ final class HomeCoordinator: Coordinator {
         }
         
         navigationController.setViewControllers([viewController], animated: false)
+    }
+    
+    func showCongestionReport() {
+        let service = KakaoLocalService()
+        let viewModel = CongestionReportViewModel(service: service)
+        let viewController = CongestionReportViewController(viewModel: viewModel)
+//        navigationController.pushViewController(viewController, animated: true)
+        
+        // 모달 형식 구현시 사용 예정
+        let navigationController = UINavigationController(rootViewController: viewController)
+        
+        let childCoordinator = CongestionReportCoordinator(navigationController: navigationController)
+        childCoordinator.service = service
+        childCoordinator.onFinish = { [weak self, weak childCoordinator] in
+            guard let self, let childCoordinator else { return }
+            self.childCoordinators.removeAll { $0 === childCoordinator }
+            self.navigationController.presentedViewController?.dismiss(animated: true)
+        }
+        childCoordinators.append(childCoordinator)
+        childCoordinator.start()
+        
+        navigationController.modalPresentationStyle = .fullScreen
+        
+        self.navigationController.present(navigationController, animated: true)
     }
     
     func showSearch() {

@@ -25,6 +25,15 @@ final class HomeViewController: UIViewController {
     private var autoScrollTimer: Timer?
     private var isUserDraggingRegion = false
     
+    private let floatingButton: UIButton = {
+        let button = UIButton(type: .system)
+        
+        let image = UIImage.iconFloatingButton
+        button.setBackgroundImage(image, for: .normal)
+        
+        return button
+    }()
+    
     init(viewModel: HomeViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -69,11 +78,27 @@ final class HomeViewController: UIViewController {
         configureCollectionView()
         configureDataSource()
         configurePageControl()
-        applyInitialSnapshot()
+        
+        setupFloatingButton()
+        
+        applyInitialSnapshot() // dummy Data
+        
         startAutoScroll()
     }
     
-    // MARK: Setup
+    // MARK: Setup UI
+    private func setupFloatingButton() {
+        view.addSubview(floatingButton)
+        floatingButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            floatingButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            floatingButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8)
+        ])
+        
+        floatingButton.addTarget(self, action: #selector(didTapFloatingButton), for: .touchUpInside)
+    }
+    
     private func configureCollectionView() {
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
         collectionView.backgroundColor = .systemBackground
@@ -252,7 +277,7 @@ final class HomeViewController: UIViewController {
     private func startAutoScroll() {
         stopAutoScroll()
         guard regionCount > 1 else { return }
-        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             guard let self = self, !self.isUserDraggingRegion else { return }
             let next = (self.regionCurrentPage + 1) % max(self.regionCount, 1)
             let indexPath = IndexPath(item: next, section: HomeSection.region.rawValue)
@@ -267,6 +292,10 @@ final class HomeViewController: UIViewController {
     }
     
     // MARK: Action
+    @objc private func didTapFloatingButton() {
+        viewModel.goToCongestionReportView?()
+    }
+    
     @objc private func didTapSearchButton() {
         viewModel.didTapSearch()
     }
