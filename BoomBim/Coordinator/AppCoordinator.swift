@@ -22,11 +22,11 @@ final class AppCoordinator: Coordinator {
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
 
-        if isLoggedIn() {
-            showMainTabBar()
-        } else {
+//        if isLoggedIn() {
+//            showMainTabBar()
+//        } else {
             showLogin()
-        }
+//        }
     }
 
     private func isLoggedIn() -> Bool {

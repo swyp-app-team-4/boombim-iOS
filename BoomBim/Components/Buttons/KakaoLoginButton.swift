@@ -19,7 +19,7 @@ final class KakaoLoginButton: UIButton {
     }
     
     private func setupButton() {
-        let image = UIImage.kakaoLoginLargeWide
+        let image = UIImage.buttonKakaoLogin
         self.setBackgroundImage(image, for: .normal)
     }
 }

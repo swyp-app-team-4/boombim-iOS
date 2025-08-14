@@ -14,9 +14,29 @@ final class LoginViewController: UIViewController {
     private let viewModel: LoginViewModel
     private let disposeBag = DisposeBag()
 
+    // MARK: - UI
+    private let buttonStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.alignment = .fill
+        stackView.distribution = .fill
+        stackView.spacing = 12
+        
+        return stackView
+    }()
+    
+    private let withLoginButton: UIButton = {
+        let button = UIButton()
+        button.setTitleColor(.systemBlue, for: .normal)
+        button.titleLabel?.setText("login.button.without_login".localized(), style: Typography.Caption.regular, color: .gray)
+        
+        button.backgroundColor = .clear
+        return button
+    }()
+    
     private let kakaoButton = KakaoLoginButton()
     private let naverButton = NaverLoginButton()
-    private let appleButton = ASAuthorizationAppleIDButton(type: .signIn, style: .white)
+    private let appleButton = ASAuthorizationAppleIDButton(type: .signIn, style: .black)
     
     init(viewModel: LoginViewModel) {
         self.viewModel = viewModel
@@ -34,38 +54,29 @@ final class LoginViewController: UIViewController {
         
         setupUI()
         bind()
-        
-        // 네이버 로그인 초기화 용
-//        NidOAuth.shared.disconnect { [weak self] result in
-//            switch result {
-//            case .success:
-//                print("disconnect result : \(result)")
-//            case .failure(let error):
-//                print("disconnect error : \(error)")
-//            }
-//        }
     }
     
     private func setupUI() {
-        [kakaoButton, naverButton, appleButton].forEach { button in
+        view.backgroundColor = .white
+        configureButton()
+    }
+    
+    private func configureButton() {
+        buttonStackView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(buttonStackView)
+        
+        [kakaoButton, naverButton, appleButton, withLoginButton].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             
-            view.addSubview(button)
+            buttonStackView.addArrangedSubview(button)
         }
         
         NSLayoutConstraint.activate([
-            kakaoButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            kakaoButton.bottomAnchor.constraint(equalTo: naverButton.topAnchor, constant: -20),
-//            kakaoButton.widthAnchor.constraint(equalToConstant: 300),
-//            kakaoButton.heightAnchor.constraint(equalToConstant: 45),
             
-            naverButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            naverButton.bottomAnchor.constraint(equalTo: appleButton.topAnchor, constant: -20),
-//            naverButton.widthAnchor.constraint(equalToConstant: 300),
-//            naverButton.heightAnchor.constraint(equalToConstant: 45)
             
-            appleButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            appleButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
+            buttonStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -100),
+            buttonStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            buttonStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
         ])
     }
     

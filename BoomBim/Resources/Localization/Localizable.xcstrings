@@ -1,7 +1,17 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-
+    "login.button.without_login" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로그인 없이 살펴보기"
+          }
+        }
+      }
+    }
   },
   "version" : "1.0"
 }
