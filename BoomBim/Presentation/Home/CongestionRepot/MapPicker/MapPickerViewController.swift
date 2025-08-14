@@ -24,6 +24,7 @@ final class MapPickerViewController: UIViewController {
     
     private var currentBodyPoi: Poi?
     private var currentArrowPoi: Poi?
+    private var mapPickerPoi: Poi?
     
     init(viewModel: MapPickerViewModel) {
         self.viewModel = viewModel
@@ -100,7 +101,10 @@ final class MapPickerViewController: UIViewController {
         mapController.delegate = self
         mapController.prepareEngine()
     }
+}
 
+// MARK: - Poi Image 생성
+extension MapPickerViewController {
     // 주황색 내부 원 + 흰색 외곽 원 + 그림자
     func makeCurrentBodyIcon(diameter: CGFloat = 15) -> UIImage {
         let blur: CGFloat = 6
@@ -287,23 +291,23 @@ extension MapPickerViewController {
 
 // MARK: Poi Layer 및 Style
 extension MapPickerViewController {
-    // 맵이 준비된 직후에 1회 호출
+    // MARK: - Set up Poi layer & Style
     func setupCurrentLocationLayersAndStyles(on map: KakaoMap) {
         let manager = map.getLabelManager()
 
         // 1) 레이어 생성
-        if manager.getLabelLayer(layerID: CurrentMarkerConstants.bodyLayerID) == nil {
+        if manager.getLabelLayer(layerID: CurrentMarkerConstants.Body.layerID) == nil {
             _ = manager.addLabelLayer(
-                option: LabelLayerOptions(layerID: CurrentMarkerConstants.bodyLayerID,
+                option: LabelLayerOptions(layerID: CurrentMarkerConstants.Body.layerID,
                                           competitionType: .none,
                                           competitionUnit: .symbolFirst,
                                           orderType: .rank,
                                           zOrder: 1000)
             )
         }
-        if manager.getLabelLayer(layerID: CurrentMarkerConstants.arrowLayerID) == nil {
+        if manager.getLabelLayer(layerID: CurrentMarkerConstants.Arrow.layerID) == nil {
             _ = manager.addLabelLayer(
-                option: LabelLayerOptions(layerID: CurrentMarkerConstants.arrowLayerID,
+                option: LabelLayerOptions(layerID: CurrentMarkerConstants.Arrow.layerID,
                                           competitionType: .none,
                                           competitionUnit: .symbolFirst,
                                           orderType: .rank,
@@ -317,7 +321,7 @@ extension MapPickerViewController {
                                 anchorPoint: CGPoint(x: 0.5, y: 0.5),
                                 badges: [])
         let bodyPerLevel = PerLevelPoiStyle(iconStyle: bodyIcon, level: 0)
-        let bodyStyle = PoiStyle(styleID: CurrentMarkerConstants.bodyStyleID, styles: [bodyPerLevel])
+        let bodyStyle = PoiStyle(styleID: CurrentMarkerConstants.Body.styleID, styles: [bodyPerLevel])
         manager.addPoiStyle(bodyStyle)
         
         let arrowImage = makeDirectionArrowIcon()
@@ -325,18 +329,18 @@ extension MapPickerViewController {
                                 anchorPoint: CGPoint(x: 0.5, y: 0.5),
                                 badges: [])
         let arrowPerLevel = PerLevelPoiStyle(iconStyle: arrowIcon, level: 0)
-        let arrowStyle = PoiStyle(styleID: CurrentMarkerConstants.arrowStyleID, styles: [arrowPerLevel])
+        let arrowStyle = PoiStyle(styleID: CurrentMarkerConstants.Arrow.styleID, styles: [arrowPerLevel])
         manager.addPoiStyle(arrowStyle)
     }
 
     func ensureCurrentLocationPois(on map: KakaoMap, at coord: CLLocationCoordinate2D) {
         let manager = map.getLabelManager()
-        let bodyLayer = manager.getLabelLayer(layerID: CurrentMarkerConstants.bodyLayerID)
-        let arrowLayer = manager.getLabelLayer(layerID: CurrentMarkerConstants.arrowLayerID)
+        let bodyLayer = manager.getLabelLayer(layerID: CurrentMarkerConstants.Body.layerID)
+        let arrowLayer = manager.getLabelLayer(layerID: CurrentMarkerConstants.Arrow.layerID)
         let mp = MapPoint(longitude: coord.longitude, latitude: coord.latitude)
 
         if currentBodyPoi == nil {
-            var opt = PoiOptions(styleID: CurrentMarkerConstants.bodyStyleID, poiID: "current_body")
+            var opt = PoiOptions(styleID: CurrentMarkerConstants.Body.styleID, poiID: CurrentMarkerConstants.Body.poiID)
             opt.rank = 1
             opt.transformType = .decal
             currentBodyPoi = bodyLayer?.addPoi(option: opt, at: mp)
@@ -346,7 +350,7 @@ extension MapPickerViewController {
         }
 
         if currentArrowPoi == nil {
-            var opt = PoiOptions(styleID: CurrentMarkerConstants.arrowStyleID, poiID: "current_arrow")
+            var opt = PoiOptions(styleID: CurrentMarkerConstants.Arrow.styleID, poiID: CurrentMarkerConstants.Arrow.poiID)
             opt.rank = 2
             opt.transformType = .absoluteRotationDecal // 카메라 회전에 영향받지 않는 절대 회전 :contentReference[oaicite:5]{index=5}
             currentArrowPoi = arrowLayer?.addPoi(option: opt, at: mp)
@@ -358,12 +362,47 @@ extension MapPickerViewController {
             currentArrowPoi?.position = mp
         }
     }
+    
+    private func setupPickedLocationLayerAndStyle(on map: KakaoMap) {
+        let manager = map.getLabelManager()
 
-    // 위치 갱신 (One-shot / 지속 갱신 공통)
-    func updateCurrentLocation(on map: KakaoMap, to coord: CLLocationCoordinate2D) {
-        ensureCurrentLocationPois(on: map, at: coord)
+        if manager.getLabelLayer(layerID: MapPickerConstants.Picker.layerID) == nil {
+            let layer = manager.addLabelLayer(
+                option: LabelLayerOptions(
+                    layerID: MapPickerConstants.Picker.layerID,
+                    competitionType: .none,
+                    competitionUnit: .symbolFirst,
+                    orderType: .rank,
+                    zOrder: 1100
+                )
+            )
+        }
+
+        let image = UIImage.iconMap
+        let icon = PoiIconStyle(symbol: image, anchorPoint: CGPoint(x: 0.5, y: 1.0), badges: [])
+        let perLevel = PerLevelPoiStyle(iconStyle: icon, level: 0)
+        let style = PoiStyle(styleID: MapPickerConstants.Picker.styleID, styles: [perLevel])
+        manager.addPoiStyle(style)
     }
 
+    private func ensurePickedPoi(on map: KakaoMap, at coord: CLLocationCoordinate2D) {
+        let manager = map.getLabelManager()
+        let layer = manager.getLabelLayer(layerID: MapPickerConstants.Picker.layerID)
+        let mp = MapPoint(longitude: coord.longitude, latitude: coord.latitude)
+        
+        if let pickerPoi = mapPickerPoi {
+            layer?.removePoi(poiID: MapPickerConstants.Picker.poiID) // 기존 Poi 삭제
+            mapPickerPoi = nil
+        }
+        
+        var poiOption = PoiOptions(styleID: MapPickerConstants.Picker.styleID, poiID: MapPickerConstants.Picker.poiID)
+        poiOption.clickable = true
+        mapPickerPoi = layer?.addPoi(option: poiOption, at: mp)
+
+        mapPickerPoi?.show()
+    }
+
+    // MARK: - Poi Action
     // 헤딩(방향) 갱신 — CLHeading의 각도를 라디안으로 바꿔서 arrow POI에만 적용
     func updateHeading(_ degrees: CLLocationDirection) {
         guard let arrow = currentArrowPoi else { return }
@@ -371,6 +410,26 @@ extension MapPickerViewController {
         let rad = CGFloat(degrees) * .pi / 180.0
         arrow.rotateAt(rad, duration: 150)
     }
+    
+    private func poiTappedHandler(_ eventParam: PoiInteractionEventParam, coord: CLLocationCoordinate2D) {
+        print("poiTappedHandler : \(coord.latitude), \(coord.longitude)")
+    }
+    
+//    private func handleSingleTap(on map: KakaoMap, mapPoint: MapPoint) {
+//        // 1) 좌표 → CLLocationCoordinate2D
+//        let coord = CLLocationCoordinate2D(latitude: mapPoint.wgsY, longitude: mapPoint.wgsX)
+//
+//        // 2) POI 추가/갱신
+//        ensurePickedPoi(on: map, at: coord)
+//
+//        // 3) Alert 표시 (위도/경도 타이틀 + TextField)
+//        presentPickAlert(for: coord) { [weak self] name in
+//            guard let self else { return }
+//            // 저장/전달이 필요하면 ViewModel로 Emit/바인딩
+//            self.viewModel.didPickLocation(name: name, latitude: coord.latitude, longitude: coord.longitude)
+//            // 필요 시 화면 닫기나 토스트 처리 등
+//        }
+//    }
 }
 
 // MARK: Kakao Map Delegate
@@ -430,12 +489,14 @@ extension MapPickerViewController: MapControllerDelegate {
         // Kakao Map 위치 설정
         guard let mapview = mapController?.getView("mapview") as? KakaoMap else { return }
         mapview.viewRect = mapContainer.bounds
-        
+        mapview.eventDelegate = self
         let coord = viewModel.getCurrentLocation()
         
         setupCurrentLocationLayersAndStyles(on: mapview)
+        setupPickedLocationLayerAndStyle(on: mapview)
         
-        updateCurrentLocation(on: mapview, to: coord)
+        ensureCurrentLocationPois(on: mapview, at: coord)
+        
         moveCamera(to: coord, level: zoomLevel)
     }
     
@@ -448,5 +509,65 @@ extension MapPickerViewController: MapControllerDelegate {
         if let map = mapController?.getView("mapview") as? KakaoMap {
             map.viewRect = CGRect(origin: .zero, size: size)
         }
+    }
+}
+
+extension MapPickerViewController: KakaoMapEventDelegate {
+    func kakaoMapDidTapped(kakaoMap: KakaoMap, point: CGPoint) {
+        let mapPoint = kakaoMap.getPosition(point)
+        let coord = CLLocationCoordinate2D(latitude: mapPoint.wgsCoord.latitude, longitude: mapPoint.wgsCoord.longitude)
+        
+        if let mapPickerPoiPosition = mapPickerPoi?.position {
+            let distance = Primitives.distance(p1: kakaoMap.getPosition(point), p2: mapPickerPoiPosition)
+            if distance < 20 {
+                return
+            } else {
+                ensurePickedPoi(on: kakaoMap, at: coord)
+            }
+            
+        } else {
+            ensurePickedPoi(on: kakaoMap, at: coord)
+        }
+    }
+    
+    func poiDidTapped(kakaoMap: KakaoMap, layerID: String, poiID: String, position: MapPoint) {
+        guard let layer = kakaoMap.getLabelManager().getLabelLayer(layerID: layerID),
+              let poi = layer.getPoi(poiID: poiID) else { return }
+        
+        let coordinate = CLLocationCoordinate2D(latitude: poi.position.wgsCoord.latitude, longitude: poi.position.wgsCoord.longitude)
+        
+        presentPickAlert(for: coordinate) { string in
+            print("string : \(string)")
+        }
+    }
+}
+
+// MARK: - Alert View
+extension MapPickerViewController {
+    private func presentPickAlert(for coord: CLLocationCoordinate2D, onSave: @escaping (String) -> Void) {
+        let lat = String(format: "%.6f", coord.latitude)
+        let lon = String(format: "%.6f", coord.longitude)
+
+        let alert = UIAlertController(
+            title: "위도 \(lat), 경도 \(lon)",
+            message: "장소 이름을 입력하세요",
+            preferredStyle: .alert
+        )
+
+        alert.addTextField { tf in
+            tf.placeholder = "예) 강남역 11번 출구"
+            tf.autocapitalizationType = .none
+            tf.clearButtonMode = .whileEditing
+        }
+
+        let cancel = UIAlertAction(title: "취소", style: .cancel, handler: nil)
+        let save = UIAlertAction(title: "저장", style: .default) { _ in
+            let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            onSave(name)
+        }
+
+        alert.addAction(cancel)
+        alert.addAction(save)
+        present(alert, animated: true, completion: nil)
     }
 }

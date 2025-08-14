@@ -18,4 +18,8 @@ final class MapPickerViewModel {
     func getCurrentLocation() -> CLLocationCoordinate2D {
         return currentLocation
     }
+    
+    func didPickLocation(name: String, latitude: Double, longitude: Double) {
+        print("name: \(name), latitude: \(latitude), longitude: \(longitude)")
+    }
 }

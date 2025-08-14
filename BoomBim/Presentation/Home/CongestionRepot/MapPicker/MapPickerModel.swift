@@ -6,8 +6,23 @@
 //
 
 enum CurrentMarkerConstants {
-    static let bodyLayerID = "CurrentBodyLayer"
-    static let arrowLayerID = "CurrentArrowLayer"
-    static let bodyStyleID = "CurrentBodyStyle"
-    static let arrowStyleID = "CurrentArrowStyle"
+    enum Body {
+        static let poiID = "CurrentBodyPoi"
+        static let layerID = "CurrentBodyLayer"
+        static let styleID = "CurrentBodyStyle"
+    }
+    
+    enum Arrow {
+        static let poiID = "CurrentArrowPoi"
+        static let layerID = "CurrentArrowLayer"
+        static let styleID = "CurrentArrowStyle"
+    }
+}
+
+enum MapPickerConstants {
+    enum Picker {
+        static let poiID = "PickerPoi"
+        static let layerID = "PickerLayer"
+        static let styleID = "PickerStyle"
+    }
 }
