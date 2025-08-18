@@ -27,7 +27,6 @@ final class LoginViewController: UIViewController {
     
     private let loginTitleLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .label
         label.textAlignment = .center
         label.numberOfLines = 0
         label.setStyledText(

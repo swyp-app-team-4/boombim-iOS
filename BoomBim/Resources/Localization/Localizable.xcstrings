@@ -55,6 +55,61 @@
           }
         }
       }
+    },
+    "nickname.button.signup" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "회원가입"
+          }
+        }
+      }
+    },
+    "nickname.label.nickname" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닉네임"
+          }
+        }
+      }
+    },
+    "nickname.label.title.main" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닉네임을 입력해주세요"
+          }
+        }
+      }
+    },
+    "nickname.label.title.sub" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "한글 최대 ~자, 공백, 영문, 숫자, 특수기호 불가"
+          }
+        }
+      }
+    },
+    "nickname.textfield.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닉네임을 입력해주세요"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
