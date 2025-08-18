@@ -29,10 +29,9 @@ final class LoginCoordinator: Coordinator {
                 case .nickname:
                     print("route .nickname")
                     self?.showNickname()
-//                    self?.finishedRelay.accept(())
                 case .mainTab:
                     print("route .home")
-                    self?.showNickname()
+                    self?.finishedRelay.accept(())
                 }
             })
             .disposed(by: disposeBag)
@@ -43,6 +42,13 @@ final class LoginCoordinator: Coordinator {
     
     func showNickname() {
         let viewModel = NicknameViewModel()
+        
+        viewModel.signupCompleted
+            .emit(onNext: { [weak self] in
+                self?.finishedRelay.accept(())
+            })
+            .disposed(by: disposeBag)
+        
         let viewController = NicknameViewController(viewModel: viewModel)
         navigationController.pushViewController(viewController, animated: true)
     }

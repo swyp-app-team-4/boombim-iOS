@@ -26,6 +26,7 @@ final class AppCoordinator: Coordinator {
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
 
+        // TODO: 로그인 정보 값을 가진 상태에서 로그인 상태 유지 기능 필요
 //        if isLoggedIn() {
 //            showMainTabBar()
 //        } else {

@@ -6,10 +6,12 @@
 //
 
 import UIKit
+import RxSwift
 import PhotosUI
 
 final class NicknameViewController: BaseViewController {
     private let viewModel: NicknameViewModel
+    private let disposeBag = DisposeBag()
     
     // MARK: - UI
     private let nicknameTitleLabel: UILabel = {
@@ -119,6 +121,8 @@ final class NicknameViewController: BaseViewController {
         configureImageView()
         configureTextField()
         configureButton()
+        
+        bind()
     }
     
     private func configureNavigationBar() {
@@ -195,6 +199,30 @@ final class NicknameViewController: BaseViewController {
         ])
     }
     
+    // MARK: - Binding
+    private func bind() {
+        let input = NicknameViewModel.Input(
+            nicknameText: nicknameTextField.rx.text.orEmpty.asDriver(),
+            signupTap: signUpButton.rx.tap.asSignal()
+        )
+        
+        let output = viewModel.tansform(input: input)
+        
+        output.isSignupEnabled
+            .drive(onNext: { [weak self] isEnabled in
+                self?.signUpButton.isEnabled = isEnabled
+                switch isEnabled {
+                case true:
+                    self?.signUpButton.backgroundColor = .main
+                    self?.signUpButton.setTitleColor(.grayScale1, for: .normal)
+                case false:
+                    self?.signUpButton.backgroundColor = UIColor.grayScale4
+                    self?.signUpButton.setTitleColor(.grayScale7, for: .normal)
+                }
+            })
+            .disposed(by: disposeBag)
+    }
+    
     // MARK: - Action
     private func setupActions() {
         setupTextFieldActions()
@@ -209,15 +237,9 @@ final class NicknameViewController: BaseViewController {
         if let text = textField.text, !text.isEmpty {
             textField.layer.borderWidth = 1
             textField.layer.borderColor = UIColor.grayScale7.cgColor
-            
-            signUpButton.backgroundColor = .main
-            signUpButton.setTitleColor(.grayScale1, for: .normal)
         } else {
             textField.layer.borderWidth = 1
             textField.layer.borderColor = UIColor.grayScale4.cgColor
-            
-            signUpButton.backgroundColor = UIColor.grayScale4
-            signUpButton.setTitleColor(.grayScale7, for: .normal)
         }
     }
     

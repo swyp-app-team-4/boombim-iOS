@@ -44,10 +44,19 @@ class BaseViewController: UIViewController {
     private func setupTapToDismissKeyboard() {
         let tap = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tap.cancelsTouchesInView = false
+        tap.delegate = self
         view.addGestureRecognizer(tap)
     }
 
     @objc private func dismissKeyboard() {
         view.endEditing(true)
+    }
+}
+
+extension BaseViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        if let view = touch.view, view is UIControl { return false }
+        
+        return true
     }
 }
