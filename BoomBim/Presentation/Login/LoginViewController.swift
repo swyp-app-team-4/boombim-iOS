@@ -151,7 +151,8 @@ final class LoginViewController: UIViewController {
         let input = LoginViewModel.Input(
             kakaoTap: kakaoButton.rx.tap.asObservable(),
             naverTap: naverButton.rx.tap.asObservable(),
-            appleTap: appleButton.rx.controlEvent(.touchUpInside).asObservable()
+            appleTap: appleButton.rx.controlEvent(.touchUpInside).asObservable(),
+            withoutLoginTap: withLoginButton.rx.tap.asSignal()
         )
         
         let output = viewModel.transform(input: input)
@@ -164,7 +165,6 @@ final class LoginViewController: UIViewController {
                     print("로그인 성공: \(tokenInfo)")
                     // 백엔드에 token 전달
                     TokenManager.shared.save(tokenInfo: tokenInfo) // UserDefaults 저장
-                    self.viewModel.didLoginSuccess?() // 화면 이동
                 case .failure(let error):
                     print("로그인 실패: \(error.localizedDescription)")
                 }

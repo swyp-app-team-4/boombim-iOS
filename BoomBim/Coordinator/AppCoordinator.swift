@@ -5,9 +5,13 @@
 //  Created by 조영현 on 8/6/25.
 //
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class AppCoordinator: Coordinator {
     var navigationController: UINavigationController
+    private let disposeBag = DisposeBag()
+    
     private let window: UIWindow
 
     private var loginCoordinator: LoginCoordinator?
@@ -36,10 +40,13 @@ final class AppCoordinator: Coordinator {
     private func showLogin() {
         let loginCoordinator = LoginCoordinator(navigationController: navigationController)
         
-        loginCoordinator.didFinish = { [weak self] in
-            self?.loginCoordinator = nil
-            self?.showMainTabBar()
-        }
+        loginCoordinator.finished
+            .emit(onNext: { [weak self] in
+                print("appCoordinator: login finished")
+                self?.loginCoordinator = nil
+                self?.showMainTabBar()
+            })
+            .disposed(by: disposeBag)
         
         self.loginCoordinator = loginCoordinator
         loginCoordinator.start()
