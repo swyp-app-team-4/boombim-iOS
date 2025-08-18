@@ -18,4 +18,8 @@ extension UIFont {
     static func pretendard(_ type: PretendardType, size: CGFloat = UIFont.systemFontSize) -> UIFont {
         return UIFont(name: "Pretendard\(type.rawValue)", size: size)!
     }
+    
+    static func taebaek(size: CGFloat = UIFont.systemFontSize) -> UIFont {
+        return UIFont(name: "TAEBAEK-font", size: size)!
+    }
 }

@@ -1,6 +1,28 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "login.button.kakao" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "카카오로 로그인"
+          }
+        }
+      }
+    },
+    "login.button.naver" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "네이버로 로그인"
+          }
+        }
+      }
+    },
     "login.button.without_login" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8,6 +30,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그인 없이 살펴보기"
+          }
+        }
+      }
+    },
+    "login.label.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금 바로\n붐빔을 확인하세요"
+          }
+        }
+      }
+    },
+    "login.label.title.highlight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "붐빔"
           }
         }
       }

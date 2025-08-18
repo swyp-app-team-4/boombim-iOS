@@ -15,6 +15,37 @@ final class LoginViewController: UIViewController {
     private let disposeBag = DisposeBag()
 
     // MARK: - UI
+    private let titleStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.alignment = .center
+        stackView.distribution = .fill
+        stackView.spacing = 32
+        
+        return stackView
+    }()
+    
+    private let loginTitleLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .label
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.setStyledText(
+            fullText: "login.label.title".localized(), highlight: "login.label.title.highlight".localized(),
+            font: .taebaek(size: 32), highlightFont: .taebaek(size: 32),
+            color: UIColor(hex: "#0F0F10"), highlightColor: .main)
+        
+        return label
+    }()
+    
+    private let loginTitleImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage.illustrationLogin
+        imageView.contentMode = .scaleAspectFit
+        
+        return imageView
+    }()
+    
     private let buttonStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -25,18 +56,33 @@ final class LoginViewController: UIViewController {
         return stackView
     }()
     
-    private let withLoginButton: UIButton = {
-        let button = UIButton()
-        button.setTitleColor(.systemBlue, for: .normal)
-        button.titleLabel?.setText("login.button.without_login".localized(), style: Typography.Caption.regular, color: .gray)
-        
-        button.backgroundColor = .clear
-        return button
+    private let bubbleImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage.bubbleInfo
+        imageView.contentMode = .scaleAspectFit
+        return imageView
     }()
     
     private let kakaoButton = KakaoLoginButton()
     private let naverButton = NaverLoginButton()
-    private let appleButton = ASAuthorizationAppleIDButton(type: .signIn, style: .black)
+    private let appleButton: UIControl = {
+        let button = ASAuthorizationAppleIDButton(type: .signIn, style: .black)
+        button.cornerRadius = 12
+        
+        return button
+    }()
+    
+    private let withLoginButton: UIButton = {
+        let button = UIButton()
+        button.setTitleColor(.systemBlue, for: .normal)
+        button.setTitle("login.button.without_login".localized(), for: .normal)
+        button.titleLabel?.font = Typography.Caption.regular.font
+        button.setTitleColor(UIColor(hex: "#70737C"), for: .normal)
+        button.setUnderline(underlineColor: UIColor(hex: "#70737C"), spacing: 4)
+        
+        button.backgroundColor = .clear
+        return button
+    }()
     
     init(viewModel: LoginViewModel) {
         self.viewModel = viewModel
@@ -59,22 +105,43 @@ final class LoginViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .white
         configureButton()
+        configureTitle()
+        
+    }
+    
+    private func configureTitle() {
+        titleStackView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(titleStackView)
+        
+        [loginTitleLabel, loginTitleImageView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            titleStackView.addArrangedSubview(view)
+        }
+        
+        NSLayoutConstraint.activate([
+            titleStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 70),
+//            titleStackView.bottomAnchor.constraint(equalTo: buttonStackView.topAnchor, constant: -44),
+            titleStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            titleStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
+        ])
     }
     
     private func configureButton() {
         buttonStackView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(buttonStackView)
         
-        [kakaoButton, naverButton, appleButton, withLoginButton].forEach { button in
+        [bubbleImageView, kakaoButton, naverButton, appleButton, withLoginButton].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             
             buttonStackView.addArrangedSubview(button)
         }
         
         NSLayoutConstraint.activate([
+            kakaoButton.heightAnchor.constraint(equalToConstant: 56),
+            naverButton.heightAnchor.constraint(equalToConstant: 56),
+            appleButton.heightAnchor.constraint(equalToConstant: 56),
             
-            
-            buttonStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -100),
+            buttonStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -70),
             buttonStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             buttonStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
         ])
