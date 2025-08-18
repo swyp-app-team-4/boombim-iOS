@@ -97,11 +97,11 @@ final class LoginViewController: UIViewController {
         
         print("loginViewcontroller")
         
-        setupUI()
+        setupView()
         bind()
     }
     
-    private func setupUI() {
+    private func setupView() {
         view.backgroundColor = .white
         configureButton()
         configureTitle()

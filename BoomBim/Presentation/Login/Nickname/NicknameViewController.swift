@@ -102,7 +102,7 @@ final class NicknameViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setupUI()
+        setupView()
         setupActions()
     }
     
@@ -112,7 +112,7 @@ final class NicknameViewController: BaseViewController {
         nicknameTextField.becomeFirstResponder()
     }
     
-    private func setupUI() {
+    private func setupView() {
         view.backgroundColor = .white
         
         configureNavigationBar()

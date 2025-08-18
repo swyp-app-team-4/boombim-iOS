@@ -37,7 +37,6 @@ final class HomeViewController: UIViewController {
     init(viewModel: HomeViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        self.title = "홈"
     }
     
     required init?(coder: NSCoder) {
@@ -47,13 +46,33 @@ final class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setupNavigationBar()
         setupView()
+    }
+    
+    private func setupView() {
+        view.backgroundColor = .white
+        
+        setupNavigationBar()
+        
+        configureCollectionView()
+        configureDataSource()
+        configurePageControl()
+        
+        setupFloatingButton()
+        
+        applyInitialSnapshot() // dummy Data
+        
+        startAutoScroll()
     }
     
     // MARK: Setup UI
     private func setupNavigationBar() {
-        title = "홈"
+        let logoImageView = UIImageView(image: .logoText)
+        logoImageView.contentMode = .scaleAspectFit
+        logoImageView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let logoItem = UIBarButtonItem(customView: logoImageView)
+        navigationItem.leftBarButtonItem = logoItem
         
         let searchButton = UIBarButtonItem(
             image: UIImage(systemName: "magnifyingglass"),
@@ -72,21 +91,6 @@ final class HomeViewController: UIViewController {
         navigationItem.rightBarButtonItems = [notificationButton, searchButton]
     }
     
-    private func setupView() {
-        view.backgroundColor = .systemBackground
-        
-        configureCollectionView()
-        configureDataSource()
-        configurePageControl()
-        
-        setupFloatingButton()
-        
-        applyInitialSnapshot() // dummy Data
-        
-        startAutoScroll()
-    }
-    
-    // MARK: Setup UI
     private func setupFloatingButton() {
         view.addSubview(floatingButton)
         floatingButton.translatesAutoresizingMaskIntoConstraints = false
