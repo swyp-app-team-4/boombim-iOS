@@ -103,9 +103,9 @@ final class LoginViewController: UIViewController {
     
     private func setupView() {
         view.backgroundColor = .white
+        
         configureButton()
         configureTitle()
-        
     }
     
     private func configureTitle() {

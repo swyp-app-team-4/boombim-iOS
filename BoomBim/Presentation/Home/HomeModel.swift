@@ -6,12 +6,14 @@
 //
 
 import Foundation
+import UIKit
 
 struct RegionItem: Hashable {
     let id = UUID()
+    let iconImage: UIImage?
+    let organization: String?
     let title: String
-    let subtitle: String
-    let iconName: String
+    let description: String
 }
 
 struct ImageTextItem: Hashable {
@@ -32,11 +34,20 @@ enum HomeSection: Int, CaseIterable {
     case imageText
     case favorites
     case crowded
+    
+    var headerImage: UIImage? {
+        switch self {
+        case .region: return .iconBroadcast
+        case .imageText: return nil
+        case .favorites: return nil
+        case .crowded: return nil
+        }
+    }
 
     var headerTitle: String? {
         switch self {
-        case .region: return nil
-        case .imageText: return nil
+        case .region: return "지역 소식"
+        case .imageText: return "지금 여기가 덜 붐벼요!"
         case .favorites: return "관심 장소"
         case .crowded: return "붐비는 장소"
         }
@@ -44,7 +55,7 @@ enum HomeSection: Int, CaseIterable {
 }
 
 enum HomeItem: Hashable {
-    case region(RegionItem)
+    case region([RegionItem])
     case imageText(ImageTextItem)
     case place(PlaceItem)
 }

@@ -10,20 +10,16 @@ import UIKit
 final class HomeViewController: UIViewController {
     private let viewModel: HomeViewModel
     
-    private var collectionView: UICollectionView!
     private var dataSource: UICollectionViewDiffableDataSource<HomeSection, HomeItem>!
     
-    // Page control for Region section
-    private let pageControl = UIPageControl()
-    private var regionCount: Int = 0 {
-        didSet { pageControl.numberOfPages = regionCount }
-    }
-    private var regionCurrentPage: Int = 0 {
-        didSet { pageControl.currentPage = regionCurrentPage }
-    }
-    
-    private var autoScrollTimer: Timer?
-    private var isUserDraggingRegion = false
+    private lazy var collectionView: UICollectionView = {
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
+        collectionView.backgroundColor = .white
+        collectionView.directionalLayoutMargins = .init(top: 0, leading: 16, bottom: 0, trailing: 16)
+        collectionView.contentInset.top = 22 // 최상단 간격
+        
+        return collectionView
+    }()
     
     private let floatingButton: UIButton = {
         let button = UIButton(type: .system)
@@ -56,13 +52,10 @@ final class HomeViewController: UIViewController {
         
         configureCollectionView()
         configureDataSource()
-        configurePageControl()
         
         setupFloatingButton()
         
         applyInitialSnapshot() // dummy Data
-        
-        startAutoScroll()
     }
     
     // MARK: Setup UI
@@ -104,11 +97,13 @@ final class HomeViewController: UIViewController {
     }
     
     private func configureCollectionView() {
-        collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
-        collectionView.backgroundColor = .systemBackground
+        
         collectionView.delegate = self
-        view.addSubview(collectionView)
+        collectionView.register(RegionCardCell.self, forCellWithReuseIdentifier: RegionCardCell.reuseID)
+        
         collectionView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(collectionView)
+        
         NSLayoutConstraint.activate([
             collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -117,21 +112,11 @@ final class HomeViewController: UIViewController {
         ])
     }
     
-    private func configurePageControl() {
-        pageControl.hidesForSinglePage = true
-        pageControl.isUserInteractionEnabled = false
-        view.addSubview(pageControl)
-        pageControl.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            pageControl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 6),
-            pageControl.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-        ])
-    }
-    
     // MARK: DataSource
     private func configureDataSource() {
-        let regionRegistration = UICollectionView.CellRegistration<RegionCardCell, RegionItem> { cell, _, item in
-            cell.configure(item)
+        // section 별 구성
+        let regionRegistration = UICollectionView.CellRegistration<RegionCardCell, [RegionItem]> { cell, _, item in
+            cell.configure(items: item)
         }
         let imageTextRegistration = UICollectionView.CellRegistration<ImageTextCell, ImageTextItem> { cell, _, item in
             cell.configure(item)
@@ -140,13 +125,15 @@ final class HomeViewController: UIViewController {
             cell.configure(item)
         }
         
+        // Header 설정
         let headerRegistration = UICollectionView.SupplementaryRegistration<TitleHeaderView>(elementKind: TitleHeaderView.elementKind) { [weak self] header, _, indexPath in
             guard let section = HomeSection(rawValue: indexPath.section) else { return }
-            if let title = section.headerTitle {
-                header.configure(title)
+            
+            if let title = section.headerTitle, let image = section.headerImage {
+                header.configure(image: image, text: title)
+            } else if let title = section.headerTitle {
+                header.configure(text: title)
             }
-            // Region section controls page control visibility
-            self?.pageControl.isHidden = (section != .region)
         }
         
         dataSource = UICollectionViewDiffableDataSource<HomeSection, HomeItem>(collectionView: collectionView) { collectionView, indexPath, item in
@@ -169,11 +156,10 @@ final class HomeViewController: UIViewController {
     private func applyInitialSnapshot() {
         // TODO: Replace with ViewModel outputs
         let regions: [RegionItem] = [
-            .init(title: "강남구", subtitle: "현재 혼잡도: 보통", iconName: "mappin.and.ellipse"),
-            .init(title: "홍대입구", subtitle: "현재 혼잡도: 높음", iconName: "mappin"),
-            .init(title: "잠실", subtitle: "현재 혼잡도: 낮음", iconName: "location"),
+            .init(iconImage: .iconTaegeuk, organization: "국토 교통부", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다."),
+            .init(iconImage: .iconTaegeuk, organization: "식약처", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다."),
+            .init(iconImage: .iconTaegeuk, organization: "소방처", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다.")
         ]
-        regionCount = regions.count
         
         let imageTexts: [ImageTextItem] = [
             .init(imageName: "sample1", title: "주말 축제 소식"),
@@ -193,7 +179,7 @@ final class HomeViewController: UIViewController {
         
         var snapshot = NSDiffableDataSourceSnapshot<HomeSection, HomeItem>()
         snapshot.appendSections(HomeSection.allCases)
-        snapshot.appendItems(regions.map { .region($0) }, toSection: .region)
+        snapshot.appendItems([.region(regions)], toSection: .region)
         snapshot.appendItems(imageTexts.map { .imageText($0) }, toSection: .imageText)
         snapshot.appendItems(favorites.map { .place($0) }, toSection: .favorites)
         snapshot.appendItems(crowded.map { .place($0) }, toSection: .crowded)
@@ -206,9 +192,7 @@ final class HomeViewController: UIViewController {
             guard let sectionKind = HomeSection(rawValue: sectionIndex) else { return nil }
             switch sectionKind {
             case .region:
-                return Self.makeRegionSection(env: env, pageUpdate: { [weak self] page in
-                    self?.regionCurrentPage = page
-                })
+                return Self.makeRegionSection(env: env)
             case .imageText:
                 return Self.makeImageTextSection(env: env)
             case .favorites, .crowded:
@@ -218,28 +202,22 @@ final class HomeViewController: UIViewController {
         let config = UICollectionViewCompositionalLayoutConfiguration()
         config.interSectionSpacing = 16
         layout.configuration = config
+        
         return layout
     }
     
-    private static func makeRegionSection(env: NSCollectionLayoutEnvironment, pageUpdate: @escaping (Int) -> Void) -> NSCollectionLayoutSection {
-        // Item is card width ~90% of container
+    private static func makeRegionSection(env: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.90), heightDimension: .absolute(180))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(151)) // 컨테이너 높이
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
-        section.orthogonalScrollingBehavior = .groupPagingCentered
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20)
+        section.contentInsets = .init(top: 14, leading: 16, bottom: 14, trailing: 16)
         
-        // Page detection via invalidation handler
-        section.visibleItemsInvalidationHandler = { items, offset, env in
-            guard let width = env.container.effectiveContentSize.width as CGFloat?, width > 0 else { return }
-            // When centered paging, current page approx:
-            let page = Int(round(offset.x / width))
-            pageUpdate(max(page, 0))
-        }
+        section.boundarySupplementaryItems = [self.sectionHeader()]
+        
         return section
     }
     
@@ -253,7 +231,10 @@ final class HomeViewController: UIViewController {
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior = .continuous
         section.interGroupSpacing = 12
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20)
+        section.contentInsets = .init(top: 8, leading: 20, bottom: 8, trailing: 20)
+        
+        section.boundarySupplementaryItems = [self.sectionHeader()]
+        
         return section
     }
     
@@ -267,32 +248,21 @@ final class HomeViewController: UIViewController {
         
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = 8
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 20, bottom: 16, trailing: 20)
+        section.contentInsets = .init(top: 8, leading: 20, bottom: 16, trailing: 20)
         
-        if hasHeader {
-            let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(34))
-            let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: TitleHeaderView.elementKind, alignment: .top)
-            section.boundarySupplementaryItems = [header]
-        }
+        section.boundarySupplementaryItems = [self.sectionHeader()]
+        
         return section
     }
     
-    // MARK: Auto scroll for region
-    private func startAutoScroll() {
-        stopAutoScroll()
-        guard regionCount > 1 else { return }
-        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            guard let self = self, !self.isUserDraggingRegion else { return }
-            let next = (self.regionCurrentPage + 1) % max(self.regionCount, 1)
-            let indexPath = IndexPath(item: next, section: HomeSection.region.rawValue)
-            self.collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
-            self.regionCurrentPage = next
-        }
-    }
-    
-    private func stopAutoScroll() {
-        autoScrollTimer?.invalidate()
-        autoScrollTimer = nil
+    // CollectionView section별 헤더
+    private static func sectionHeader() -> NSCollectionLayoutBoundarySupplementaryItem {
+        let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(34))
+        let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: size, elementKind: TitleHeaderView.elementKind, alignment: .top)
+        
+        header.pinToVisibleBounds = false
+        header.contentInsets = .init(top: 8, leading: 16, bottom: 8, trailing: 16)
+        return header
     }
     
     // MARK: Action
@@ -310,20 +280,6 @@ final class HomeViewController: UIViewController {
 }
 
 extension HomeViewController: UICollectionViewDelegate {
-    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        // Only care when dragging in Region section area
-        // Rough check: pageControl is only visible for region
-        if !pageControl.isHidden { isUserDraggingRegion = true }
-    }
-    
-    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        isUserDraggingRegion = false
-    }
-    
-    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        if !decelerate { isUserDraggingRegion = false }
-    }
-    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
         switch item {
