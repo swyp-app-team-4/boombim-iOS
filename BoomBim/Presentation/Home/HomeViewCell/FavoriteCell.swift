@@ -58,7 +58,6 @@ final class FavoriteCell: UICollectionViewCell {
         let label = UILabel()
         label.font = Typography.Caption.regular.font
         label.textColor = .grayScale8
-        label.numberOfLines = 2
         
         return label
     }()

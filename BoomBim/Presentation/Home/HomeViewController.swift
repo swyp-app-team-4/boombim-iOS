@@ -119,23 +119,42 @@ final class HomeViewController: UIViewController {
             cell.configure(items: item)
         }
         
-        let imageTextRegistration = UICollectionView.CellRegistration<RecommendPlaceCell, RecommendPlaceItem> { cell, _, item in
+        let recommendRegistration = UICollectionView.CellRegistration<RecommendPlaceCell, RecommendPlaceItem> { cell, _, item in
             cell.configure(item)
         }
         
-        let placeRegistration = UICollectionView.CellRegistration<FavoriteCell, FavoritePlaceItem> { cell, _, item in
+        let favoriteRegistration = UICollectionView.CellRegistration<FavoriteCell, FavoritePlaceItem> { cell, _, item in
+            cell.configure(item)
+        }
+        
+        let congestionRankRegistration = UICollectionView.CellRegistration<CongestionRankCell, CongestionRankPlaceItem> { cell, _, item in
             cell.configure(item)
         }
         
         // Header 설정
         let headerRegistration = UICollectionView.SupplementaryRegistration<TitleHeaderView>(elementKind: TitleHeaderView.elementKind) { [weak self] header, _, indexPath in
             guard let section = HomeSection(rawValue: indexPath.section) else { return }
+            let title = section.headerTitle
+            let image = section.headerImage
+            let showsButton = section.headerButton
             
-            if let title = section.headerTitle, let image = section.headerImage {
-                header.configure(image: image, text: title)
-            } else if let title = section.headerTitle {
-                header.configure(text: title)
-            }
+            header.configure(text: title ?? "", image: image, button: showsButton, buttonHandler: {
+                print("button Action")
+            })
+            
+//            print("indexPAth : \(indexPath.section)")
+//            if let title = section.headerTitle, let image = section.headerImage {
+//                print("title : \(title)")
+//                header.configure(image: image, text: title)
+//            } else if let title = section.headerTitle, let button = section.headerButton {
+//                print("title : \(title)")
+//                header.configure(text: title, button: button, buttonHandler: {
+//                    print("button Action")
+//                })
+//            } else if let title = section.headerTitle {
+//                print("title : \(title)")
+//                header.configure(text: title)
+//            }
         }
         
         dataSource = UICollectionViewDiffableDataSource<HomeSection, HomeItem>(collectionView: collectionView) { collectionView, indexPath, item in
@@ -143,9 +162,11 @@ final class HomeViewController: UIViewController {
             case .region(let m):
                 return collectionView.dequeueConfiguredReusableCell(using: regionRegistration, for: indexPath, item: m)
             case .recommendPlace(let m):
-                return collectionView.dequeueConfiguredReusableCell(using: imageTextRegistration, for: indexPath, item: m)
+                return collectionView.dequeueConfiguredReusableCell(using: recommendRegistration, for: indexPath, item: m)
             case .favoritePlace(let m):
-                return collectionView.dequeueConfiguredReusableCell(using: placeRegistration, for: indexPath, item: m)
+                return collectionView.dequeueConfiguredReusableCell(using: favoriteRegistration, for: indexPath, item: m)
+            case .congestionRank(let m):
+                return collectionView.dequeueConfiguredReusableCell(using: congestionRankRegistration, for: indexPath, item: m)
             }
         }
         
@@ -181,10 +202,12 @@ final class HomeViewController: UIViewController {
             .init(image: .dummy, title: "강남역 2번 출구", update: 8, congestion: .relaxed)
         ]
         
-        let crowded: [FavoritePlaceItem] = [
-            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .busy),
-            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .normal),
-            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .relaxed)
+        let congestionRank: [CongestionRankPlaceItem] = [
+            .init(rank: 1, image: .dummy, title: "서울역", address: "서울 강남구", update: 3, congestion: .crowded),
+            .init(rank: 2, image: .dummy, title: "서울역", address: "서울 강남구", update: 12, congestion: .busy),
+            .init(rank: 3, image: .dummy, title: "서울역", address: "서울 강남구", update: 10, congestion: .busy),
+            .init(rank: 4, image: .dummy, title: "서울역", address: "서울 강남구", update: 6, congestion: .normal),
+            .init(rank: 5, image: .dummy, title: "서울역", address: "서울 강남구", update: 15, congestion: .relaxed),
         ]
         
         var snapshot = NSDiffableDataSourceSnapshot<HomeSection, HomeItem>()
@@ -193,7 +216,7 @@ final class HomeViewController: UIViewController {
         snapshot.appendItems(imageTexts1.map { .recommendPlace($0) }, toSection: .recommendPlace1)
         snapshot.appendItems(imageTexts2.map { .recommendPlace($0) }, toSection: .recommendPlace2)
         snapshot.appendItems(favorites.map { .favoritePlace($0) }, toSection: .favoritePlace)
-        snapshot.appendItems(crowded.map { .favoritePlace($0) }, toSection: .congestion)
+        snapshot.appendItems(congestionRank.map { .congestionRank($0) }, toSection: .congestionRank)
         dataSource.apply(snapshot, animatingDifferences: true)
     }
     
@@ -208,8 +231,10 @@ final class HomeViewController: UIViewController {
                 return Self.makeRecommendPlaceSection(env: env, inset: true)
             case .recommendPlace2:
                 return Self.makeRecommendPlaceSection(env: env, inset: false)
-            case .favoritePlace, .congestion:
+            case .favoritePlace:
                 return Self.makeFavoritePlaceSection(env: env)
+            case .congestionRank:
+                return Self.makeCongestionRankSection(env: env)
             }
         }
         let config = UICollectionViewCompositionalLayoutConfiguration()
@@ -274,13 +299,31 @@ final class HomeViewController: UIViewController {
         return section
     }
     
+    private static func makeCongestionRankSection(env: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(90))
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+        
+        let section = NSCollectionLayoutSection(group: group)
+        section.orthogonalScrollingBehavior = .none
+        
+        section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
+        section.interGroupSpacing = 14
+        
+        section.boundarySupplementaryItems = [self.sectionHeader()]
+        
+        return section
+    }
+    
     // CollectionView section별 헤더
     private static func sectionHeader() -> NSCollectionLayoutBoundarySupplementaryItem {
         let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(34))
         let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: size, elementKind: TitleHeaderView.elementKind, alignment: .top)
         
         header.pinToVisibleBounds = false
-        header.contentInsets = .init(top: 8, leading: 0, bottom: 8, trailing: 16)
+        header.contentInsets = .init(top: 8, leading: 0, bottom: 8, trailing: 0)
         return header
     }
     

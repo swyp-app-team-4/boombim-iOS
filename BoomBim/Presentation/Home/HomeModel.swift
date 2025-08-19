@@ -32,12 +32,22 @@ struct FavoritePlaceItem: Hashable {
     let congestion: CongestionLevel
 }
 
+struct CongestionRankPlaceItem: Hashable {
+    let id = UUID()
+    let rank: Int
+    let image: UIImage
+    let title: String
+    let address: String
+    let update: Int
+    let congestion: CongestionLevel
+}
+
 enum HomeSection: Int, CaseIterable {
     case region
     case recommendPlace1
     case recommendPlace2
     case favoritePlace
-    case congestion
+    case congestionRank
     
     var headerImage: UIImage? {
         switch self {
@@ -45,7 +55,7 @@ enum HomeSection: Int, CaseIterable {
         case .recommendPlace1: return nil
         case .recommendPlace2: return nil
         case .favoritePlace: return nil
-        case .congestion: return nil
+        case .congestionRank: return nil
         }
     }
 
@@ -55,7 +65,17 @@ enum HomeSection: Int, CaseIterable {
         case .recommendPlace1: return "지금 여기가 덜 붐벼요!"
         case .recommendPlace2: return nil
         case .favoritePlace: return "관심 장소"
-        case .congestion: return "붐비는 장소"
+        case .congestionRank: return "지금 붐비는 장소 TOP 5"
+        }
+    }
+    
+    var headerButton: Bool? {
+        switch self {
+        case .region: return false
+        case .recommendPlace1: return false
+        case .recommendPlace2: return false
+        case .favoritePlace: return false
+        case .congestionRank: return true
         }
     }
 }
@@ -64,4 +84,5 @@ enum HomeItem: Hashable {
     case region([RegionItem])
     case recommendPlace(RecommendPlaceItem)
     case favoritePlace(FavoritePlaceItem)
+    case congestionRank(CongestionRankPlaceItem)
 }
