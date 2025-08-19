@@ -32,9 +32,9 @@ final class HomeCoordinator: Coordinator {
             self?.showNotification()
         }
         
-        viewModel.goToPlaceView = { [weak self] place in
-            self?.showPlaceDetail(place)
-        }
+//        viewModel.goToPlaceView = { [weak self] place in
+//            self?.showPlaceDetail(place)
+//        }
         
         navigationController.setViewControllers([viewController], animated: false)
     }

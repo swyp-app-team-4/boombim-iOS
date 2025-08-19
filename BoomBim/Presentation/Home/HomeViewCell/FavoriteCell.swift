@@ -1,5 +1,5 @@
 //
-//  ImageTextCell.swift
+//  PlaceCell.swift
 //  BoomBim
 //
 //  Created by 조영현 on 8/11/25.
@@ -7,13 +7,13 @@
 
 import UIKit
 
-final class ImageTextCell: UICollectionViewCell {
-    static let identifier = "ImageTextCell"
+final class FavoriteCell: UICollectionViewCell {
+    static let identifier = "FavoriteCell"
     
     private let stackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
-        stackView.alignment = .fill
+        stackView.alignment = .leading
         stackView.distribution = .fillProportionally
         stackView.spacing = 6
         
@@ -54,7 +54,7 @@ final class ImageTextCell: UICollectionViewCell {
         return label
     }()
     
-    private let address: UILabel = {
+    private let update: UILabel = {
         let label = UILabel()
         label.font = Typography.Caption.regular.font
         label.textColor = .grayScale8
@@ -99,13 +99,16 @@ final class ImageTextCell: UICollectionViewCell {
         imageView.addSubview(congestionImageView)
         
         NSLayoutConstraint.activate([
+            imageView.heightAnchor.constraint(equalToConstant: 180),
+            imageView.widthAnchor.constraint(equalToConstant: 180),
+            
             congestionImageView.topAnchor.constraint(equalTo: imageView.topAnchor, constant: 10),
             congestionImageView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: -10)
         ])
     }
     
     private func configureTextStackView() {
-        [title, address].forEach { label in
+        [title, update].forEach { label in
             label.translatesAutoresizingMaskIntoConstraints = false
             textStackView.addArrangedSubview(label)
         }
@@ -113,10 +116,10 @@ final class ImageTextCell: UICollectionViewCell {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    func configure(_ item: ImageTextItem) {
+    func configure(_ item: FavoritePlaceItem) {
         imageView.image = item.image
         congestionImageView.image = item.congestion.badge
         title.text = item.title
-        address.text = item.address
+        update.text = "오늘 \(item.update)명 업데이트"
     }
 }

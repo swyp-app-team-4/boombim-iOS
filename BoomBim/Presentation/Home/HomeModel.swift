@@ -16,7 +16,7 @@ struct RegionItem: Hashable {
     let description: String
 }
 
-struct ImageTextItem: Hashable {
+struct RecommendPlaceItem: Hashable {
     let id = UUID()
     let image: UIImage
     let title: String
@@ -24,18 +24,19 @@ struct ImageTextItem: Hashable {
     let congestion: CongestionLevel
 }
 
-struct PlaceItem: Hashable {
+struct FavoritePlaceItem: Hashable {
     let id = UUID()
-    let name: String
-    let detail: String
-    let congestion: String // 혼잡도
+    let image: UIImage
+    let title: String
+    let update: Int
+    let congestion: CongestionLevel
 }
 
 enum HomeSection: Int, CaseIterable {
     case region
     case recommendPlace1
     case recommendPlace2
-    case favorites
+    case favoritePlace
     case congestion
     
     var headerImage: UIImage? {
@@ -43,7 +44,7 @@ enum HomeSection: Int, CaseIterable {
         case .region: return .iconBroadcast
         case .recommendPlace1: return nil
         case .recommendPlace2: return nil
-        case .favorites: return nil
+        case .favoritePlace: return nil
         case .congestion: return nil
         }
     }
@@ -53,7 +54,7 @@ enum HomeSection: Int, CaseIterable {
         case .region: return "지역 소식"
         case .recommendPlace1: return "지금 여기가 덜 붐벼요!"
         case .recommendPlace2: return nil
-        case .favorites: return "관심 장소"
+        case .favoritePlace: return "관심 장소"
         case .congestion: return "붐비는 장소"
         }
     }
@@ -61,6 +62,6 @@ enum HomeSection: Int, CaseIterable {
 
 enum HomeItem: Hashable {
     case region([RegionItem])
-    case imageText(ImageTextItem)
-    case place(PlaceItem)
+    case recommendPlace(RecommendPlaceItem)
+    case favoritePlace(FavoritePlaceItem)
 }

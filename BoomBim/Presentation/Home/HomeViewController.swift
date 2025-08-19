@@ -119,11 +119,11 @@ final class HomeViewController: UIViewController {
             cell.configure(items: item)
         }
         
-        let imageTextRegistration = UICollectionView.CellRegistration<ImageTextCell, ImageTextItem> { cell, _, item in
+        let imageTextRegistration = UICollectionView.CellRegistration<RecommendPlaceCell, RecommendPlaceItem> { cell, _, item in
             cell.configure(item)
         }
         
-        let placeRegistration = UICollectionView.CellRegistration<PlaceCell, PlaceItem> { cell, _, item in
+        let placeRegistration = UICollectionView.CellRegistration<FavoriteCell, FavoritePlaceItem> { cell, _, item in
             cell.configure(item)
         }
         
@@ -142,9 +142,9 @@ final class HomeViewController: UIViewController {
             switch item {
             case .region(let m):
                 return collectionView.dequeueConfiguredReusableCell(using: regionRegistration, for: indexPath, item: m)
-            case .imageText(let m):
+            case .recommendPlace(let m):
                 return collectionView.dequeueConfiguredReusableCell(using: imageTextRegistration, for: indexPath, item: m)
-            case .place(let m):
+            case .favoritePlace(let m):
                 return collectionView.dequeueConfiguredReusableCell(using: placeRegistration, for: indexPath, item: m)
             }
         }
@@ -163,35 +163,37 @@ final class HomeViewController: UIViewController {
             .init(iconImage: .iconTaegeuk, organization: "소방처", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다.")
         ]
         
-        let imageTexts1: [ImageTextItem] = [
+        let imageTexts1: [RecommendPlaceItem] = [
             .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.normal),
             .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.busy),
             .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.crowded)
         ]
         
-        let imageTexts2: [ImageTextItem] = [
+        let imageTexts2: [RecommendPlaceItem] = [
             .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.normal),
             .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.busy),
             .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.crowded)
         ]
         
-        let favorites: [PlaceItem] = [
-            .init(name: "선릉 카페", detail: "450m · 테라스", congestion: "여유"),
-            .init(name: "역삼 맛집", detail: "1.2km · 웨이팅", congestion: "보통")
+        let favorites: [FavoritePlaceItem] = [
+            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .busy),
+            .init(image: .dummy, title: "강남역 2번 출구", update: 5, congestion: .normal),
+            .init(image: .dummy, title: "강남역 2번 출구", update: 8, congestion: .relaxed)
         ]
         
-        let crowded: [PlaceItem] = [
-            .init(name: "코엑스", detail: "2.1km · 행사 중", congestion: "혼잡"),
-            .init(name: "롯데월드", detail: "6.4km · 주말 피크", congestion: "매우 혼잡")
+        let crowded: [FavoritePlaceItem] = [
+            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .busy),
+            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .normal),
+            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .relaxed)
         ]
         
         var snapshot = NSDiffableDataSourceSnapshot<HomeSection, HomeItem>()
         snapshot.appendSections(HomeSection.allCases)
         snapshot.appendItems([.region(regions)], toSection: .region)
-        snapshot.appendItems(imageTexts1.map { .imageText($0) }, toSection: .recommendPlace1)
-        snapshot.appendItems(imageTexts2.map { .imageText($0) }, toSection: .recommendPlace2)
-        snapshot.appendItems(favorites.map { .place($0) }, toSection: .favorites)
-        snapshot.appendItems(crowded.map { .place($0) }, toSection: .congestion)
+        snapshot.appendItems(imageTexts1.map { .recommendPlace($0) }, toSection: .recommendPlace1)
+        snapshot.appendItems(imageTexts2.map { .recommendPlace($0) }, toSection: .recommendPlace2)
+        snapshot.appendItems(favorites.map { .favoritePlace($0) }, toSection: .favoritePlace)
+        snapshot.appendItems(crowded.map { .favoritePlace($0) }, toSection: .congestion)
         dataSource.apply(snapshot, animatingDifferences: true)
     }
     
@@ -203,11 +205,11 @@ final class HomeViewController: UIViewController {
             case .region:
                 return Self.makeRegionSection(env: env)
             case .recommendPlace1:
-                return Self.makeImageTextSection(env: env, inset: true)
+                return Self.makeRecommendPlaceSection(env: env, inset: true)
             case .recommendPlace2:
-                return Self.makeImageTextSection(env: env, inset: false)
-            case .favorites, .congestion:
-                return Self.makeListSection(env: env, hasHeader: true)
+                return Self.makeRecommendPlaceSection(env: env, inset: false)
+            case .favoritePlace, .congestion:
+                return Self.makeFavoritePlaceSection(env: env)
             }
         }
         let config = UICollectionViewCompositionalLayoutConfiguration()
@@ -232,11 +234,11 @@ final class HomeViewController: UIViewController {
         return section
     }
     
-    private static func makeImageTextSection(env: NSCollectionLayoutEnvironment, inset: Bool) -> NSCollectionLayoutSection {
+    private static func makeRecommendPlaceSection(env: NSCollectionLayoutEnvironment, inset: Bool) -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.8), heightDimension: .absolute(180))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.8), heightDimension: .absolute(230))
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
@@ -254,17 +256,18 @@ final class HomeViewController: UIViewController {
         return section
     }
     
-    private static func makeListSection(env: NSCollectionLayoutEnvironment, hasHeader: Bool) -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(56))
+    private static func makeFavoritePlaceSection(env: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(56))
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-        group.interItemSpacing = .fixed(8)
+        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(180), heightDimension: .estimated(230))
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 8
-        section.contentInsets = .init(top: 8, leading: 16, bottom: 16, trailing: 16)
+        section.orthogonalScrollingBehavior = .continuous
+        
+        section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
+        section.interGroupSpacing = 12
         
         section.boundarySupplementaryItems = [self.sectionHeader()]
         
@@ -299,8 +302,8 @@ extension HomeViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
         switch item {
-        case .place(let place):
-            viewModel.didSelectPlace(place)
+//        case .bookmarkPlace(let place):
+//            viewModel.didSelectPlace(place)
         default:
             break
         }
