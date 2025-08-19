@@ -18,8 +18,10 @@ struct RegionItem: Hashable {
 
 struct ImageTextItem: Hashable {
     let id = UUID()
-    let imageName: String
+    let image: UIImage
     let title: String
+    let address: String
+    let congestion: CongestionLevel
 }
 
 struct PlaceItem: Hashable {
@@ -31,25 +33,28 @@ struct PlaceItem: Hashable {
 
 enum HomeSection: Int, CaseIterable {
     case region
-    case imageText
+    case recommendPlace1
+    case recommendPlace2
     case favorites
-    case crowded
+    case congestion
     
     var headerImage: UIImage? {
         switch self {
         case .region: return .iconBroadcast
-        case .imageText: return nil
+        case .recommendPlace1: return nil
+        case .recommendPlace2: return nil
         case .favorites: return nil
-        case .crowded: return nil
+        case .congestion: return nil
         }
     }
 
     var headerTitle: String? {
         switch self {
         case .region: return "지역 소식"
-        case .imageText: return "지금 여기가 덜 붐벼요!"
+        case .recommendPlace1: return "지금 여기가 덜 붐벼요!"
+        case .recommendPlace2: return nil
         case .favorites: return "관심 장소"
-        case .crowded: return "붐비는 장소"
+        case .congestion: return "붐비는 장소"
         }
     }
 }

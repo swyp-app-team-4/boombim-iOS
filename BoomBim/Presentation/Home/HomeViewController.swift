@@ -118,9 +118,11 @@ final class HomeViewController: UIViewController {
         let regionRegistration = UICollectionView.CellRegistration<RegionCardCell, [RegionItem]> { cell, _, item in
             cell.configure(items: item)
         }
+        
         let imageTextRegistration = UICollectionView.CellRegistration<ImageTextCell, ImageTextItem> { cell, _, item in
             cell.configure(item)
         }
+        
         let placeRegistration = UICollectionView.CellRegistration<PlaceCell, PlaceItem> { cell, _, item in
             cell.configure(item)
         }
@@ -161,10 +163,16 @@ final class HomeViewController: UIViewController {
             .init(iconImage: .iconTaegeuk, organization: "소방처", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다.")
         ]
         
-        let imageTexts: [ImageTextItem] = [
-            .init(imageName: "sample1", title: "주말 축제 소식"),
-            .init(imageName: "sample2", title: "인기 스팟 모아보기"),
-            .init(imageName: "sample3", title: "야간 카페 추천"),
+        let imageTexts1: [ImageTextItem] = [
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.normal),
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.busy),
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.crowded)
+        ]
+        
+        let imageTexts2: [ImageTextItem] = [
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.normal),
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.busy),
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.crowded)
         ]
         
         let favorites: [PlaceItem] = [
@@ -180,9 +188,10 @@ final class HomeViewController: UIViewController {
         var snapshot = NSDiffableDataSourceSnapshot<HomeSection, HomeItem>()
         snapshot.appendSections(HomeSection.allCases)
         snapshot.appendItems([.region(regions)], toSection: .region)
-        snapshot.appendItems(imageTexts.map { .imageText($0) }, toSection: .imageText)
+        snapshot.appendItems(imageTexts1.map { .imageText($0) }, toSection: .recommendPlace1)
+        snapshot.appendItems(imageTexts2.map { .imageText($0) }, toSection: .recommendPlace2)
         snapshot.appendItems(favorites.map { .place($0) }, toSection: .favorites)
-        snapshot.appendItems(crowded.map { .place($0) }, toSection: .crowded)
+        snapshot.appendItems(crowded.map { .place($0) }, toSection: .congestion)
         dataSource.apply(snapshot, animatingDifferences: true)
     }
     
@@ -193,9 +202,11 @@ final class HomeViewController: UIViewController {
             switch sectionKind {
             case .region:
                 return Self.makeRegionSection(env: env)
-            case .imageText:
-                return Self.makeImageTextSection(env: env)
-            case .favorites, .crowded:
+            case .recommendPlace1:
+                return Self.makeImageTextSection(env: env, inset: true)
+            case .recommendPlace2:
+                return Self.makeImageTextSection(env: env, inset: false)
+            case .favorites, .congestion:
                 return Self.makeListSection(env: env, hasHeader: true)
             }
         }
@@ -210,28 +221,33 @@ final class HomeViewController: UIViewController {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(151)) // 컨테이너 높이
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(151))
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = .init(top: 14, leading: 16, bottom: 14, trailing: 16)
+        section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
         
         section.boundarySupplementaryItems = [self.sectionHeader()]
         
         return section
     }
     
-    private static func makeImageTextSection(env: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .absolute(180), heightDimension: .estimated(170))
+    private static func makeImageTextSection(env: NSCollectionLayoutEnvironment, inset: Bool) -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(180), heightDimension: .estimated(170))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.8), heightDimension: .absolute(180))
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior = .continuous
-        section.interGroupSpacing = 12
-        section.contentInsets = .init(top: 8, leading: 20, bottom: 8, trailing: 20)
+        if inset {
+            section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
+        } else {
+            section.contentInsets = .init(top: 0, leading: 16, bottom: 0, trailing: 16)
+        }
+        
+        section.interGroupSpacing = 14
         
         section.boundarySupplementaryItems = [self.sectionHeader()]
         
@@ -248,7 +264,7 @@ final class HomeViewController: UIViewController {
         
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = 8
-        section.contentInsets = .init(top: 8, leading: 20, bottom: 16, trailing: 20)
+        section.contentInsets = .init(top: 8, leading: 16, bottom: 16, trailing: 16)
         
         section.boundarySupplementaryItems = [self.sectionHeader()]
         
@@ -261,7 +277,7 @@ final class HomeViewController: UIViewController {
         let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: size, elementKind: TitleHeaderView.elementKind, alignment: .top)
         
         header.pinToVisibleBounds = false
-        header.contentInsets = .init(top: 8, leading: 16, bottom: 8, trailing: 16)
+        header.contentInsets = .init(top: 8, leading: 0, bottom: 8, trailing: 16)
         return header
     }
     

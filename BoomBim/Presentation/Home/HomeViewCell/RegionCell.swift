@@ -32,7 +32,7 @@ final class RegionCell: UICollectionViewCell {
     
     private let icon: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .scaleAspectFill
         
         return imageView
     }()

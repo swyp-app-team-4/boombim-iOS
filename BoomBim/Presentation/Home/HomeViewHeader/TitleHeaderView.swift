@@ -39,7 +39,7 @@ final class TitleHeaderView: UICollectionReusableView {
             imageView.bottomAnchor.constraint(equalTo: bottomAnchor),
             imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
             
-            label.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 6),
+            label.leadingAnchor.constraint(equalTo: imageView.trailingAnchor),
             label.bottomAnchor.constraint(equalTo: bottomAnchor),
             label.topAnchor.constraint(equalTo: topAnchor)
         ])
