@@ -48,9 +48,11 @@ final class NotificationViewController: BaseViewController {
     }
     
     private func setupNavigationBar() {
-        title = "알림"
+        self.title = "알림"
         
         // TODO: navigation 또는 modal의 차이에 따라서 달라질 예정
+        navigationController?.navigationBar.tintColor = .grayScale9
+        navigationController?.navigationBar.topItem?.title = ""
     }
     
     private func configureHeaderView() {

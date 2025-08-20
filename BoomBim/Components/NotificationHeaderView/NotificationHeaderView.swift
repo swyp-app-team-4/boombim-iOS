@@ -44,7 +44,7 @@ final class NotificationHeaderView: UIView {
     
     private let line: UIView = {
         let view = UIView()
-        view.backgroundColor = .grayScale8
+        view.backgroundColor = .grayScale2
         
         return view
     }()

@@ -155,6 +155,28 @@
         }
       }
     },
+    "norification.empty.button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "관심 장소 추가하기"
+          }
+        }
+      }
+    },
+    "notification.empty.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "관심 장소를 추가하고\n붐비지 않는 장소를 추천 받아 보세요"
+          }
+        }
+      }
+    },
     "notification.page.header.news" : {
       "extractionState" : "manual",
       "localizations" : {
