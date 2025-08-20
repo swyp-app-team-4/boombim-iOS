@@ -154,6 +154,28 @@
           }
         }
       }
+    },
+    "notification.page.header.news" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새소식"
+          }
+        }
+      }
+    },
+    "notification.page.header.notice" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공지/이벤트"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

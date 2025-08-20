@@ -67,23 +67,22 @@ final class HomeViewController: BaseViewController {
         let logoItem = UIBarButtonItem(customView: logoImageView)
         navigationItem.leftBarButtonItem = logoItem
         
-        let searchButton = UIBarButtonItem(
-            image: .iconSearch,
-            style: .plain,
-            target: self,
-            action: #selector(didTapSearchButton)
-        )
+        let searchButton = UIButton(type: .system)
+        searchButton.setImage(.iconSearch, for: .normal)
         searchButton.tintColor = .grayScale9
-        
-        let notificationButton = UIBarButtonItem(
-            image: .iconAlarm,
-            style: .plain,
-            target: self,
-            action: #selector(didTapNotificationButton)
-        )
+        searchButton.addTarget(self, action: #selector(didTapSearchButton), for: .touchUpInside)
+
+        let notificationButton = UIButton(type: .system)
+        notificationButton.setImage(.iconAlarm, for: .normal)
         notificationButton.tintColor = .grayScale9
-        
-        navigationItem.rightBarButtonItems = [searchButton, notificationButton]
+        notificationButton.addTarget(self, action: #selector(didTapNotificationButton), for: .touchUpInside)
+
+        let stack = UIStackView(arrangedSubviews: [notificationButton, searchButton])
+        stack.axis = .horizontal
+        stack.spacing = 12
+
+        let barItem = UIBarButtonItem(customView: stack)
+        navigationItem.rightBarButtonItem = barItem
     }
     
     private func setupFloatingButton() {
