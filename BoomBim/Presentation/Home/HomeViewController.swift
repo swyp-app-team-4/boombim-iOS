@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class HomeViewController: UIViewController {
+final class HomeViewController: BaseViewController {
     private let viewModel: HomeViewModel
     
     private var dataSource: UICollectionViewDiffableDataSource<HomeSection, HomeItem>!
@@ -68,20 +68,22 @@ final class HomeViewController: UIViewController {
         navigationItem.leftBarButtonItem = logoItem
         
         let searchButton = UIBarButtonItem(
-            image: UIImage(systemName: "magnifyingglass"),
+            image: .iconSearch,
             style: .plain,
             target: self,
             action: #selector(didTapSearchButton)
         )
+        searchButton.tintColor = .grayScale9
         
         let notificationButton = UIBarButtonItem(
-            image: UIImage(systemName: "bell"),
+            image: .iconAlarm,
             style: .plain,
             target: self,
             action: #selector(didTapNotificationButton)
         )
+        notificationButton.tintColor = .grayScale9
         
-        navigationItem.rightBarButtonItems = [notificationButton, searchButton]
+        navigationItem.rightBarButtonItems = [searchButton, notificationButton]
     }
     
     private func setupFloatingButton() {

@@ -12,6 +12,9 @@ class BaseViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         logLifeCycle("viewDidLoad")
+        
+        setNavigationBarColor()
+        setTabBarColor()
         setupTapToDismissKeyboard()
     }
 
@@ -34,7 +37,32 @@ class BaseViewController: UIViewController {
         super.viewDidDisappear(animated)
         logLifeCycle("viewDidDisappear")
     }
+    
+    // MARK: - Navigation Bar Color
+    private func setNavigationBarColor() {
+        let navigationAppearance = UINavigationBarAppearance()
+        navigationAppearance.configureWithOpaqueBackground()
+        navigationAppearance.backgroundColor = .white
+        
+        navigationController?.navigationBar.standardAppearance = navigationAppearance
+        navigationController?.navigationBar.compactAppearance = navigationAppearance
+        navigationController?.navigationBar.scrollEdgeAppearance = navigationAppearance
+    }
+    
+    // MARK: - Tab Bar Color
+    private func setTabBarColor() {
+        let tabAppearance = UITabBarAppearance()
+        tabAppearance.configureWithOpaqueBackground()
+        tabAppearance.backgroundColor = .white
+        
+        tabBarController?.tabBar.standardAppearance = tabAppearance
+        tabBarController?.tabBar.scrollEdgeAppearance = tabAppearance
+        
+        tabBarController?.tabBar.tintColor = .grayScale9
+        tabBarController?.tabBar.unselectedItemTintColor = .grayScale5
+    }
 
+    // MARK: - Log
     private func logLifeCycle(_ methodName: String) {
         let className = String(describing: type(of: self))
         print("🌀 \(className) - \(methodName)")

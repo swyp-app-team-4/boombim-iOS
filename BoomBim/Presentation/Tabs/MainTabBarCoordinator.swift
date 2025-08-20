@@ -11,7 +11,6 @@ final class MainTabBarCoordinator: Coordinator {
     var navigationController = UINavigationController()
     let tabBarController = UITabBarController()
     
-    // 🔽 여기에 Coordinator들을 프로퍼티로 보관
     private var homeCoordinator: HomeCoordinator?
     private var mapCoordinator: MapCoordinator?
     private var chatCoordinator: ChatCoordinator?
@@ -33,10 +32,10 @@ final class MainTabBarCoordinator: Coordinator {
         self.chatCoordinator = chatCoordinator
         self.myPageCoordinator = myPageCoordinator
         
-        homeNC.tabBarItem = UITabBarItem(title: "홈", image: UIImage.iconHome, selectedImage: UIImage.iconHome)
-        mapNC.tabBarItem = UITabBarItem(title: "지도", image: UIImage.iconMap, selectedImage: UIImage.iconMap)
-        chatNC.tabBarItem = UITabBarItem(title: "소통", image: UIImage.iconChat, selectedImage: UIImage.iconChat)
-        myPageNC.tabBarItem = UITabBarItem(title: "마이", image: UIImage.iconProfile, selectedImage: UIImage.iconProfile)
+        homeNC.tabBarItem = UITabBarItem(title: "", image: UIImage.iconHome, selectedImage: UIImage.iconHome)
+        mapNC.tabBarItem = UITabBarItem(title: "", image: UIImage.iconMap, selectedImage: UIImage.iconMap)
+        chatNC.tabBarItem = UITabBarItem(title: "", image: UIImage.iconChat, selectedImage: UIImage.iconChat)
+        myPageNC.tabBarItem = UITabBarItem(title: "", image: UIImage.iconProfile, selectedImage: UIImage.iconProfile)
 
         homeCoordinator.start()
         mapCoordinator.start()
