@@ -9,7 +9,7 @@ import UIKit
 
 final class RegionCardCell: UICollectionViewCell {
     
-    static let reuseID = "RegionCardCell"
+    static let identifier = "RegionCardCell"
     
     private let stackView: UIStackView = {
         let stackView = UIStackView()

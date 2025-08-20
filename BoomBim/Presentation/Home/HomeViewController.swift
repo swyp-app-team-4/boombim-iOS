@@ -99,7 +99,8 @@ final class HomeViewController: UIViewController {
     private func configureCollectionView() {
         
         collectionView.delegate = self
-        collectionView.register(RegionCardCell.self, forCellWithReuseIdentifier: RegionCardCell.reuseID)
+        collectionView.register(RegionCardCell.self, forCellWithReuseIdentifier: RegionCardCell.identifier)
+        collectionView.register(SeparatorView.self, forSupplementaryViewOfKind: SeparatorView.elementKind, withReuseIdentifier: SeparatorView.identifier)
         
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(collectionView)
@@ -141,20 +142,12 @@ final class HomeViewController: UIViewController {
             header.configure(text: title ?? "", image: image, button: showsButton, buttonHandler: {
                 print("button Action")
             })
+        }
+        
+        let separatorRegistration = UICollectionView.SupplementaryRegistration<SeparatorView>(elementKind: SeparatorView.elementKind) { separator, _, indexPath in
+            guard let section = HomeSection(rawValue: indexPath.section) else { return }
             
-//            print("indexPAth : \(indexPath.section)")
-//            if let title = section.headerTitle, let image = section.headerImage {
-//                print("title : \(title)")
-//                header.configure(image: image, text: title)
-//            } else if let title = section.headerTitle, let button = section.headerButton {
-//                print("title : \(title)")
-//                header.configure(text: title, button: button, buttonHandler: {
-//                    print("button Action")
-//                })
-//            } else if let title = section.headerTitle {
-//                print("title : \(title)")
-//                header.configure(text: title)
-//            }
+            separator.configure()
         }
         
         dataSource = UICollectionViewDiffableDataSource<HomeSection, HomeItem>(collectionView: collectionView) { collectionView, indexPath, item in
@@ -171,8 +164,25 @@ final class HomeViewController: UIViewController {
         }
         
         dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
-            guard kind == TitleHeaderView.elementKind else { return nil }
-            return collectionView.dequeueConfiguredReusableSupplementary(using: headerRegistration, for: indexPath)
+            guard let self else { return nil }
+            
+            switch kind {
+            case TitleHeaderView.elementKind:
+                return collectionView.dequeueConfiguredReusableSupplementary(using: headerRegistration, for: indexPath)
+                
+            case SeparatorView.elementKind:
+                guard let section = HomeSection(rawValue: indexPath.section) else { return nil}
+                
+                let view = collectionView.dequeueConfiguredReusableSupplementary(using: separatorRegistration, for: indexPath)
+                
+                let count = self.dataSource.snapshot().numberOfItems(inSection: section)
+                view.isHidden = (indexPath.item == count - 1) // 마지막 셀이라면 숨김
+                
+                return view
+                
+            default:
+                return nil
+            }
         }
     }
     
@@ -301,9 +311,16 @@ final class HomeViewController: UIViewController {
     
     private static func makeCongestionRankSection(env: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(90))
+        
+        let sepSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(15))
+        let sepAnchor = NSCollectionLayoutAnchor(edges: [.bottom])
+        let separator = NSCollectionLayoutSupplementaryItem(layoutSize: sepSize, elementKind: SeparatorView.elementKind, containerAnchor: sepAnchor)
+        
+        separator.contentInsets = .zero // .init(top: 14, leading: 0, bottom: 14, trailing: 0)
+        let item = NSCollectionLayoutItem(layoutSize: itemSize, supplementaryItems: [separator])
+        
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(105))
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)

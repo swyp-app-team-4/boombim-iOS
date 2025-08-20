@@ -132,7 +132,7 @@ final class CongestionRankCell: UICollectionViewCell {
             stackView.topAnchor.constraint(equalTo: contentView.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -15) // SeparatorView로 간격을 보여주기 위해서 추가
         ])
     }
     

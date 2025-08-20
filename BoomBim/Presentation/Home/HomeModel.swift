@@ -78,6 +78,16 @@ enum HomeSection: Int, CaseIterable {
         case .congestionRank: return true
         }
     }
+    
+    var cellSeparator: Bool? {
+        switch self {
+        case .region: return false
+        case .recommendPlace1: return false
+        case .recommendPlace2: return false
+        case .favoritePlace: return false
+        case .congestionRank: return true
+        }
+    }
 }
 
 enum HomeItem: Hashable {
