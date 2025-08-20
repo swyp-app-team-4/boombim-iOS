@@ -9,6 +9,8 @@ import UIKit
 
 final class NoticeViewController: UIViewController {
     
+    private var notices: [NoticeItem] = []
+    
     private let emptyStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -51,17 +53,45 @@ final class NoticeViewController: UIViewController {
         return button
     }()
     
+    private let noticeTableView: UITableView = {
+        let tableView = UITableView(frame: .zero, style: .grouped)
+        tableView.separatorStyle = .none
+        tableView.backgroundColor = .clear
+        
+        return tableView
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupView()
         setupActions()
+        
+        // dummy Data
+        notices = [
+            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.20"),
+            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.16"),
+            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.10")
+        ]
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if notices.isEmpty {
+            emptyStackView.isHidden = false
+            noticeTableView.isHidden = true
+        } else {
+            emptyStackView.isHidden = true
+            noticeTableView.isHidden = false
+        }
     }
     
     private func setupView() {
         view.backgroundColor = .white
         
         configureEmptyStackView()
+        configureTableView()
     }
     
     private func configureEmptyStackView() {
@@ -81,6 +111,22 @@ final class NoticeViewController: UIViewController {
         ])
     }
     
+    private func configureTableView() {
+        noticeTableView.delegate = self
+        noticeTableView.dataSource = self
+        noticeTableView.register(NoticeTableViewCell.self, forCellReuseIdentifier: NoticeTableViewCell.identifier)
+        
+        noticeTableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(noticeTableView)
+        
+        NSLayoutConstraint.activate([
+            noticeTableView.topAnchor.constraint(equalTo: view.topAnchor),
+            noticeTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            noticeTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            noticeTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+    
     private func setupActions() {
         setupEmptyButtonAction()
     }
@@ -91,5 +137,29 @@ final class NoticeViewController: UIViewController {
     
     @objc private func emptyButtonTapped() {
         print("empty Button Tapped")
+    }
+}
+
+extension NoticeViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        notices.count
+    }
+
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return 16
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 80
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let index = indexPath.row
+        let notice = notices[index]
+        let cell = tableView.dequeueReusableCell(withIdentifier: NoticeTableViewCell.identifier, for: indexPath) as! NoticeTableViewCell
+        
+        cell.configure(notice)
+        
+        return cell
     }
 }

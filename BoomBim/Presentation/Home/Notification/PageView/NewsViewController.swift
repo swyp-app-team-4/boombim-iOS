@@ -9,6 +9,8 @@ import UIKit
 
 final class NewsViewController: UIViewController {
     
+    private var news: [NewsItem] = []
+    
     private let emptyStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -51,17 +53,45 @@ final class NewsViewController: UIViewController {
         return button
     }()
     
+    private let newsTableView: UITableView = {
+        let tableView = UITableView(frame: .zero, style: .grouped)
+        tableView.separatorStyle = .none
+        tableView.backgroundColor = .clear
+        
+        return tableView
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupView()
         setupActions()
+        
+        // dummy Data
+        news = [
+            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다. dldldldldldl", date: "4분 전", isNoti: true),
+            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "10분 전", isNoti: false),
+            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "15분 전", isNoti: true)
+        ]
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if news.isEmpty {
+            emptyStackView.isHidden = false
+            newsTableView.isHidden = true
+        } else {
+            emptyStackView.isHidden = true
+            newsTableView.isHidden = false
+        }
     }
     
     private func setupView() {
         view.backgroundColor = .white
         
         configureEmptyStackView()
+        configureTableView()
     }
     
     private func configureEmptyStackView() {
@@ -81,6 +111,22 @@ final class NewsViewController: UIViewController {
         ])
     }
     
+    private func configureTableView() {
+        newsTableView.delegate = self
+        newsTableView.dataSource = self
+        newsTableView.register(NewsTableViewCell.self, forCellReuseIdentifier: NewsTableViewCell.identifier)
+        
+        newsTableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(newsTableView)
+        
+        NSLayoutConstraint.activate([
+            newsTableView.topAnchor.constraint(equalTo: view.topAnchor),
+            newsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            newsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            newsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+    
     private func setupActions() {
         setupEmptyButtonAction()
     }
@@ -91,5 +137,29 @@ final class NewsViewController: UIViewController {
     
     @objc private func emptyButtonTapped() {
         print("empty Button Tapped")
+    }
+}
+
+extension NewsViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        news.count
+    }
+
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return 16
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableView.automaticDimension
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let index = indexPath.row
+        let notice = news[index]
+        let cell = tableView.dequeueReusableCell(withIdentifier: NewsTableViewCell.identifier, for: indexPath) as! NewsTableViewCell
+        
+        cell.configure(notice)
+        
+        return cell
     }
 }

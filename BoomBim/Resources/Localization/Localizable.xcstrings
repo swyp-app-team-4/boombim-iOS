@@ -166,6 +166,17 @@
         }
       }
     },
+    "notification.button.money" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알리고 10원 받기"
+          }
+        }
+      }
+    },
     "notification.empty.label" : {
       "extractionState" : "manual",
       "localizations" : {
