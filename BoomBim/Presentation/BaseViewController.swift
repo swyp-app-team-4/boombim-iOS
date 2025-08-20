@@ -13,8 +13,8 @@ class BaseViewController: UIViewController {
         super.viewDidLoad()
         logLifeCycle("viewDidLoad")
         
-        setNavigationBarColor()
-        setTabBarColor()
+        setupNavigationBar()
+        setupTabBar()
         setupTapToDismissKeyboard()
     }
 
@@ -39,7 +39,7 @@ class BaseViewController: UIViewController {
     }
     
     // MARK: - Navigation Bar Color
-    private func setNavigationBarColor() {
+    private func setupNavigationBar() {
         let navigationAppearance = UINavigationBarAppearance()
         navigationAppearance.configureWithOpaqueBackground()
         navigationAppearance.backgroundColor = .white
@@ -50,7 +50,7 @@ class BaseViewController: UIViewController {
     }
     
     // MARK: - Tab Bar Color
-    private func setTabBarColor() {
+    private func setupTabBar() {
         let tabAppearance = UITabBarAppearance()
         tabAppearance.configureWithOpaqueBackground()
         tabAppearance.backgroundColor = .white

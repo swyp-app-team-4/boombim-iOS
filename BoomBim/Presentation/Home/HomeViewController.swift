@@ -45,6 +45,7 @@ final class HomeViewController: BaseViewController {
         setupView()
     }
     
+    // MARK: Setup UI
     private func setupView() {
         view.backgroundColor = .white
         
@@ -58,7 +59,6 @@ final class HomeViewController: BaseViewController {
         applyInitialSnapshot() // dummy Data
     }
     
-    // MARK: Setup UI
     private func setupNavigationBar() {
         let logoImageView = UIImageView(image: .logoText)
         logoImageView.contentMode = .scaleAspectFit

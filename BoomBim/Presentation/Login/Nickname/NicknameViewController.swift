@@ -115,7 +115,7 @@ final class NicknameViewController: BaseViewController {
     private func setupView() {
         view.backgroundColor = .white
         
-        configureNavigationBar()
+        setupNavigationBar()
         
         configureTitle()
         configureImageView()
@@ -125,11 +125,11 @@ final class NicknameViewController: BaseViewController {
         bind()
     }
     
-    private func configureNavigationBar() {
+    private func setupNavigationBar() {
         title = ""
         
-        self.navigationController?.navigationBar.tintColor = .grayScale9
-        self.navigationController?.navigationBar.topItem?.title = ""
+        navigationController?.navigationBar.tintColor = .grayScale9
+        navigationController?.navigationBar.topItem?.title = ""
     }
     
     private func configureTitle() {

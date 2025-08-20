@@ -7,14 +7,12 @@
 
 import UIKit
 
-final class NotificationViewController: UIViewController {
+final class NotificationViewController: BaseViewController {
     private let viewModel: NotificationViewModel
-    
     
     init(viewModel: NotificationViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        self.title = "알림"
     }
 
     required init?(coder: NSCoder) {
@@ -24,5 +22,15 @@ final class NotificationViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
+    }
+    
+    private func setupView() {
+        
+    }
+    
+    private func setupNavigationBar() {
+        title = ""
+        
+        
     }
 }
