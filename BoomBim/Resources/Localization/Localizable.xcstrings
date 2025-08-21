@@ -100,6 +100,61 @@
         }
       }
     },
+    "my.label.question" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "질문"
+          }
+        }
+      }
+    },
+    "my.label.vote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "투표"
+          }
+        }
+      }
+    },
+    "my.page.header.favorite" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "관심"
+          }
+        }
+      }
+    },
+    "my.page.header.question" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나의 질문"
+          }
+        }
+      }
+    },
+    "my.page.header.vote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나의 투표"
+          }
+        }
+      }
+    },
     "nickname.button.signup" : {
       "extractionState" : "manual",
       "localizations" : {
