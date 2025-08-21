@@ -166,6 +166,17 @@
         }
       }
     },
+    "notification.button.event" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이벤트"
+          }
+        }
+      }
+    },
     "notification.button.money" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -173,6 +184,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "알리고 10원 받기"
+          }
+        }
+      }
+    },
+    "notification.button.notice" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공지"
+          }
+        }
+      }
+    },
+    "notification.button.read" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모두 읽음"
           }
         }
       }

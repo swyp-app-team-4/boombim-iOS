@@ -69,9 +69,9 @@ final class NewsViewController: UIViewController {
         
         // dummy Data
         news = [
-            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다. dldldldldldl", date: "4분 전", isNoti: true),
-            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "10분 전", isNoti: false),
-            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "15분 전", isNoti: true)
+            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다. dldldldldldl", date: "4분 전", isNoti: true, isRead: false),
+            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "10분 전", isNoti: false, isRead: false),
+            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "15분 전", isNoti: true, isRead: false)
         ]
     }
     
@@ -115,6 +115,7 @@ final class NewsViewController: UIViewController {
         newsTableView.delegate = self
         newsTableView.dataSource = self
         newsTableView.register(NewsTableViewCell.self, forCellReuseIdentifier: NewsTableViewCell.identifier)
+        newsTableView.register(NewsHeaderView.self, forHeaderFooterViewReuseIdentifier: NewsHeaderView.identifier)
         
         newsTableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(newsTableView)
@@ -141,6 +142,10 @@ final class NewsViewController: UIViewController {
 }
 
 extension NewsViewController: UITableViewDelegate, UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 1
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         news.count
     }
@@ -161,5 +166,14 @@ extension NewsViewController: UITableViewDelegate, UITableViewDataSource {
         cell.configure(notice)
         
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: NewsHeaderView.identifier) as! NewsHeaderView
+        header.configure(date: "2025.05.01", buttonHandler: {
+            print("모두 읽음 탭")
+        })
+        
+        return header
     }
 }

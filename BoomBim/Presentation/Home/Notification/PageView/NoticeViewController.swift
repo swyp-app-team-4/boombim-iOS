@@ -69,9 +69,9 @@ final class NoticeViewController: UIViewController {
         
         // dummy Data
         notices = [
-            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.20"),
-            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.16"),
-            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.10")
+            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.20", isRead: false),
+            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.16", isRead: false),
+            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.10", isRead: false)
         ]
     }
     
@@ -115,6 +115,7 @@ final class NoticeViewController: UIViewController {
         noticeTableView.delegate = self
         noticeTableView.dataSource = self
         noticeTableView.register(NoticeTableViewCell.self, forCellReuseIdentifier: NoticeTableViewCell.identifier)
+        noticeTableView.register(NoticeHeaderView.self, forHeaderFooterViewReuseIdentifier: NoticeHeaderView.identifier)
         
         noticeTableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(noticeTableView)
@@ -141,6 +142,10 @@ final class NoticeViewController: UIViewController {
 }
 
 extension NoticeViewController: UITableViewDelegate, UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 1
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         notices.count
     }
@@ -161,5 +166,18 @@ extension NoticeViewController: UITableViewDelegate, UITableViewDataSource {
         cell.configure(notice)
         
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: NoticeHeaderView.identifier) as! NoticeHeaderView
+        header.configure(noticeButtonHandler: {
+            print("notice Button Tap")
+        }, eventButtonHandler: {
+            print("event Button Tap")
+        }, readButtonHandler: {
+            print("read Button Tap")
+        })
+        
+        return header
     }
 }

@@ -13,6 +13,7 @@ struct NewsItem: Hashable {
     let title: String
     let date: String
     let isNoti: Bool
+    let isRead: Bool
 }
 
 struct NoticeItem: Hashable {
@@ -20,4 +21,5 @@ struct NoticeItem: Hashable {
     let image: UIImage
     let title: String
     let date: String
+    let isRead: Bool
 }
