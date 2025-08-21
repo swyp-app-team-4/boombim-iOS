@@ -23,3 +23,11 @@ struct NoticeItem: Hashable {
     let date: String
     let isRead: Bool
 }
+
+struct AlarmItem: Decodable {
+    let alarmReId: Int
+    let title: String
+    let alarmType: String
+    let deliveryStatus: String
+    let alarmTime: String
+}

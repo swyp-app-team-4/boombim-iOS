@@ -6,9 +6,12 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class NotificationViewController: BaseViewController {
     private let viewModel: NotificationViewModel
+    private let disposeBag = DisposeBag()
     
     private let headerView = NotificationHeaderView()
     private let pageViewController: UIPageViewController = {
@@ -36,6 +39,8 @@ final class NotificationViewController: BaseViewController {
         
         setupNavigationBar()
         setupView()
+        
+        bind()
         
         bindHeaderAction()
     }
@@ -81,6 +86,41 @@ final class NotificationViewController: BaseViewController {
             pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             pageViewController.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
+    }
+    
+    // MARK: - bind
+    private func bind() {
+        viewModel.tokenResult
+            .subscribe(onNext: { result in
+                switch result {
+                case .success(let response):
+                    print("viewModel.tokenResult: \(response)")
+                    TokenManager.shared.fcmTokenUploadState = true
+                    self.viewModel.fetchAlarm()
+                case .failure(let error):
+                    print("Error register token: \(error)")
+                }
+            })
+            .disposed(by: disposeBag)
+
+        
+        viewModel.alarmResult
+            .subscribe(onNext: { result in
+                switch result {
+                case .success(let response):
+                    print("Fetched alarm: \(response)")
+                case .failure(let error):
+                    print("Error fetching alarm: \(error)")
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        guard let fcmTokenUploadState = TokenManager.shared.fcmTokenUploadState else { return }
+        if fcmTokenUploadState {
+            viewModel.fetchAlarm()
+        } else {
+            viewModel.setFcmToken()
+        }
     }
     
     // MARK: - bind Action

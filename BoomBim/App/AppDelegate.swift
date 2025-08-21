@@ -11,10 +11,12 @@ import RxKakaoSDKAuth
 import KakaoSDKAuth
 import KakaoMapsSDK
 import NidThirdPartyLogin
+import FirebaseCore
+import FirebaseMessaging
 
 @main
-class AppDelegate: UIResponder, UIApplicationDelegate {
-
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
@@ -33,6 +35,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 //        NidOAuth.shared.setLoginBehavior(.inAppBrowser)
 //        NidOAuth.shared.setLoginBehavior(.appPreferredWithInAppBrowserFallback) // default
         
+        // Firebase
+        FirebaseApp.configure()
+        // 알림 권한
+        UNUserNotificationCenter.current().delegate = self
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+            print("Notification permission:", granted)
+        }
+        
+        // 원격 알림 등록
+        UIApplication.shared.registerForRemoteNotifications()
+        
+        // FCM 토큰 콜백
+        Messaging.messaging().delegate = self
+        
         return true
     }
     
@@ -49,7 +65,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     }
-
-
 }
 
+extension AppDelegate: MessagingDelegate {
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let token = fcmToken else { return }
+        print("FCM token:", token)
+        
+        TokenManager.shared.fcmToken = token
+    }
+}

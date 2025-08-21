@@ -12,4 +12,9 @@ enum UserDefaultsKeys {
         static let expiresIn = "expiresIn"
         static let idToken = "idToken"
     }
+    
+    enum Fcm {
+        static let fcmToken = "fcmToken"
+        static let fcmTokenUpdate = "fcmTokenUpdate"
+    }
 }

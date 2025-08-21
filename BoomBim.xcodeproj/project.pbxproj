@@ -14,6 +14,8 @@
 		CF820D182E3B7B5A0048B51C /* RxKakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D172E3B7B5A0048B51C /* RxKakaoSDKCommon */; };
 		CF820D1A2E3B7B5A0048B51C /* RxKakaoSDKShare in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D192E3B7B5A0048B51C /* RxKakaoSDKShare */; };
 		CF820D1C2E3B7B5A0048B51C /* RxKakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D1B2E3B7B5A0048B51C /* RxKakaoSDKUser */; };
+		E28330722E56C0730092EAEB /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = E28330712E56C0730092EAEB /* FirebaseCore */; };
+		E28330742E56C0730092EAEB /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = E28330732E56C0730092EAEB /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,12 +48,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E28330742E56C0730092EAEB /* FirebaseMessaging in Frameworks */,
 				CF820D1C2E3B7B5A0048B51C /* RxKakaoSDKUser in Frameworks */,
 				CF820D1A2E3B7B5A0048B51C /* RxKakaoSDKShare in Frameworks */,
 				CF820D182E3B7B5A0048B51C /* RxKakaoSDKCommon in Frameworks */,
 				CF820D162E3B7B5A0048B51C /* RxKakaoSDKAuth in Frameworks */,
 				CF820D112E3B7A8D0048B51C /* NidThirdPartyLogin in Frameworks */,
 				CF820D142E3B7B5A0048B51C /* RxKakaoSDK in Frameworks */,
+				E28330722E56C0730092EAEB /* FirebaseCore in Frameworks */,
 				CF2142312E48A65900F05030 /* KakaoMapsSDK-SPM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -102,6 +106,8 @@
 				CF820D192E3B7B5A0048B51C /* RxKakaoSDKShare */,
 				CF820D1B2E3B7B5A0048B51C /* RxKakaoSDKUser */,
 				CF2142302E48A65900F05030 /* KakaoMapsSDK-SPM */,
+				E28330712E56C0730092EAEB /* FirebaseCore */,
+				E28330732E56C0730092EAEB /* FirebaseMessaging */,
 			);
 			productName = SwypTeam4;
 			productReference = CF820C872E3B72750048B51C /* BoomBim.app */;
@@ -136,6 +142,7 @@
 				CF820D0F2E3B7A8D0048B51C /* XCRemoteSwiftPackageReference "naveridlogin-sdk-ios-swift" */,
 				CF820D122E3B7B5A0048B51C /* XCRemoteSwiftPackageReference "kakao-ios-sdk-rx" */,
 				CF21422F2E48A65900F05030 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */,
+				E28330702E56C0730092EAEB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CF820C882E3B72750048B51C /* Products */;
@@ -399,6 +406,14 @@
 				minimumVersion = 2.24.6;
 			};
 		};
+		E28330702E56C0730092EAEB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -436,6 +451,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CF820D122E3B7B5A0048B51C /* XCRemoteSwiftPackageReference "kakao-ios-sdk-rx" */;
 			productName = RxKakaoSDKUser;
+		};
+		E28330712E56C0730092EAEB /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E28330702E56C0730092EAEB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		E28330732E56C0730092EAEB /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E28330702E56C0730092EAEB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
