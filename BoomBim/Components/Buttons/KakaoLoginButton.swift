@@ -19,7 +19,19 @@ final class KakaoLoginButton: UIButton {
     }
     
     private func setupButton() {
-        let image = UIImage.kakaoLoginLargeWide
-        self.setBackgroundImage(image, for: .normal)
+        backgroundColor = UIColor(hex: "#FEE500")  // 공식 카카오 노란색
+        setTitle("login.button.kakao".localized(), for: .normal)
+        setTitleColor(.black, for: .normal)
+        titleLabel?.font = Typography.Body01.medium.font
+        
+        setImage(UIImage(named: "kakao_logo"), for: .normal)
+        imageView?.contentMode = .scaleAspectFit
+        
+        semanticContentAttribute = .forceLeftToRight
+        contentEdgeInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 0)
+        
+        layer.cornerRadius = 12
+        clipsToBounds = true
     }
 }

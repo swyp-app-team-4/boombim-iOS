@@ -9,17 +9,28 @@ import RxSwift
 import RxCocoa
 
 final class LoginViewModel {
+    enum LoginRoute {
+        case nickname
+        case mainTab
+    }
+    
     struct Input {
         let kakaoTap: Observable<Void>
         let naverTap: Observable<Void>
         let appleTap: Observable<Void>
+        let withoutLoginTap: Signal<Void>
     }
 
     struct Output {
         let loginResult: Observable<Result<TokenResponse, Error>>
+//        let continueWithoutLogin: Observable<Void>
+        let route: Signal<LoginRoute>
     }
     
-    var didLoginSuccess: (() -> Void)?
+    private let routeRelay = PublishRelay<LoginRoute>()
+    var route: Signal<LoginRoute> {
+        routeRelay.asSignal()
+    }
 
     private let disposeBag = DisposeBag()
 
@@ -29,6 +40,9 @@ final class LoginViewModel {
                 KakaoLoginService().login()
                     .flatMapLatest({ tokenInfo in
                         AuthService.shared.requestLogin(type: .kakao, tokenInfo: tokenInfo)
+                    })
+                    .do(onNext: { _ in
+                        self.routeRelay.accept(.nickname)
                     })
                 .catch { .just(.failure($0)) } }
         
@@ -49,7 +63,14 @@ final class LoginViewModel {
                 .catch { .just(.failure($0)) } }
 
         let merged = Observable.merge(kakao, naver, apple)
+        
+        input.withoutLoginTap
+            .emit(onNext: { [routeRelay] in
+                routeRelay.accept(.mainTab)
+            })
+            .disposed(by: disposeBag)
 
-        return Output(loginResult: merged)
+        return Output(loginResult: merged,
+                      route: routeRelay.asSignal())
     }
 }

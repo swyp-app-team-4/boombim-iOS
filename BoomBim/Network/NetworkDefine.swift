@@ -23,4 +23,9 @@ enum NetworkDefine {
         static let keyword = "v2/local/search/keyword.json"
         static let category = "v2/local/search/category.json"
     }
+    
+    enum Fcm {
+        static let token = "api/alarm/fcm-token"
+        static let alarm = "api/alarm/history?deviceType=IOS"
+    }
 }

@@ -6,10 +6,15 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class LoginCoordinator: Coordinator {
     var navigationController: UINavigationController
-    var didFinish: (() -> Void)? // 로그인 성공 시 호출 콜백
+    private let disposeBag = DisposeBag()
+
+    private let finishedRelay = PublishRelay<Void>()
+    var finished: Signal<Void> { finishedRelay.asSignal() }
 
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -18,11 +23,33 @@ final class LoginCoordinator: Coordinator {
     func start() {
         let viewModel = LoginViewModel()
         
-        viewModel.didLoginSuccess = { [weak self] in
-            self?.didFinish?()
-        }
+        viewModel.route
+            .emit(onNext: { [weak self] route in
+                switch route {
+                case .nickname:
+                    print("route .nickname")
+                    self?.showNickname()
+                case .mainTab:
+                    print("route .home")
+                    self?.finishedRelay.accept(())
+                }
+            })
+            .disposed(by: disposeBag)
         
         let vc = LoginViewController(viewModel: viewModel)
         navigationController.setViewControllers([vc], animated: false)
+    }
+    
+    func showNickname() {
+        let viewModel = NicknameViewModel()
+        
+        viewModel.signupCompleted
+            .emit(onNext: { [weak self] in
+                self?.finishedRelay.accept(())
+            })
+            .disposed(by: disposeBag)
+        
+        let viewController = NicknameViewController(viewModel: viewModel)
+        navigationController.pushViewController(viewController, animated: true)
     }
 }

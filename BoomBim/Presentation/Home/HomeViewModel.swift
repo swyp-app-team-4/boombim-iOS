@@ -9,7 +9,7 @@ final class HomeViewModel {
     var goToCongestionReportView: (() -> Void)?
     var goToSearchView: (() -> Void)?
     var goToNotificationView: (() -> Void)?
-    var goToPlaceView: ((PlaceItem) -> Void)?
+    var goToPlaceView: ((FavoritePlaceItem) -> Void)?
     
     func didTapFloating() {
         goToCongestionReportView?()
@@ -23,7 +23,7 @@ final class HomeViewModel {
         goToNotificationView?()
     }
     
-    func didSelectPlace(_ place: PlaceItem) {
+    func didSelectPlace(_ place: FavoritePlaceItem) {
         goToPlaceView?(place)
     }
 }

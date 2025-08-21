@@ -12,6 +12,7 @@ final class TokenManager {
     
     private let defaults = UserDefaults.standard
     
+    // MARK: - Login
     var accessToken: String? {
         get { defaults.string(forKey: UserDefaultsKeys.Auth.accessToken) }
         set { defaults.setValue(newValue, forKey: UserDefaultsKeys.Auth.accessToken) }
@@ -50,6 +51,17 @@ final class TokenManager {
         defaults.removeObject(forKey: UserDefaultsKeys.Auth.refreshToken)
 //        defaults.removeObject(forKey: UserDefaultsKeys.Auth.expiresIn)
 //        defaults.removeObject(forKey: UserDefaultsKeys.Auth.idToken)
+    }
+    
+    // MARK: - FCM
+    var fcmToken: String? {
+        get { defaults.string(forKey: UserDefaultsKeys.Fcm.fcmToken) }
+        set { defaults.setValue(newValue, forKey: UserDefaultsKeys.Fcm.fcmToken) }
+    }
+    
+    var fcmTokenUploadState: Bool? {
+        get { defaults.bool(forKey: UserDefaultsKeys.Fcm.fcmTokenUpdate) }
+        set { defaults.setValue(newValue, forKey: UserDefaultsKeys.Fcm.fcmTokenUpdate) }
     }
 }
 

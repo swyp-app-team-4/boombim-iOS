@@ -21,11 +21,6 @@ final class KakaoLoginService: SocialLoginService {
                             refreshToken: token.refreshToken,
                             expiresIn: Int(token.expiresIn),
                             idToken: "") // idToken 보류
-                        print("tokenInfo : \(tokenInfo)")
-                        print("accessToken : \(token.accessToken)")
-                        print("refreshToken : \(token.refreshToken)")
-                        print("expiresIn : \(token.expiresIn)")
-                        print("idToken : \(token.idToken ?? "")")
                         observer.onNext(tokenInfo)
                         observer.onCompleted()
                     } else {
