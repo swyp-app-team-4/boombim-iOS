@@ -11,3 +11,21 @@ import UIKit
 enum FavoriteSection {
     case main
 }
+
+struct VoteItem: Hashable {
+    let id = UUID()
+    let image: UIImage
+    let title: String
+    let congestion: CongestionLevel
+    let people: Int
+    let isVoting: Bool
+}
+
+struct QuestionItem: Hashable {
+    let id = UUID()
+    let image: UIImage
+    let title: String
+    let congestion: CongestionLevel
+    let people: Int
+    let isQuesting: Bool
+}

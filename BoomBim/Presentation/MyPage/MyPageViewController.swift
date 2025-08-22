@@ -26,6 +26,8 @@ final class MyPageViewController: BaseViewController {
     init(viewModel: MyPageViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        
+        self.title = "마이페이지"
     }
 
     required init?(coder: NSCoder) {
@@ -46,7 +48,6 @@ final class MyPageViewController: BaseViewController {
     
     // MARK: Setup UI
     private func setupNavigationBar() {
-        title = "마이페이지"
         
         let settingsButton = UIBarButtonItem(
             image: .iconSetting,
