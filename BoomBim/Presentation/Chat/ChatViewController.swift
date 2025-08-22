@@ -9,6 +9,18 @@ import UIKit
 
 final class ChatViewController: UIViewController {
     private let viewModel: ChatViewModel
+    
+    private let headerView = TwoTitleHeaderView()
+    private let pageViewController: UIPageViewController = {
+        let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal, options: nil)
+        pageViewController.view.backgroundColor = .white
+        
+        return pageViewController
+    }()
+    
+    private lazy var pages: [UIViewController] = [NewsViewController(), NoticeViewController()]
+    
+    private var currentPageIndex: Int = 0
 
     init(viewModel: ChatViewModel) {
         self.viewModel = viewModel

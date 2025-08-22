@@ -45,6 +45,17 @@
         }
       }
     },
+    "chat.button.vote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "투표하기"
+          }
+        }
+      }
+    },
     "login.button.kakao" : {
       "extractionState" : "manual",
       "localizations" : {

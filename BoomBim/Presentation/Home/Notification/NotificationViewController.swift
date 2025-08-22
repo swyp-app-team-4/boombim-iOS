@@ -13,7 +13,7 @@ final class NotificationViewController: BaseViewController {
     private let viewModel: NotificationViewModel
     private let disposeBag = DisposeBag()
     
-    private let headerView = NotificationHeaderView()
+    private let headerView = TwoTitleHeaderView()
     private let pageViewController: UIPageViewController = {
         let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal, options: nil)
         pageViewController.view.backgroundColor = .white
@@ -63,6 +63,8 @@ final class NotificationViewController: BaseViewController {
     private func configureHeaderView() {
         headerView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(headerView)
+        
+        headerView.setButtonTitle(left: "notification.page.header.news".localized(), right: "notification.page.header.notice".localized())
         
         NSLayoutConstraint.activate([
             headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
