@@ -100,6 +100,61 @@
         }
       }
     },
+    "my.label.question" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "질문"
+          }
+        }
+      }
+    },
+    "my.label.vote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "투표"
+          }
+        }
+      }
+    },
+    "my.page.header.favorite" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "관심"
+          }
+        }
+      }
+    },
+    "my.page.header.question" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나의 질문"
+          }
+        }
+      }
+    },
+    "my.page.header.vote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나의 투표"
+          }
+        }
+      }
+    },
     "nickname.button.signup" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -239,6 +294,105 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "공지/이벤트"
+          }
+        }
+      }
+    },
+    "settings.button.logout" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로그아웃"
+          }
+        }
+      }
+    },
+    "settings.button.withdraw" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "회원 탈퇴"
+          }
+        }
+      }
+    },
+    "settings.label.faq" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자주 묻는 질문 (FAQ)"
+          }
+        }
+      }
+    },
+    "settings.label.guide" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "서비스 이용안내"
+          }
+        }
+      }
+    },
+    "settings.label.loginInfo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로그인 정보"
+          }
+        }
+      }
+    },
+    "settings.label.profile" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개인 정보"
+          }
+        }
+      }
+    },
+    "settings.label.push" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림 설정"
+          }
+        }
+      }
+    },
+    "settings.label.support" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "고객센터(문제신고)"
+          }
+        }
+      }
+    },
+    "settings.label.terms" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이용약관 / 개인정보 동의"
           }
         }
       }

@@ -111,6 +111,8 @@ final class CongestionRankCell: UICollectionViewCell {
         setupView()
     }
     
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    
     private func setupView() {
         contentView.backgroundColor = .white
         
@@ -167,8 +169,6 @@ final class CongestionRankCell: UICollectionViewCell {
             congestionStackView.addArrangedSubview(view)
         }
     }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func configure(_ item: CongestionRankPlaceItem) {
         imageView.image = item.image

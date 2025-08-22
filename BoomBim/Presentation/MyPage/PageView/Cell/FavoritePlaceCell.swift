@@ -1,24 +1,14 @@
 //
-//  FavoriteCell.swift
+//  FavoritePlaceCell.swift
 //  BoomBim
 //
-//  Created by 조영현 on 8/11/25.
+//  Created by 조영현 on 8/21/25.
 //
 
 import UIKit
 
-final class FavoriteCell: UICollectionViewCell {
-    static let identifier = "FavoriteCell"
-    
-    private let stackView: UIStackView = {
-        let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.alignment = .leading
-        stackView.distribution = .fillProportionally
-        stackView.spacing = 6
-        
-        return stackView
-    }()
+final class FavoritePlaceCell: UICollectionViewCell {
+    static let identifier = "FavoritePlaceCell"
     
     private lazy var imageView: UIImageView = {
         let imageView = UIImageView()
@@ -49,17 +39,24 @@ final class FavoriteCell: UICollectionViewCell {
     private let title: UILabel = {
         let label = UILabel()
         label.font = Typography.Body02.semiBold.font
-        label.textColor = .grayScale10
+        label.textColor = .grayScale1
         
         return label
     }()
     
     private let update: UILabel = {
         let label = UILabel()
-        label.font = Typography.Caption.regular.font
-        label.textColor = .grayScale8
+        label.font = Typography.Caption.medium.font
+        label.textColor = .grayScale1
         
         return label
+    }()
+    
+    private let favoriteImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = .iconFavoriteStar
+        
+        return imageView
     }()
 
     override init(frame: CGRect) {
@@ -71,38 +68,35 @@ final class FavoriteCell: UICollectionViewCell {
     private func setupView() {
         contentView.backgroundColor = .white
         
-        configureStackView()
         configureImageView()
         configureTextStackView()
     }
     
-    private func configureStackView() {
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(stackView)
+    private func configureImageView() {
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(imageView)
         
-        [imageView, textStackView].forEach { view in
+        [congestionImageView, textStackView, favoriteImageView].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
-            stackView.addArrangedSubview(view)
+            imageView.addSubview(view)
         }
         
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
-        ])
-    }
-    
-    private func configureImageView() {
-        congestionImageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.addSubview(congestionImageView)
-        
-        NSLayoutConstraint.activate([
-            imageView.heightAnchor.constraint(equalToConstant: 180),
-            imageView.widthAnchor.constraint(equalToConstant: 180),
+            imageView.topAnchor.constraint(equalTo: topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: bottomAnchor),
             
             congestionImageView.topAnchor.constraint(equalTo: imageView.topAnchor, constant: 10),
-            congestionImageView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: -10)
+            congestionImageView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: -10),
+            
+            textStackView.bottomAnchor.constraint(equalTo: imageView.bottomAnchor, constant: -12),
+            textStackView.leadingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: 11),
+            
+            favoriteImageView.bottomAnchor.constraint(equalTo: imageView.bottomAnchor, constant: -12),
+            favoriteImageView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: -10),
+            favoriteImageView.heightAnchor.constraint(equalToConstant: 34),
+            favoriteImageView.widthAnchor.constraint(equalToConstant: 34)
         ])
     }
     
