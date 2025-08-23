@@ -29,58 +29,61 @@ final class ProfileImageView: UIView {
 
     // 셀에서 호출
     func configure(with urls: [URL?]) {
-        // 1) 기존 정리
+        // 정리
         imageViews.forEach { $0.removeFromSuperview() }
         leadingConstraints.removeAll()
         imageViews.removeAll()
-
-        // 2) 개수 제한
+        
         let count = min(maxVisible, urls.count)
         guard count > 0 else { isHidden = true; return }
         isHidden = false
-
-        // 3) 생성
+        
         for i in 0..<count {
             let iv = makeAvatarView()
             addSubview(iv)
             iv.translatesAutoresizingMaskIntoConstraints = false
-
-            let leading = iv.leadingAnchor.constraint(
-                equalTo: leadingAnchor,
-                constant: CGFloat(i) * (avatarSize - overlap)
-            )
+            
+            let leading = iv.leadingAnchor.constraint(equalTo: leadingAnchor,
+                                                      constant: CGFloat(i) * (avatarSize - overlap))
             leadingConstraints.append(leading)
-
+            
             NSLayoutConstraint.activate([
                 leading,
                 iv.centerYAnchor.constraint(equalTo: centerYAnchor),
                 iv.widthAnchor.constraint(equalToConstant: avatarSize),
                 iv.heightAnchor.constraint(equalTo: iv.widthAnchor)
             ])
-
-            // 최신(오른쪽)이 위로 오도록
+            
+            // 오른쪽이 위로 오도록
             iv.layer.zPosition = CGFloat(Float(i))
-
-            // 이미지 로딩
+            
+            // ✅ placeholder 먼저 세팅
+            iv.image = .iconEmptyProfile
+            
             if let u = urls[i] {
                 // Nuke 사용 시:
-                // Nuke.loadImage(with: u, options: .init(transition: .fadeIn(duration: 0.2)), into: iv)
-                loadWithURLSession(u, into: iv) // 기본 로더
+                // let opts = ImageLoadingOptions(placeholder: placeholderImage,
+                //                                failureImage: placeholderImage,
+                //                                transition: .fadeIn(duration: 0.2))
+                // Nuke.loadImage(with: u, options: opts, into: iv)
+                
+                // 기본 URLSession 로더 사용 시:
+//                iv.boundURL = u                      // 레이스컨디션 방지용 바인딩
+//                loadWithURLSession(u, into: iv, placeholder: .iconEmptyProfile)
             } else {
-                iv.backgroundColor = .systemGray4
+                // ✅ URL이 없으면 기본 이미지 유지
+                iv.image = .iconEmptyProfile
             }
-
+            
             imageViews.append(iv)
         }
-
-        // 컨텐츠 폭 계산을 위해
+        
         invalidateIntrinsicContentSize()
         setNeedsLayout()
     }
-
+    
     override func layoutSubviews() {
         super.layoutSubviews()
-        // 원형 + 테두리
         imageViews.forEach {
             $0.layer.cornerRadius = avatarSize / 2
             $0.layer.borderWidth = 2
@@ -88,7 +91,7 @@ final class ProfileImageView: UIView {
             $0.clipsToBounds = true
         }
     }
-
+    
     private func makeAvatarView() -> UIImageView {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFill

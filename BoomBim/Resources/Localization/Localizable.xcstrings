@@ -56,6 +56,28 @@
         }
       }
     },
+    "chat.page.header.question" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내 질문"
+          }
+        }
+      }
+    },
+    "chat.page.header.vote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "투표하기"
+          }
+        }
+      }
+    },
     "login.button.kakao" : {
       "extractionState" : "manual",
       "localizations" : {

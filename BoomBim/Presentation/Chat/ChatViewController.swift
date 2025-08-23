@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class ChatViewController: UIViewController {
+final class ChatViewController: BaseViewController {
     private let viewModel: ChatViewModel
     
     private let headerView = TwoTitleHeaderView()
@@ -18,13 +18,14 @@ final class ChatViewController: UIViewController {
         return pageViewController
     }()
     
-    private lazy var pages: [UIViewController] = [NewsViewController(), NoticeViewController()]
+    private lazy var pages: [UIViewController] = [VoteChatViewController(), QuestionViewController()]
     
     private var currentPageIndex: Int = 0
 
     init(viewModel: ChatViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        
         self.title = "소통"
     }
 
@@ -34,6 +35,66 @@ final class ChatViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        
+        setupView()
+    }
+    
+    private func setupView() {
+        view.backgroundColor = . white
+        
+        configureHeaderView()
+        configurePageViewController()
+    }
+    
+    private func configureHeaderView() {
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(headerView)
+        
+        headerView.setButtonTitle(left: "chat.page.header.vote".localized(), right: "chat.page.header.question".localized())
+        
+        NSLayoutConstraint.activate([
+            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            headerView.heightAnchor.constraint(equalToConstant: 44)
+        ])
+    }
+    
+    private func configurePageViewController() {
+        pageViewController.setViewControllers([pages[currentPageIndex]], direction: .forward, animated: false, completion: nil)
+        pageViewController.dataSource = self
+        pageViewController.delegate = self
+        
+        pageViewController.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(pageViewController.view)
+        
+        NSLayoutConstraint.activate([
+            pageViewController.view.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            pageViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            pageViewController.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+    }
+}
+
+extension ChatViewController: UIPageViewControllerDataSource, UIPageViewControllerDelegate {
+    func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
+        guard let idx = pages.firstIndex(of: viewController), idx > 0 else { return nil }
+        return pages[idx - 1]
+    }
+    
+    func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
+        guard let idx = pages.firstIndex(of: viewController), idx < pages.count - 1 else { return nil }
+        return pages[idx + 1]
+    }
+    
+    // 스와이프 완료 시 헤더 상태 동기화
+    func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+        guard completed,
+              let vc = pageViewController.viewControllers?.first,
+              let idx = pages.firstIndex(of: vc) else { return }
+        
+        currentPageIndex = idx
+        headerView.updateSelection(index: idx, animated: true)
     }
 }
