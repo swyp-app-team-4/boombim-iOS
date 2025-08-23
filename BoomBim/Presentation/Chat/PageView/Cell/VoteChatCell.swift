@@ -95,17 +95,28 @@ final class VoteChatCell: UITableViewCell {
     
     private(set) var selectedIndex: Int? = nil
 //    var onChange: ((Int?) -> Void)?
-//    var onVote: ((Bool?) -> Void)?
+    
+    private var voteUIAction: UIAction?
+    var onVote: ((Int?) -> Void)?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
         setupView()
+        
+//        setButtonActions()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        onVote = nil                 // 외부 핸들러 초기화
+        selectedIndex = nil          // 필요 시 초기화
+    }
+
     
     private func setupView() {
         contentView.backgroundColor = .tableViewBackground
@@ -177,6 +188,24 @@ final class VoteChatCell: UITableViewCell {
             buttonStackView.addArrangedSubview(button)
         }
     }
+    
+    private func setButtonActions() {
+        for (i, btn) in buttons.enumerated() {
+            btn.tag = i
+            btn.addAction(UIAction { [weak self] _ in
+                self?.handleTap(index: i)
+            }, for: .touchUpInside)
+        }
+        
+        voteUIAction = UIAction { [weak self] _ in
+            guard let self else { return }
+            self.onVote?(self.selectedIndex)   // <- 선택 인덱스 전달
+            print("selectedIndex:", self.selectedIndex as Any)
+        }
+        if let action = voteUIAction {
+            voteButton.addAction(action, for: .touchUpInside)
+        }
+    }
 
     private func handleTap(index: Int) {
         selectedIndex = index
@@ -219,5 +248,18 @@ final class VoteChatCell: UITableViewCell {
         
         voteButton.backgroundColor = item.isVoting ? .main : .grayScale4
         voteButton.setTitleColor(item.isVoting ? .grayScale1 : .grayScale7, for: .normal)
+        
+        // 투표 여부에 따른 버튼 활성화
+        voteButton.isEnabled = item.isVoting
+        
+//        buttons.forEach { button in
+//            button.isEnabled = item.isVoting
+//        }
+        if item.isVoting {
+            setButtonActions()
+        } else {
+            print("button Actions disable")
+        }
     }
 }
+

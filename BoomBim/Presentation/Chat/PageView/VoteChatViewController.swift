@@ -133,6 +133,13 @@ extension VoteChatViewController: UITableViewDelegate, UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: VoteChatCell.identifier, for: indexPath) as! VoteChatCell
         
         cell.configure(vote)
+        cell.onVote = { [weak self, weak tableView] selectedIndex in
+            guard let self, let tableView, let currentIndexPath = tableView.indexPath(for: cell) // 재사용 대비, 최신 indexPath 구하기
+            else { return }
+            
+            print("vote Button Tapped : \(currentIndexPath.row)")
+            print("selectedIndex : \(selectedIndex)")
+        }
         
         return cell
     }
