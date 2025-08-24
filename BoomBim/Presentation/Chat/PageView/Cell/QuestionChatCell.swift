@@ -109,8 +109,6 @@ final class QuestionChatCell: UITableViewCell {
         configureView()
         configureCardView()
         configurePollGaugeView()
-        
-        setButtonActions()
     }
     
     private func configureView() {
