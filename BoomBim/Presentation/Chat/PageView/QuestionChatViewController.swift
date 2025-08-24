@@ -144,7 +144,18 @@ extension QuestionChatViewController: UITableViewDelegate, UITableViewDataSource
             else { return }
             
             print("vote Button Tapped : \(currentIndexPath.row)")
-//            self.viewModel.sendVote(row: ip.row, optionIndex: option)
+            let dialog = ConfirmDialogController(
+                title: "투표를 종료할까요?",
+                message: "해당 장소 모든 투표가 종료됩니다.",
+                confirmTitle: "예",
+                cancelTitle: "아니요",
+                onConfirm: { [weak self] in
+                    // self?.viewModel.endPoll() // 실제 종료 호출
+                    // self.viewModel.sendVote(row: ip.row, optionIndex: option)
+                }
+            )
+            
+            present(dialog, animated: true)
         }
         
         return cell
