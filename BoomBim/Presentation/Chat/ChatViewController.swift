@@ -18,7 +18,7 @@ final class ChatViewController: BaseViewController {
         return pageViewController
     }()
     
-    private lazy var pages: [UIViewController] = [VoteChatViewController(), QuestionViewController()]
+    private lazy var pages: [UIViewController] = [VoteChatViewController(), QuestionChatViewController()]
     
     private var currentPageIndex: Int = 0
 
@@ -37,6 +37,8 @@ final class ChatViewController: BaseViewController {
         super.viewDidLoad()
         
         setupView()
+        
+        bindHeaderAction()
     }
     
     private func setupView() {
@@ -74,6 +76,20 @@ final class ChatViewController: BaseViewController {
             pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             pageViewController.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
+    }
+    
+    // MARK: - bind Action
+    private func bindHeaderAction() {
+        headerView.backgroundColor = .clear
+        headerView.onSelectIndex = { [weak self] toIndex in
+            guard let self, toIndex != self.currentPageIndex, (0..<self.pages.count).contains(toIndex) else { return }
+            
+            let direction: UIPageViewController.NavigationDirection = (toIndex > self.currentPageIndex) ? .forward : .reverse
+            self.pageViewController.setViewControllers([self.pages[toIndex]], direction: direction, animated: true)
+            
+            self.currentPageIndex = toIndex
+            self.headerView.updateSelection(index: toIndex, animated: true)
+        }
     }
 }
 

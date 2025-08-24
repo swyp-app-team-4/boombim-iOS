@@ -68,13 +68,6 @@ final class VoteChatCell: UITableViewCell {
         return stackView
     }()
     
-    private let spacerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .clear
-        
-        return view
-    }()
-    
     private let relaxedButton = makeButton(off: .buttonUnselectedRelaxed, on: .buttonSelectedRelaxed)
     private let normalButton  = makeButton(off: .buttonUnselectedNormal,  on: .buttonSelectedNormal)
     private let busyButton   = makeButton(off: .buttonUnselectedBusy,  on: .buttonSelectedBusy)
@@ -89,6 +82,13 @@ final class VoteChatCell: UITableViewCell {
         button.layer.cornerRadius = 22
         
         return button
+    }()
+    
+    private let spacerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        
+        return view
     }()
     
     private lazy var buttons: [UIButton] = [relaxedButton, normalButton, busyButton, crowdedButton]

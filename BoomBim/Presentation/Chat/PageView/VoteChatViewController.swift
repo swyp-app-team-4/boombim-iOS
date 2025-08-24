@@ -55,11 +55,11 @@ final class VoteChatViewController: UIViewController {
         
         // dummy Data
         votes = [
-            .init(profileImage: [], people: 10, update: "5", title: "서울역", roadImage: nil, congestion: .relaxed, isVoting: true),
-            .init(profileImage: [], people: 13, update: "15", title: "강남역", roadImage: nil, congestion: .busy, isVoting: false),
-            .init(profileImage: [], people: 6, update: "25", title: "신촌역", roadImage: nil, congestion: .relaxed, isVoting: true),
-            .init(profileImage: [], people: 9, update: "35", title: "양재역", roadImage: nil, congestion: .crowded, isVoting: false),
-            .init(profileImage: [], people: 11, update: "55", title: "건대입구역", roadImage: nil, congestion: .normal, isVoting: true)
+            .init(profileImage: [nil, nil, nil], people: 10, update: "5", title: "서울역", roadImage: nil, congestion: .relaxed, isVoting: true),
+            .init(profileImage: [nil, nil], people: 13, update: "15", title: "강남역", roadImage: nil, congestion: .busy, isVoting: false),
+            .init(profileImage: [nil], people: 6, update: "25", title: "신촌역", roadImage: nil, congestion: .relaxed, isVoting: true),
+            .init(profileImage: [nil], people: 9, update: "35", title: "양재역", roadImage: nil, congestion: .crowded, isVoting: false),
+            .init(profileImage: [nil], people: 11, update: "55", title: "건대입구역", roadImage: nil, congestion: .normal, isVoting: true)
         ]
     }
     
@@ -144,4 +144,3 @@ extension VoteChatViewController: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
 }
-

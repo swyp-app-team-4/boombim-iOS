@@ -56,6 +56,17 @@
         }
       }
     },
+    "chat.button.vote.end" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "투표종료"
+          }
+        }
+      }
+    },
     "chat.page.header.question" : {
       "extractionState" : "manual",
       "localizations" : {

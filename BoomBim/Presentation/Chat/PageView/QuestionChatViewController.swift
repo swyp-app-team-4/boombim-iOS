@@ -9,7 +9,7 @@ import UIKit
 
 final class QuestionChatViewController: UIViewController {
     
-    private var news: [NewsItem] = []
+    private var questions: [QuestionChatItem] = []
     
     private let emptyStackView: UIStackView = {
         let stackView = UIStackView()
@@ -35,28 +35,15 @@ final class QuestionChatViewController: UIViewController {
         label.textColor = .grayScale10
         label.textAlignment = .center
         label.numberOfLines = 0
-        label.text = "notification.empty.label".localized()
+        label.text = "질문이 없습니다"
         
         return label
     }()
     
-    private lazy var emptyButton: UIButton = {
-        let button = UIButton()
-        button.backgroundColor = .main
-        button.setTitle("norification.empty.button".localized(), for: .normal)
-        button.setTitleColor(.grayScale1, for: .normal)
-        button.titleLabel?.font = Typography.Body02.medium.font
-        button.layer.cornerRadius = 22
-        button.layer.masksToBounds = true
-        button.contentEdgeInsets = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
-        
-        return button
-    }()
-    
-    private let newsTableView: UITableView = {
+    private let questionTableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
         tableView.separatorStyle = .none
-        tableView.backgroundColor = .clear
+        tableView.backgroundColor = .tableViewBackground
         
         return tableView
     }()
@@ -65,37 +52,37 @@ final class QuestionChatViewController: UIViewController {
         super.viewDidLoad()
         
         setupView()
-        setupActions()
         
         // dummy Data
-        news = [
-            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다. dldldldldldl", date: "4분 전", isNoti: true, isRead: false),
-            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "10분 전", isNoti: false, isRead: false),
-            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "15분 전", isNoti: true, isRead: false)
+        questions = [
+            .init(profileImage: [nil, nil, nil], people: 18, update: "5", title: "서울역", relaxed: 15, normal: 3, busy: 2, crowded: 3, isVoting: true),
+            .init(profileImage: [nil, nil], people: 38, update: "30", title: "신촌역", relaxed: 15, normal: 3, busy: 22, crowded: 36, isVoting: true),
+            .init(profileImage: [nil], people: 8, update: "45", title: "강남역", relaxed: 35, normal: 43, busy: 12, crowded: 3, isVoting: true),
+            .init(profileImage: [nil, nil, nil], people: 50, update: "55", title: "홍대입구역", relaxed: 15, normal: 3, busy: 52, crowded: 13, isVoting: true),
         ]
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        if news.isEmpty {
+        if questions.isEmpty {
             emptyStackView.isHidden = false
-            newsTableView.isHidden = true
+            questionTableView.isHidden = true
         } else {
             emptyStackView.isHidden = true
-            newsTableView.isHidden = false
+            questionTableView.isHidden = false
         }
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .tableViewBackground
         
         configureEmptyStackView()
         configureTableView()
     }
     
     private func configureEmptyStackView() {
-        [emptyIllustrationImageView, emptyTitleLabel, emptyButton].forEach { view in
+        [emptyIllustrationImageView, emptyTitleLabel].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             emptyStackView.addArrangedSubview(view)
         }
@@ -104,50 +91,31 @@ final class QuestionChatViewController: UIViewController {
         view.addSubview(emptyStackView)
         
         NSLayoutConstraint.activate([
-            emptyButton.heightAnchor.constraint(equalToConstant: 44),
-            
             emptyStackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 50),
             emptyStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
     
     private func configureTableView() {
-        newsTableView.delegate = self
-        newsTableView.dataSource = self
-        newsTableView.register(NewsTableViewCell.self, forCellReuseIdentifier: NewsTableViewCell.identifier)
-        newsTableView.register(NewsHeaderView.self, forHeaderFooterViewReuseIdentifier: NewsHeaderView.identifier)
+        questionTableView.delegate = self
+        questionTableView.dataSource = self
+        questionTableView.register(QuestionChatCell.self, forCellReuseIdentifier: QuestionChatCell.identifier)
         
-        newsTableView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(newsTableView)
+        questionTableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(questionTableView)
         
         NSLayoutConstraint.activate([
-            newsTableView.topAnchor.constraint(equalTo: view.topAnchor),
-            newsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            newsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            newsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            questionTableView.topAnchor.constraint(equalTo: view.topAnchor),
+            questionTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            questionTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            questionTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-    }
-    
-    private func setupActions() {
-        setupEmptyButtonAction()
-    }
-    
-    private func setupEmptyButtonAction() {
-        emptyButton.addTarget(self, action: #selector(emptyButtonTapped), for: .touchUpInside)
-    }
-    
-    @objc private func emptyButtonTapped() {
-        print("empty Button Tapped")
     }
 }
 
 extension QuestionChatViewController: UITableViewDelegate, UITableViewDataSource {
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        news.count
+        questions.count
     }
 
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
@@ -160,20 +128,18 @@ extension QuestionChatViewController: UITableViewDelegate, UITableViewDataSource
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let index = indexPath.row
-        let notice = news[index]
-        let cell = tableView.dequeueReusableCell(withIdentifier: NewsTableViewCell.identifier, for: indexPath) as! NewsTableViewCell
+        let question = questions[index]
+        let cell = tableView.dequeueReusableCell(withIdentifier: QuestionChatCell.identifier, for: indexPath) as! QuestionChatCell
         
-        cell.configure(notice)
+        cell.configure(question)
+        cell.onVote = { [weak self, weak cell, weak tableView] in
+            guard let self, let cell = cell, let tableView = tableView, let currentIndexPath = tableView.indexPath(for: cell)
+            else { return }
+            
+            print("vote Button Tapped : \(currentIndexPath.row)")
+//            self.viewModel.sendVote(row: ip.row, optionIndex: option)
+        }
         
         return cell
-    }
-    
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: NewsHeaderView.identifier) as! NewsHeaderView
-        header.configure(date: "2025.05.01", buttonHandler: {
-            print("모두 읽음 탭")
-        })
-        
-        return header
     }
 }
