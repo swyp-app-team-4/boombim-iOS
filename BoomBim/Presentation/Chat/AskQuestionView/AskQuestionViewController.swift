@@ -18,6 +18,8 @@ final class AskQuestionViewController: BaseViewController {
     
     private let currentLocationSubject = PublishSubject<CLLocationCoordinate2D>()
     
+    private var results: [SearchItem] = []
+    
     // MARK: - UI Components
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -30,6 +32,47 @@ final class AskQuestionViewController: BaseViewController {
     }()
     
     private let locationSearchView = LocationSearchFieldView()
+
+    // TODO: 추후 검토
+    //    private let searchBar: UISearchBar = {
+//        let searchBar = UISearchBar()
+//        searchBar.searchBarStyle = .minimal            // 기본 배경 제거
+//        searchBar.setBackgroundImage(UIImage(), for: .any, barMetrics: .default)
+//        searchBar.isTranslucent = false
+//        searchBar.backgroundColor = .grayScale1
+//        
+//        let textField = searchBar.searchTextField             // <- 진짜 텍스트필드
+//        textField.attributedPlaceholder = NSAttributedString(
+//            string: "약속된 장소를 검색해보세요.",
+//            attributes: [.foregroundColor: UIColor.placeholder]
+//        )
+//        textField.font = Typography.Body03.medium.font
+//        textField.backgroundColor = .grayScale1
+//        textField.tintColor = .grayScale7
+//        
+//        textField.layer.cornerRadius = 10
+//        textField.layer.borderWidth = 1
+//        textField.layer.borderColor = UIColor.grayScale4.cgColor
+//        textField.clipsToBounds = true
+//        
+//        textField.clearButtonMode = .whileEditing
+//        textField.returnKeyType = .search
+//        
+//        textField.leftView?.tintColor = .grayScale8
+//        textField.rightView?.tintColor = .grayScale8
+//        
+//        let cfg = UIImage.SymbolConfiguration(pointSize: 16, weight: .regular, scale: .medium)
+//        let base = UIImage(systemName: "xmark.circle.fill", withConfiguration: cfg)!
+//
+//        // 원하는 색으로 “미리” 칠해서 넣기
+//        let normal = base.withTintColor(.grayScale8, renderingMode: .alwaysOriginal)
+//        let highlighted = base.withTintColor(.grayScale6, renderingMode: .alwaysOriginal)
+//
+//        searchBar.setImage(normal,     for: .clear, state: .normal)
+//        searchBar.setImage(highlighted, for: .clear, state: .highlighted)
+//        
+//        return searchBar
+//    }()
     
     private lazy var locationButton: UIButton = {
         let button = UIButton(type: .system)
@@ -100,7 +143,7 @@ final class AskQuestionViewController: BaseViewController {
         view.backgroundColor = .white
         
         configureNavigationBar()
-        configureSearchView()
+        configureView()
     }
     
     private func configureNavigationBar() {
@@ -114,11 +157,13 @@ final class AskQuestionViewController: BaseViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
     }
     
-    private func configureSearchView() {
+    private func configureView() {
         [titleLabel, locationSearchView, locationButton, illustrationImageView, tableView, nextButton].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             self.view.addSubview(view)
         }
+        
+        tableView.dataSource = self
         
         let middleGuide = UILayoutGuide()
         view.addLayoutGuide(middleGuide)
@@ -136,6 +181,7 @@ final class AskQuestionViewController: BaseViewController {
             locationSearchView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 14),
             locationSearchView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             locationSearchView.trailingAnchor.constraint(equalTo: locationButton.leadingAnchor, constant: -8),
+            locationSearchView.heightAnchor.constraint(equalToConstant: 44),
             
             nextButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             nextButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
@@ -147,6 +193,11 @@ final class AskQuestionViewController: BaseViewController {
             middleGuide.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             middleGuide.bottomAnchor.constraint(equalTo: nextButton.topAnchor),
             
+            tableView.topAnchor.constraint(equalTo: locationSearchView.bottomAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: nextButton.topAnchor),
+            
             illustrationImageView.centerXAnchor.constraint(equalTo: middleGuide.centerXAnchor),
             illustrationImageView.centerYAnchor.constraint(equalTo: middleGuide.centerYAnchor),
             illustrationImageView.heightAnchor.constraint(greaterThanOrEqualToConstant: 185),
@@ -156,6 +207,20 @@ final class AskQuestionViewController: BaseViewController {
     
     // MARK: ViewModel binding
     private func bindViewModel() {
+        // 검색 입력
+        locationSearchView.rx.text.orEmpty
+            .bind(to: viewModel.query)
+            .disposed(by: disposeBag)
+        
+        viewModel.results
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] items in
+                self?.results = items
+                self?.tableView.reloadData()
+            })
+            .disposed(by: disposeBag)
+        
+        // 현재 위치 관련
         let input = AskQuestionViewModel.Input(
             currentLocation: currentLocationSubject.asObservable()
         )
@@ -174,9 +239,9 @@ final class AskQuestionViewController: BaseViewController {
     
     // MARK: Bind Action
     private func bindAction() {
-        locationSearchView.onTapSearch = { [weak self] in
-//            self?.viewModel.didTapSearch()
-        }
+//        locationSearchView.onTapSearch = { [weak self] in
+////            self?.viewModel.didTapSearch()
+//        }
         
         locationButton.addTarget(self, action: #selector(didTapLocation), for: .touchUpInside)
     }
@@ -251,5 +316,19 @@ extension AskQuestionViewController {
         })
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         present(alert, animated: true)
+    }
+}
+
+extension AskQuestionViewController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return results.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let item = results[indexPath.row]
+        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+        cell.textLabel?.text = item.title
+        cell.detailTextLabel?.text = item.address
+        return cell
     }
 }

@@ -55,7 +55,7 @@ final class KakaoLocalService {
         let headers: HTTPHeaders = ["Authorization": "KakaoAK \(restApiKey)"]
 
         let rectParam = "\(rect.left),\(rect.bottom),\(rect.right),\(rect.top)"
-        print("rect : \(rect.x), \(rect.y), \(rect.bottom),\(rect.left),\(rect.right),\(rect.top)")
+        print("rect : \(rect.x), \(rect.y), \(rect.bottom), \(rect.left), \(rect.right), \(rect.top)")
 
         let params: Parameters = [
             "query": "스타벅스",
@@ -94,51 +94,6 @@ final class KakaoLocalService {
             return Disposables.create { req.cancel() }
         }
     }
-    
-    /** 사용자의 위치 x,y 좌표로 카테고리 검사를 진행해서 반경 100m에 포함된 목록 중 가장 가까운 것을 표시 */
-//    func searchNearbyPlaces(x: String, y: String, radius: Int = 100, size: Int = 5) -> Single<[Place]> {
-//        let url = NetworkDefine.apiKakao + NetworkDefine.Search.category
-//        let headers: HTTPHeaders = ["Authorization": "KakaoAK \(restApiKey)"]
-//
-//        print("rect : \(x), \(y)")
-//
-//        let params: Parameters = [
-//            "category_group_code": ["MT1","CS2","PS3","SC4","AC5","PK6",
-//                                    "OL7","SW8","BK9","CT1","AG2","PO3",
-//                                    "AT4","AD5","FD6","CE7","HP8","PM9"],
-//            "x": x,
-//            "y": y,
-//            "radius": radius,
-//            "page": 1,
-//            "size": size,                 // 1~45
-//            "sort": "distance"            // 거리순(뷰포트 내)
-//        ]
-//
-//        return Single.create { single in
-//            let req = AF.request(url, method: .get, parameters: params, headers: headers)
-//                .validate()
-//                .responseDecodable(of: KakaoCategoryResponse.self) { res in
-//                    
-//                    debugPrint(res)
-//                    
-//                    switch res.result {
-//                    case .success(let dto):
-//                        let places: [Place] = dto.documents.map {
-//                            Place(id: $0.id,
-//                                  name: $0.place_name,
-//                                  coord: CLLocationCoordinate2D(latitude: Double($0.y) ?? 0,
-//                                                                longitude: Double($0.x) ?? 0),
-//                                  address: $0.road_address_name.isEmpty ? $0.address_name : $0.road_address_name,
-//                                  distance: $0.distance)
-//                        }
-//                        single(.success(places))
-//                    case .failure(let err):
-//                        single(.failure(err))
-//                    }
-//                }
-//            return Disposables.create { req.cancel() }
-//        }
-//    }
     
     // 1) 단일 코드용
     private func searchByCategory(code: String,

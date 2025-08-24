@@ -6,10 +6,12 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class LocationSearchFieldView: UIView {
 
-    private let textField: UITextField = {
+    fileprivate let textField: UITextField = {
         let textField = UITextField()
         
         textField.attributedPlaceholder = NSAttributedString(
@@ -66,6 +68,7 @@ final class LocationSearchFieldView: UIView {
 
     /** 외부에서 텍스트 세팅 */
     func setText(_ text: String?) {
+        textField.textColor = .grayScale9
         textField.text = text
     }
 
@@ -78,5 +81,21 @@ extension LocationSearchFieldView: UITextFieldDelegate {
     func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool { // 편집 시작을 가로채서 지도 화면으로
         onTapSearch?()
         return false // 키보드 열지 않음, 지도 화면으로 전환
+    }
+}
+
+extension Reactive where Base: LocationSearchFieldView {
+    /// UISearchBar처럼 쓰는 text ControlProperty
+    var text: ControlProperty<String?> {
+        let source = base.textField.rx.text
+        let sink = Binder(base) { view, value in
+            view.textField.text = value
+        }
+        return ControlProperty(values: source, valueSink: sink)
+    }
+
+    /// Return(검색) 눌렀을 때
+    var returnTap: ControlEvent<Void> {
+        base.textField.rx.controlEvent(.editingDidEndOnExit)
     }
 }
