@@ -347,7 +347,7 @@ final class HomeViewController: BaseViewController {
     
     // MARK: Action
     @objc private func didTapFloatingButton() {
-        viewModel.goToCongestionReportView?()
+        viewModel.didTapFloating()
     }
     
     @objc private func didTapSearchButton() {

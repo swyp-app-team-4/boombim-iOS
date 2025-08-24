@@ -6,5 +6,9 @@
 //
 
 final class ChatViewModel {
+    var goToQuestionView: (() -> Void)?
     
+    func didTapFloating() {
+        goToQuestionView?()
+    }
 }

@@ -18,6 +18,15 @@ final class ChatViewController: BaseViewController {
         return pageViewController
     }()
     
+    private let floatingButton: UIButton = {
+        let button = UIButton(type: .system)
+        
+        let image = UIImage.iconAskFloatingButton
+        button.setBackgroundImage(image, for: .normal)
+        
+        return button
+    }()
+    
     private lazy var pages: [UIViewController] = [VoteChatViewController(), QuestionChatViewController()]
     
     private var currentPageIndex: Int = 0
@@ -46,6 +55,8 @@ final class ChatViewController: BaseViewController {
         
         configureHeaderView()
         configurePageViewController()
+        
+        setupFloatingButton()
     }
     
     private func configureHeaderView() {
@@ -78,6 +89,18 @@ final class ChatViewController: BaseViewController {
         ])
     }
     
+    private func setupFloatingButton() {
+        view.addSubview(floatingButton)
+        floatingButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            floatingButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            floatingButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8)
+        ])
+        
+        floatingButton.addTarget(self, action: #selector(didTapFloatingButton), for: .touchUpInside)
+    }
+    
     // MARK: - bind Action
     private func bindHeaderAction() {
         headerView.backgroundColor = .clear
@@ -90,6 +113,10 @@ final class ChatViewController: BaseViewController {
             self.currentPageIndex = toIndex
             self.headerView.updateSelection(index: toIndex, animated: true)
         }
+    }
+    
+    @objc private func didTapFloatingButton() {
+        viewModel.didTapFloating()
     }
 }
 

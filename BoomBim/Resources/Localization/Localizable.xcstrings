@@ -45,6 +45,17 @@
         }
       }
     },
+    "chat.button.next" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음"
+          }
+        }
+      }
+    },
     "chat.button.vote" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -63,6 +74,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "투표종료"
+          }
+        }
+      }
+    },
+    "chat.label.question.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "어떤 장소의 혼잡도가\n궁금하신가요?"
           }
         }
       }

@@ -13,16 +13,16 @@ final class LocationSearchFieldView: UIView {
         let textField = UITextField()
         
         textField.attributedPlaceholder = NSAttributedString(
-            string: "검색",
-            attributes: [.foregroundColor: UIColor.systemGray3]
+            string: "약속된 장소를 검색해보세요.",
+            attributes: [.foregroundColor: UIColor.placeholder]
         )
-        textField.font = .systemFont(ofSize: 16)
-        textField.backgroundColor = .systemBackground
-        textField.tintColor = .systemGray3
+        textField.font = Typography.Body03.medium.font
+        textField.backgroundColor = .grayScale1
+        textField.tintColor = .grayScale7
         
-        textField.layer.cornerRadius = 16
+        textField.layer.cornerRadius = 10
         textField.layer.borderWidth = 1
-        textField.layer.borderColor = UIColor.separator.cgColor
+        textField.layer.borderColor = UIColor.grayScale4.cgColor
         textField.clearButtonMode = .whileEditing
         textField.returnKeyType = .search
         
@@ -52,10 +52,10 @@ final class LocationSearchFieldView: UIView {
         textField.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            textField.topAnchor.constraint(equalTo: topAnchor, constant: 12),
-            textField.leadingAnchor.constraint(equalTo: leadingAnchor),
+            textField.topAnchor.constraint(equalTo: topAnchor),
+            textField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
             textField.trailingAnchor.constraint(equalTo: trailingAnchor),
-            textField.heightAnchor.constraint(equalToConstant: 56),
+            textField.heightAnchor.constraint(equalToConstant: 44),
             textField.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
 
