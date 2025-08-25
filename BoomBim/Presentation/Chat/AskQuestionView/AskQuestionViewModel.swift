@@ -13,6 +13,7 @@ final class AskQuestionViewModel {
     let disposeBag = DisposeBag()
     
     var goToMapPickerView: ((CLLocationCoordinate2D) -> Void)?
+    var goToCheckPlaceView: ((Place) -> Void)?
     var backToHome: (() -> Void)?
     
     let query = BehaviorRelay<String>(value: "")
@@ -92,5 +93,10 @@ final class AskQuestionViewModel {
     func didTapShare() {
         print("didTapShare")
         backToHome?()
+    }
+
+    func didTapNextButton(place: Place) {
+        print("didTapNextButton")
+        goToCheckPlaceView?(place)
     }
 }

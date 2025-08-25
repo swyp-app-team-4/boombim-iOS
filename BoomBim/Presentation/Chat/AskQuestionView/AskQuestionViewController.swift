@@ -105,6 +105,12 @@ final class AskQuestionViewController: BaseViewController {
         setActions()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        searchTextField.becomeFirstResponder()
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
@@ -252,7 +258,10 @@ final class AskQuestionViewController: BaseViewController {
     }
     
     @objc private func didTapNextButton() {
+        guard let selectedPlace = selectedPlace else { return }
         print("selected Place : \(selectedPlace)")
+        
+        self.viewModel.didTapNextButton(place: selectedPlace)
     }
 }
 

@@ -35,6 +35,11 @@ final class AskQuestionViewCoordinator: Coordinator {
             self?.onFinish?()
         }
         
+        viewModel.goToCheckPlaceView = { [weak self] place in
+            print("goToCheckPlaceView")
+            self?.showCheckPlace(place)
+        }
+        
         navigationController.setViewControllers([viewController], animated: false)
         debugPrint(navigationController)
     }
@@ -43,6 +48,14 @@ final class AskQuestionViewCoordinator: Coordinator {
         print("showMapPicker")
         let viewModel = MapPickerViewModel(currentLocation: currentLocation)
         let viewController = MapPickerViewController(viewModel: viewModel)
+        
+        navigationController.pushViewController(viewController, animated: true)
+    }
+    
+    func showCheckPlace(_ place: Place) {
+        print("showCheckPlace")
+        let viewModel = CheckPlaceViewModel(place: place)
+        let viewController = CheckPlaceViewController(viewModel: viewModel)
         
         navigationController.pushViewController(viewController, animated: true)
     }
