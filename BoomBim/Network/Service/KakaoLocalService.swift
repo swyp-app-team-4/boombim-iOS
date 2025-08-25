@@ -96,13 +96,12 @@ final class KakaoLocalService {
     }
     
     // 1) 단일 코드용
-    private func searchByCategory(code: String,
-                                  x: Double, y: Double,
-                                  radius: Int, size: Int) -> Single<[Place]> {
+    private func searchByCategory(code: String, x: Double, y: Double, radius: Int, size: Int) -> Single<[Place]> {
         
         let url = NetworkDefine.apiKakao + NetworkDefine.Search.category
         let headers: HTTPHeaders = ["Authorization": "KakaoAK \(restApiKey)"]
-        let params: Parameters = [
+        
+        var params: Parameters = [
             "category_group_code": code, // <-- 배열 금지! 단일 문자열
             "x": "\(x)", "y": "\(y)",
             "radius": radius,
@@ -142,7 +141,7 @@ final class KakaoLocalService {
     func searchNearbyAcrossCategories(x: Double, y: Double,
                                       radius: Int = 100,
                                       limit: Int = 5,
-                                      sizePerCategory: Int = 3,
+                                      sizePerCategory: Int = 15,
                                       codes: [String] = ["MT1","CS2","PS3","SC4","AC5","PK6",
                                                          "OL7","SW8","BK9","CT1","AG2","PO3",
                                                          "AT4","AD5","FD6","CE7","HP8","PM9"]) -> Single<[Place]> {
@@ -151,7 +150,6 @@ final class KakaoLocalService {
             searchByCategory(code: code, x: x, y: y, radius: radius, size: sizePerCategory)
                 .catchAndReturn([]) // 일부 실패 무시
         }
-        
 
         // 여러 Single<[Place]> → Single<[[Place]]>로 합치기
         Single.zip(calls)
@@ -161,7 +159,7 @@ final class KakaoLocalService {
             }
             .subscribe(onSuccess: { places in
                 print("=== Places 결과 ===")
-                places.forEach { print($0) } // Place가 CustomStringConvertible 구현되어 있으면 보기 좋게 출력됨
+//                places.forEach { print($0) } // Place가 CustomStringConvertible 구현되어 있으면 보기 좋게 출력됨
             })
         
         // 핵심: Observable.zip로 바꾼 뒤 마지막에 asSingle()
@@ -174,5 +172,54 @@ final class KakaoLocalService {
                 }
                 .map { (sorted: [Place]) -> [Place] in Array(sorted.prefix(limit)) } // 상위 N개
                 .asSingle()
+    }
+    
+    // 키워드 검색
+    /// 키워드로 검색해서 기준 좌표에서 가장 가까운 N곳(기본 10) 반환
+    /// - Parameters:
+    ///   - query: 검색어
+    ///   - x: 경도 (lon)
+    ///   - y: 위도 (lat)
+    ///   - limit: 1...15 (Kakao 제한은 최대 15)
+    ///   - radius: 선택. 미터(0~20000). 주면 해당 반경 내로 제한
+    func searchByKeyword(query: String, x: Double, y: Double, limit: Int = 10, radius: Int? = nil
+    ) -> Single<[Place]> {
+        
+
+        let url = NetworkDefine.apiKakao + NetworkDefine.Search.keyword
+        let headers: HTTPHeaders = ["Authorization": "KakaoAK \(restApiKey)"]
+        
+        var params: Parameters = [
+            "query": query,
+            "x": x,                // 경도
+            "y": y,                // 위도
+            "sort": "distance",            // 거리순
+            "size": limit
+        ]
+        if let r = radius { params["radius"] = String(r) } // 0~20000
+        
+        return Single.create { single in
+            let req = AF.request(url, method: .get, parameters: params, headers: headers)
+                .validate()
+                .responseDecodable(of: KakaoKeywordResponse.self) { res in
+                    switch res.result {
+                    case .success(let dto):
+                        let places = dto.documents.map { d in
+                            Place(
+                                id: d.id,
+                                name: d.place_name,
+                                coord: .init(latitude: Double(d.y) ?? 0,
+                                             longitude: Double(d.x) ?? 0),
+                                address: d.road_address_name.isEmpty ? d.address_name : d.road_address_name,
+                                distance: Double(d.distance)
+                            )
+                        }
+                        single(.success(places))
+                    case .failure(let error):
+                        single(.failure(error))
+                    }
+                }
+            return Disposables.create { req.cancel() }
+        }
     }
 }

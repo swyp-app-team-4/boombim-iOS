@@ -16,7 +16,7 @@ final class AskQuestionViewModel {
     var backToHome: (() -> Void)?
     
     let query = BehaviorRelay<String>(value: "")
-    let results = PublishRelay<[SearchItem]>()
+    let results = BehaviorRelay<[Place]>(value: [])
     
     struct Input {
         let currentLocation: Observable<CLLocationCoordinate2D>
@@ -40,20 +40,24 @@ final class AskQuestionViewModel {
             .distinctUntilChanged()
             .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
             .subscribe(onNext: { [weak self] query in
+                print("query : \(query)")
                 self?.search(query: query)
             })
             .disposed(by: disposeBag)
     }
 
     private func search(query: String) {
-        NaverSearchService.shared.search(query: query) { [weak self] result in
-            switch result {
-            case .success(let items):
-                self?.results.accept(items)
-            case .failure(let error):
-                print("Search error: \(error.localizedDescription)")
-            }
-        }
+        guard let currentCoordinate = currentCoordinate else { return }
+        print("currentCoordinate : \(currentCoordinate.longitude),\(currentCoordinate.latitude)")
+        service.searchByKeyword(query: query, x: currentCoordinate.longitude, y: currentCoordinate.latitude)
+            .observe(on: MainScheduler.instance)
+            .subscribe(with: self, onSuccess: { owner, items in
+                print("items : \(items)")
+                owner.results.accept(items)
+            }, onFailure: { owner, error in
+                print("search error:", error)
+            })
+            .disposed(by: disposeBag)
     }
     
     func transform(input: Input) -> Output {

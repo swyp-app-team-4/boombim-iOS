@@ -18,7 +18,7 @@ final class AskQuestionViewController: BaseViewController {
     
     private let currentLocationSubject = PublishSubject<CLLocationCoordinate2D>()
     
-    private var results: [SearchItem] = []
+    private var results: [Place] = []
     
     // MARK: - UI Components
     private let titleLabel: UILabel = {
@@ -91,6 +91,8 @@ final class AskQuestionViewController: BaseViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        setLocation()
         
         setupView()
         bindAction()
@@ -216,7 +218,7 @@ final class AskQuestionViewController: BaseViewController {
             .subscribe(onNext: { [weak self] places in
                 guard let firstPlaceName = places.first?.name else { return }
                 
-                self?.searchTextField.text = firstPlaceName
+//                self?.searchTextField.text = firstPlaceName
 //                self?.locationSearchView.setText(firstPlaceName)
             })
             .disposed(by: disposeBag)
@@ -227,6 +229,7 @@ final class AskQuestionViewController: BaseViewController {
 //        locationSearchView.onTapSearch = { [weak self] in
 ////            self?.viewModel.didTapSearch()
 //        }
+        viewModel.bindSearch()
         
         locationButton.addTarget(self, action: #selector(didTapLocation), for: .touchUpInside)
     }
@@ -311,9 +314,11 @@ extension AskQuestionViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let item = results[indexPath.row]
-        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
-        cell.textLabel?.text = item.title
-        cell.detailTextLabel?.text = item.address
+        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+        cell.backgroundColor = .clear
+        cell.textLabel?.textColor = .grayScale10
+        print("item.name: \(item.name)")
+        cell.textLabel?.text = item.name
         return cell
     }
 }
