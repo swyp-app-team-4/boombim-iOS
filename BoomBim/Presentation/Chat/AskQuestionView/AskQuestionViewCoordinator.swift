@@ -55,7 +55,7 @@ final class AskQuestionViewCoordinator: Coordinator {
     
     func showCheckPlace(_ place: Place) {
         print("showCheckPlace")
-        let viewModel = CheckPlaceViewModel(place: place)
+        let viewModel = CheckPlaceViewModel(place: place, mode: .justComplete)
         
         viewModel.onComplete = { [weak self] in
             self?.onComplete?()

@@ -42,6 +42,7 @@ final class SearchPlaceCoordinator: Coordinator {
             self?.showCheckPlace(place)
         }
         
+        navigationController.pushViewController(viewController, animated: true)
 //        navigationController.setViewControllers([viewController], animated: false)
 //        debugPrint(navigationController)
     }
@@ -56,7 +57,7 @@ final class SearchPlaceCoordinator: Coordinator {
     
     func showCheckPlace(_ place: Place) {
         print("showCheckPlace")
-        let viewModel = CheckPlaceViewModel(place: place)
+        let viewModel = CheckPlaceViewModel(place: place, mode: .returnPlace)
         
         viewModel.onPlaceComplete = { [weak self] place in
             self?.onPlaceComplete?(place)

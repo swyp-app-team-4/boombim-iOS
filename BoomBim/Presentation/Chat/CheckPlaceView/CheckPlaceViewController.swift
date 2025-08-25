@@ -211,7 +211,7 @@ final class CheckPlaceViewController: BaseViewController {
     
     @objc private func didTapNextButton() {
         print("didTapNextButton")
-        viewModel.onComplete?()
+        viewModel.didTapNext()
     }
 }
 

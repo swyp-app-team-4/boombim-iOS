@@ -54,22 +54,56 @@ final class CongestionReportCoordinator: Coordinator {
         navigationController.pushViewController(viewController, animated: true)
     }
     
+//    func showSearchPlace() {
+//        guard let service = self.service else { return }
+//        
+//        let coordinator = SearchPlaceCoordinator(navigationController: navigationController)
+//        coordinator.service = service
+//        coordinator.onPlaceComplete = { [weak self] place in
+//            print("place : \(place)")
+//            self?.navigationController.popToRootViewController(animated: true)
+//        }
+//        
+//        let viewModel = SearchPlaceViewModel(service: service)
+//        let viewController = SearchPlaceViewController(viewModel: viewModel)
+//        
+//        coordinator.start()
+//        
+////        navigationController.pushViewController(viewController, animated: true)
+//    }
+    
     func showSearchPlace() {
         print("showSearchPlace")
- 
         guard let service = self.service else { return }
         
-        let coordinator = SearchPlaceCoordinator(navigationController: navigationController)
-        coordinator.service = service
-        coordinator.onPlaceComplete = { [weak self] place in
-            self?.navigationController.popToRootViewController(animated: true)
+        let childCoordinator = SearchPlaceCoordinator(navigationController: navigationController)
+        childCoordinator.service = service
+        
+        // 결과 전달
+        childCoordinator.onPlaceComplete = { [weak self, weak childCoordinator] place in
+            guard let self else { return }
+            // 필요 시 pop 완료 후 루트에 전달
+            CATransaction.begin()
+            CATransaction.setCompletionBlock {
+                // self.homeViewModel.placeSelected.accept(place)  // 예시
+            }
+            self.navigationController.popToRootViewController(animated: true)
+            CATransaction.commit()
+            
+            // child 정리
+            if let childCoordinator {
+                self.childCoordinators.removeAll { $0 === childCoordinator }
+            }
         }
         
-        let viewModel = SearchPlaceViewModel(service: service)
-        let viewController = SearchPlaceViewController(viewModel: viewModel)
+        // child 종료 시 정리
+        childCoordinator.onFinish = { [weak self, weak childCoordinator] in
+            guard let self, let childCoordinator else { return }
+            self.childCoordinators.removeAll { $0 === childCoordinator }
+        }
         
-        coordinator.start()
+        childCoordinators.append(childCoordinator)
         
-        navigationController.pushViewController(viewController, animated: true)
+        childCoordinator.start()
     }
 }

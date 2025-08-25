@@ -24,7 +24,7 @@ final class SearchPlaceViewController: BaseViewController {
     // MARK: - UI Components
     private let titleImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = .iconTime
+        imageView.image = .iconInfo
         imageView.tintColor = .grayScale9
         imageView.contentMode = .scaleAspectFit
         
@@ -126,7 +126,7 @@ final class SearchPlaceViewController: BaseViewController {
     }
     
     private func configureView() {
-        [titleLabel, searchTextField, illustrationImageView, tableView, nextButton].forEach { view in
+        [titleImageView, titleLabel, searchTextField, illustrationImageView, tableView, nextButton].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             self.view.addSubview(view)
         }
@@ -140,8 +140,13 @@ final class SearchPlaceViewController: BaseViewController {
         view.addLayoutGuide(middleGuide)
         
         NSLayoutConstraint.activate([
+            titleImageView.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            titleImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            titleImageView.widthAnchor.constraint(equalToConstant: 24),
+            titleImageView.heightAnchor.constraint(equalToConstant: 24),
+            
             titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 18),
-            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: titleImageView.trailingAnchor, constant: 1),
             titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
             searchTextField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 14),
