@@ -61,9 +61,9 @@ final class LocationSearchFieldView: UIView {
             textField.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
 
-//        // 전체 뷰 탭해도 검색 열리게
-//        let tap = UITapGestureRecognizer(target: self, action: #selector(openSearch))
-//        addGestureRecognizer(tap)
+        // 전체 뷰 탭해도 검색 열리게
+        let tap = UITapGestureRecognizer(target: self, action: #selector(openSearch))
+        addGestureRecognizer(tap)
     }
 
     /** 외부에서 텍스트 세팅 */
@@ -72,9 +72,9 @@ final class LocationSearchFieldView: UIView {
         textField.text = text
     }
 
-//    @objc private func openSearch() {
-//        onTapSearch?()
-//    }
+    @objc private func openSearch() {
+        onTapSearch?()
+    }
 }
 
 extension LocationSearchFieldView: UITextFieldDelegate {

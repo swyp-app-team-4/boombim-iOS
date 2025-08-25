@@ -31,48 +31,8 @@ final class AskQuestionViewController: BaseViewController {
         return label
     }()
     
-    private let locationSearchView = LocationSearchFieldView()
-
-    // TODO: 추후 검토
-    //    private let searchBar: UISearchBar = {
-//        let searchBar = UISearchBar()
-//        searchBar.searchBarStyle = .minimal            // 기본 배경 제거
-//        searchBar.setBackgroundImage(UIImage(), for: .any, barMetrics: .default)
-//        searchBar.isTranslucent = false
-//        searchBar.backgroundColor = .grayScale1
-//        
-//        let textField = searchBar.searchTextField             // <- 진짜 텍스트필드
-//        textField.attributedPlaceholder = NSAttributedString(
-//            string: "약속된 장소를 검색해보세요.",
-//            attributes: [.foregroundColor: UIColor.placeholder]
-//        )
-//        textField.font = Typography.Body03.medium.font
-//        textField.backgroundColor = .grayScale1
-//        textField.tintColor = .grayScale7
-//        
-//        textField.layer.cornerRadius = 10
-//        textField.layer.borderWidth = 1
-//        textField.layer.borderColor = UIColor.grayScale4.cgColor
-//        textField.clipsToBounds = true
-//        
-//        textField.clearButtonMode = .whileEditing
-//        textField.returnKeyType = .search
-//        
-//        textField.leftView?.tintColor = .grayScale8
-//        textField.rightView?.tintColor = .grayScale8
-//        
-//        let cfg = UIImage.SymbolConfiguration(pointSize: 16, weight: .regular, scale: .medium)
-//        let base = UIImage(systemName: "xmark.circle.fill", withConfiguration: cfg)!
-//
-//        // 원하는 색으로 “미리” 칠해서 넣기
-//        let normal = base.withTintColor(.grayScale8, renderingMode: .alwaysOriginal)
-//        let highlighted = base.withTintColor(.grayScale6, renderingMode: .alwaysOriginal)
-//
-//        searchBar.setImage(normal,     for: .clear, state: .normal)
-//        searchBar.setImage(highlighted, for: .clear, state: .highlighted)
-//        
-//        return searchBar
-//    }()
+//    private let locationSearchView = LocationSearchFieldView()
+    private let searchTextField = AppSearchTextField()
     
     private lazy var locationButton: UIButton = {
         let button = UIButton(type: .system)
@@ -138,6 +98,11 @@ final class AskQuestionViewController: BaseViewController {
         bindViewModel()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+    }
+    
     // MARK: Setup UI
     private func setupView() {
         view.backgroundColor = .white
@@ -158,7 +123,7 @@ final class AskQuestionViewController: BaseViewController {
     }
     
     private func configureView() {
-        [titleLabel, locationSearchView, locationButton, illustrationImageView, tableView, nextButton].forEach { view in
+        [titleLabel, /*locationSearchView*/searchTextField, locationButton, illustrationImageView, tableView, nextButton].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             self.view.addSubview(view)
         }
@@ -178,22 +143,22 @@ final class AskQuestionViewController: BaseViewController {
             locationButton.heightAnchor.constraint(equalToConstant: 44),
             locationButton.widthAnchor.constraint(equalToConstant: 44),
             
-            locationSearchView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 14),
-            locationSearchView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            locationSearchView.trailingAnchor.constraint(equalTo: locationButton.leadingAnchor, constant: -8),
-            locationSearchView.heightAnchor.constraint(equalToConstant: 44),
+            searchTextField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 14),
+            searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            searchTextField.trailingAnchor.constraint(equalTo: locationButton.leadingAnchor, constant: -8),
+            searchTextField.heightAnchor.constraint(equalToConstant: 44),
             
             nextButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             nextButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             nextButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
             nextButton.heightAnchor.constraint(equalToConstant: 44),
             
-            middleGuide.topAnchor.constraint(equalTo: locationSearchView.bottomAnchor),
+            middleGuide.topAnchor.constraint(equalTo: searchTextField.bottomAnchor),
             middleGuide.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             middleGuide.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             middleGuide.bottomAnchor.constraint(equalTo: nextButton.topAnchor),
             
-            tableView.topAnchor.constraint(equalTo: locationSearchView.bottomAnchor),
+            tableView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: nextButton.topAnchor),
@@ -208,8 +173,27 @@ final class AskQuestionViewController: BaseViewController {
     // MARK: ViewModel binding
     private func bindViewModel() {
         // 검색 입력
-        locationSearchView.rx.text.orEmpty
-            .bind(to: viewModel.query)
+//        searchTextField.rx.text.orEmpty
+//            .bind(to: viewModel.query)
+//            .disposed(by: disposeBag)
+        let textInput = searchTextField.rx.text.orEmpty
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .debounce(.milliseconds(250), scheduler: MainScheduler.instance)
+            .distinctUntilChanged()
+            .share(replay: 1)
+
+        textInput.bind(to: viewModel.query).disposed(by: disposeBag)
+
+        textInput
+            .map { $0.isEmpty }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak tableView] hidden in
+                guard let tableView = tableView else { return }
+                UIView.transition(with: tableView, duration: 0.2, options: .transitionCrossDissolve) {
+                    tableView.isHidden = hidden
+                }
+            })
             .disposed(by: disposeBag)
         
         viewModel.results
@@ -232,7 +216,8 @@ final class AskQuestionViewController: BaseViewController {
             .subscribe(onNext: { [weak self] places in
                 guard let firstPlaceName = places.first?.name else { return }
                 
-                self?.locationSearchView.setText(firstPlaceName)
+                self?.searchTextField.text = firstPlaceName
+//                self?.locationSearchView.setText(firstPlaceName)
             })
             .disposed(by: disposeBag)
     }
