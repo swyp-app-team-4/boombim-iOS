@@ -45,6 +45,94 @@
         }
       }
     },
+    "chat.button.next" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음"
+          }
+        }
+      }
+    },
+    "chat.button.vote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "투표하기"
+          }
+        }
+      }
+    },
+    "chat.button.vote.end" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "투표종료"
+          }
+        }
+      }
+    },
+    "chat.label.question.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "어떤 장소의 혼잡도가\n궁금하신가요?"
+          }
+        }
+      }
+    },
+    "chat.page.header.question" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내 질문"
+          }
+        }
+      }
+    },
+    "chat.page.header.vote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "투표하기"
+          }
+        }
+      }
+    },
+    "check.button.ask" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 위치로 질문하기"
+          }
+        }
+      }
+    },
+    "check.label.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "장소가 맞는지 확인해주세요"
+          }
+        }
+      }
+    },
     "login.button.kakao" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -294,6 +382,61 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "공지/이벤트"
+          }
+        }
+      }
+    },
+    "report.label.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "주변 상황 설명을 남겨주세요."
+          }
+        }
+      }
+    },
+    "report.label.title.info" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "주변에 있는 장소로 검색해주세요"
+          }
+        }
+      }
+    },
+    "report.label.title.location" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 위치"
+          }
+        }
+      }
+    },
+    "report.label.title.time" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 시각"
+          }
+        }
+      }
+    },
+    "report.label.title.vote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "혼잡도를 투표해주세요"
           }
         }
       }

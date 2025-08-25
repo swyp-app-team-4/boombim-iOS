@@ -59,7 +59,9 @@ final class SettingsViewController: BaseViewController {
         tableView.separatorStyle = .none
 
         tableView.register(SettingCell.self, forCellReuseIdentifier: SettingCell.identifier)
-        tableView.tableHeaderView = nil
+        
+        tableView.tableHeaderView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: 0.0, height: CGFloat.leastNonzeroMagnitude))
+        
         tableView.tableFooterView = makeFooter() // 하단 “로그아웃/회원 탈퇴”
         
         NSLayoutConstraint.activate([

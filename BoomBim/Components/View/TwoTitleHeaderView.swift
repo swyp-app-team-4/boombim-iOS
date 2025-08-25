@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class NotificationHeaderView: UIView {
+final class TwoTitleHeaderView: UIView {
     private let stackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
@@ -17,7 +17,7 @@ final class NotificationHeaderView: UIView {
         return stackView
     }()
     
-    private let newsButton: UIButton = {
+    private let leftButton: UIButton = {
         let button = UIButton()
         button.setTitle("notification.page.header.news".localized(), for: .normal)
         button.titleLabel?.font = Typography.Body02.semiBold.font
@@ -26,7 +26,7 @@ final class NotificationHeaderView: UIView {
         return button
     }()
     
-    private let noticeButton: UIButton = {
+    private let rightButton: UIButton = {
         let button = UIButton()
         button.setTitle("notification.page.header.notice".localized(), for: .normal)
         button.titleLabel?.font = Typography.Body02.medium.font
@@ -92,16 +92,16 @@ final class NotificationHeaderView: UIView {
         }
         
         NSLayoutConstraint.activate([
-            newsBadge.centerXAnchor.constraint(equalTo: newsButton.centerXAnchor),
-            newsBadge.topAnchor.constraint(equalTo: newsButton.topAnchor),
+            newsBadge.centerXAnchor.constraint(equalTo: leftButton.centerXAnchor),
+            newsBadge.topAnchor.constraint(equalTo: leftButton.topAnchor),
             
-            noticeBadge.centerXAnchor.constraint(equalTo: noticeButton.centerXAnchor),
-            noticeBadge.topAnchor.constraint(equalTo: noticeButton.topAnchor),
+            noticeBadge.centerXAnchor.constraint(equalTo: rightButton.centerXAnchor),
+            noticeBadge.topAnchor.constraint(equalTo: rightButton.topAnchor),
         ])
     }
     
     private func configureButton() {
-        [newsButton, noticeButton].forEach { button in
+        [leftButton, rightButton].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             stackView.addArrangedSubview(button)
         }
@@ -130,7 +130,7 @@ final class NotificationHeaderView: UIView {
             line.heightAnchor.constraint(equalToConstant: 1),
             
             underline.leadingAnchor.constraint(equalTo: leadingAnchor),
-            underline.widthAnchor.constraint(equalTo: newsButton.widthAnchor),
+            underline.widthAnchor.constraint(equalTo: leftButton.widthAnchor),
             underline.bottomAnchor.constraint(equalTo: bottomAnchor),
             underline.heightAnchor.constraint(equalToConstant: 2),
         ])
@@ -138,26 +138,26 @@ final class NotificationHeaderView: UIView {
     
     // MARK: - Action
     private func setupAction(){
-        newsButton.addTarget(self, action: #selector(tapNews), for: .touchUpInside)
-        noticeButton.addTarget(self, action: #selector(tapNotice), for: .touchUpInside)
+        leftButton.addTarget(self, action: #selector(tapLeft), for: .touchUpInside)
+        rightButton.addTarget(self, action: #selector(tapRight), for: .touchUpInside)
     }
 
-    @objc private func tapNews()   {
+    @objc private func tapLeft()   {
         onSelectIndex?(0)
     }
     
-    @objc private func tapNotice() {
+    @objc private func tapRight() {
         onSelectIndex?(1)
     }
 
     func updateSelection(index: Int, animated: Bool) {
         let isNews = (index == 0)
-        newsButton.setTitleColor(isNews ? .grayScale10 : .grayScale8, for: .normal)
-        newsButton.titleLabel?.font = isNews ? Typography.Body02.semiBold.font : Typography.Body02.medium.font
-        noticeButton.setTitleColor(isNews ? .grayScale8 : .grayScale10, for: .normal)
-        noticeButton.titleLabel?.font = isNews ? Typography.Body02.medium.font : Typography.Body02.semiBold.font
+        leftButton.setTitleColor(isNews ? .grayScale10 : .grayScale8, for: .normal)
+        leftButton.titleLabel?.font = isNews ? Typography.Body02.semiBold.font : Typography.Body02.medium.font
+        rightButton.setTitleColor(isNews ? .grayScale8 : .grayScale10, for: .normal)
+        rightButton.titleLabel?.font = isNews ? Typography.Body02.medium.font : Typography.Body02.semiBold.font
 
-        let target = isNews ? newsButton : noticeButton
+        let target = isNews ? leftButton : rightButton
         let changes = {
             self.underline.center.x = target.center.x
             self.underline.bounds.size.width = target.bounds.width
@@ -168,5 +168,10 @@ final class NotificationHeaderView: UIView {
 
     func setBadgeVisible(_ visible: Bool) {
         noticeBadge.isHidden = !visible
+    }
+    
+    func setButtonTitle(left: String, right: String) {
+        leftButton.setTitle(left, for: .normal)
+        rightButton.setTitle(right, for: .normal)
     }
 }

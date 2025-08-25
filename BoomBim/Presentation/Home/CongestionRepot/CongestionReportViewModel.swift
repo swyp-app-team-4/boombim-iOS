@@ -11,13 +11,19 @@ import CoreLocation
 
 final class CongestionReportViewModel {
     var goToMapPickerView: ((CLLocationCoordinate2D) -> Void)?
+    var goToSearchPlaceView: (() -> Void)?
     var backToHome: (() -> Void)?
     
-    struct Input {
-        let currentLocation: Observable<CLLocationCoordinate2D>
-    }
-    struct Output {
-        let places: Observable<[Place]>
+    // 내부 저장소 (가장 최근 선택값을 보관)
+    private let selectedPlaceRelay = BehaviorRelay<Place?>(value: nil)
+    
+    // VC에서 읽기 전용으로 구독 (메인스레드 보장)
+    var selectedPlace: Driver<Place?> { selectedPlaceRelay.asDriver() }
+    var currentSelectedPlace: Place? { selectedPlaceRelay.value }
+    
+    // Coordinator가 호출할 setter
+    func setSelectedPlace(_ place: Place) {
+        selectedPlaceRelay.accept(place)
     }
     
     private let service: KakaoLocalService
@@ -28,28 +34,10 @@ final class CongestionReportViewModel {
         self.service = service
     }
     
-    func transform(input: Input) -> Output {
-        let places = input.currentLocation
-            .take(1)
-            .flatMapLatest { [service] coord in
-                service.searchNearbyAcrossCategories(x: coord.longitude, y: coord.latitude)
-                    .asObservable()
-                    .catchAndReturn([])
-            }
-            .share(replay: 1, scope: .whileConnected)
-
-        return Output(places: places)
-    }
-    
-    func setCurrentCoordinate(_ coord: CLLocationCoordinate2D) {
-        currentCoordinate = coord
-    }
-    
     // MARK: Action
     func didTapSearch() {
         print("didTapSearch")
-        guard let currentCoordinate = self.currentCoordinate else { return }
-        goToMapPickerView?(currentCoordinate)
+        goToSearchPlaceView?()
     }
     
     func didTapExit() {
