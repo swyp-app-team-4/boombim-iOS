@@ -17,6 +17,8 @@ final class CongestionReportCoordinator: Coordinator {
     
     var service: KakaoLocalService?
     
+    private var rootViewModel: CongestionReportViewModel?
+    
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
@@ -26,6 +28,7 @@ final class CongestionReportCoordinator: Coordinator {
         guard let service = self.service else { return }
         let viewModel = CongestionReportViewModel(service: service)
         let viewController = CongestionReportViewController(viewModel: viewModel)
+        rootViewModel = viewModel
         
         viewModel.goToMapPickerView = { [weak self] location in
             print("goToMapPickerView")
@@ -54,24 +57,6 @@ final class CongestionReportCoordinator: Coordinator {
         navigationController.pushViewController(viewController, animated: true)
     }
     
-//    func showSearchPlace() {
-//        guard let service = self.service else { return }
-//        
-//        let coordinator = SearchPlaceCoordinator(navigationController: navigationController)
-//        coordinator.service = service
-//        coordinator.onPlaceComplete = { [weak self] place in
-//            print("place : \(place)")
-//            self?.navigationController.popToRootViewController(animated: true)
-//        }
-//        
-//        let viewModel = SearchPlaceViewModel(service: service)
-//        let viewController = SearchPlaceViewController(viewModel: viewModel)
-//        
-//        coordinator.start()
-//        
-////        navigationController.pushViewController(viewController, animated: true)
-//    }
-    
     func showSearchPlace() {
         print("showSearchPlace")
         guard let service = self.service else { return }
@@ -85,7 +70,7 @@ final class CongestionReportCoordinator: Coordinator {
             // 필요 시 pop 완료 후 루트에 전달
             CATransaction.begin()
             CATransaction.setCompletionBlock {
-                // self.homeViewModel.placeSelected.accept(place)  // 예시
+                self.rootViewModel?.setSelectedPlace(place)
             }
             self.navigationController.popToRootViewController(animated: true)
             CATransaction.commit()

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import KakaoMapsSDK
 import CoreLocation
 import RxSwift
 import RxCocoa
@@ -17,6 +18,13 @@ final class CongestionReportViewController: BaseViewController {
     private let locationManager = AppLocationManager.shared
     
     private let currentLocationSubject = PublishSubject<CLLocationCoordinate2D>()
+    
+    private var isMapPrepared = false
+    
+    private var mapHeightRatioConstraint: NSLayoutConstraint!
+    private var voteTopToMap: NSLayoutConstraint!
+    private var voteTopToLocation: NSLayoutConstraint!
+    private var didCallAddViews = false
     
     // MARK: - UI Components
     private let timeContainerView: UIView = {
@@ -89,6 +97,12 @@ final class CongestionReportViewController: BaseViewController {
         
         return textField
     }()
+    
+    private var mapContainer: KMViewContainer!
+    private var mapController: KMController!
+    
+    private var zoomLevel: Int = 17 // Default zoom
+    private var mapPickerPoi: Poi?
     
     private let voteContainerView: UIView = {
         let view = UIView()
@@ -195,6 +209,30 @@ final class CongestionReportViewController: BaseViewController {
         
         bindAction()
         setActions()
+        
+        bind()
+    }
+    
+    private func bind() {
+        viewModel.selectedPlace
+            .compactMap { $0 }                // nil은 무시
+        // .distinctUntilChanged()        // Place가 Equatable이면 중복 갱신 방지
+            .drive(with: self) { vc, place in
+                print("place : \(place)")
+                vc.locationTextField.text = place.name
+                
+                if !vc.isMapPrepared {
+                    // 최초 진입: 지도 준비 + 컨테이너 표시
+                    vc.showMapSection()
+                    vc.configureKakaoMap()          // prepareEngine() 호출 (아래 4번 참고)
+                    vc.isMapPrepared = true
+                    // addViews → addViewSucceeded delegate가 이어서 불립니다.
+                } else {
+                    // 이미 지도 존재: 위치/POI만 갱신
+                    vc.updateMap(for: place)
+                }
+            }
+            .disposed(by: disposeBag)
     }
     
     // MARK: Setup UI
@@ -205,6 +243,8 @@ final class CongestionReportViewController: BaseViewController {
         
         configureTime()
         configureLocation()
+        configureMapUI()
+//        configureKakaoMap()
         configureVote()
         configureTextView()
     }
@@ -280,6 +320,46 @@ final class CongestionReportViewController: BaseViewController {
         ])
     }
     
+    private func configureMapUI() {
+        mapContainer = KMViewContainer()
+        mapContainer.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(mapContainer)
+        
+        mapContainer.layer.cornerRadius = 14
+        mapContainer.clipsToBounds = true
+        
+        NSLayoutConstraint.activate([
+            mapContainer.topAnchor.constraint(equalTo: locationContainerView.bottomAnchor, constant: 10),
+            mapContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            mapContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+        ])
+        
+        // 높이 비율 제약 보관
+        mapHeightRatioConstraint = mapContainer.heightAnchor.constraint(equalTo: mapContainer.widthAnchor, multiplier: 0.4)
+        
+        // 초기 상태: 맵 숨김
+        mapContainer.isHidden = true
+        mapHeightRatioConstraint.isActive = false
+    }
+    
+    private func showMapSection() {
+        // 제약 토글
+        voteTopToLocation.isActive = false
+        voteTopToMap.isActive = true
+        mapHeightRatioConstraint.isActive = true
+
+        mapContainer.isHidden = false
+        view.layoutIfNeeded()
+        print("뷰 초기화")
+    }
+    
+    private func configureKakaoMap() {
+        print("prepareEngine() start")
+        mapController = KMController(viewContainer: mapContainer)
+        mapController.delegate = self
+        mapController.prepareEngine()
+    }
+    
     private func configureVote() {
         voteContainerView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(voteContainerView)
@@ -294,8 +374,15 @@ final class CongestionReportViewController: BaseViewController {
             voteContainerView.addSubview(view)
         }
         
+        // vote의 top 제약 두 개를 만들고 보관
+        voteTopToMap = voteContainerView.topAnchor.constraint(equalTo: mapContainer.bottomAnchor, constant: 18)
+        voteTopToLocation = voteContainerView.topAnchor.constraint(equalTo: locationContainerView.bottomAnchor, constant: 18)
+        
+        voteTopToMap.isActive = false
+        voteTopToLocation.isActive = true
+        
         NSLayoutConstraint.activate([
-            voteContainerView.topAnchor.constraint(equalTo: locationContainerView.bottomAnchor, constant: 18),
+//            voteContainerView.topAnchor.constraint(equalTo: mapContainer.bottomAnchor, constant: 18),
             voteContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             voteContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 //            voteContainerView.heightAnchor.constraint(equalToConstant: 128),
@@ -382,5 +469,173 @@ extension CongestionReportViewController: UITextViewDelegate {
     
     private func updateCounter() {
         descriptionCount.text = "\(descriptionTextView.text.count)/\(500)자"
+    }
+}
+
+// MARK: Kakao Map Camera 동작
+extension CongestionReportViewController {
+    private func moveCamera(to coord: CLLocationCoordinate2D, level: Int) {
+        guard let mapView = mapController?.getView("mapview") as? KakaoMap else { return }
+        let update = CameraUpdate.make(
+            target: MapPoint(longitude: coord.longitude, latitude: coord.latitude),
+            zoomLevel: Int(level),
+            mapView: mapView
+        )
+        
+        // ✅ 애니메이션 없이 즉시 이동
+        mapView.moveCamera(update)
+        
+        // 필요하면 이동 직후 카메라 잠그기
+        lockCamera(map: mapView)
+    }
+    
+    func lockCamera(map: KakaoMap) {
+        let toDisable: [GestureType] = [
+            .pan, .zoom, .doubleTapZoomIn, .twoFingerTapZoomOut,
+            .oneFingerZoom, .rotate, .tilt, .rotateZoom
+        ]
+        toDisable.forEach { map.setGestureEnable(type: $0, enable: false) }
+
+        let level = map.zoomLevel
+        map.cameraMinLevel = level
+        map.cameraMaxLevel = level
+    }
+}
+
+// MARK: Poi Layer 및 Style
+extension CongestionReportViewController {
+    private func setupLocationLayerAndStyle(on map: KakaoMap) {
+        let manager = map.getLabelManager()
+
+        if manager.getLabelLayer(layerID: MapPickerConstants.Picker.layerID) == nil {
+            let layer = manager.addLabelLayer(
+                option: LabelLayerOptions(
+                    layerID: MapPickerConstants.Picker.layerID,
+                    competitionType: .none,
+                    competitionUnit: .symbolFirst,
+                    orderType: .rank,
+                    zOrder: 1100
+                )
+            )
+        }
+
+        var image = UIImage.iconMapPoint
+        image = image.resized(to: CGSize(width: 40, height: 40))
+        
+        let icon = PoiIconStyle(symbol: image, anchorPoint: CGPoint(x: 0.5, y: 1.0), badges: [])
+        let perLevel = PerLevelPoiStyle(iconStyle: icon, level: 0)
+        let style = PoiStyle(styleID: MapPickerConstants.Picker.styleID, styles: [perLevel])
+        manager.addPoiStyle(style)
+    }
+
+    private func ensureLocationPoi(on map: KakaoMap, at coord: CLLocationCoordinate2D) {
+        let manager = map.getLabelManager()
+        let layer = manager.getLabelLayer(layerID: MapPickerConstants.Picker.layerID)
+        let mp = MapPoint(longitude: coord.longitude, latitude: coord.latitude)
+        
+        if let pickerPoi = mapPickerPoi {
+            layer?.removePoi(poiID: MapPickerConstants.Picker.poiID) // 기존 Poi 삭제
+            mapPickerPoi = nil
+        }
+        
+        var poiOption = PoiOptions(styleID: MapPickerConstants.Picker.styleID, poiID: MapPickerConstants.Picker.poiID)
+//        poiOption.clickable = true
+        mapPickerPoi = layer?.addPoi(option: poiOption, at: mp)
+
+        mapPickerPoi?.show()
+    }
+}
+
+// MARK: Kakao Map Delegate
+extension CongestionReportViewController: MapControllerDelegate {
+    // 인증에 성공했을 경우 호출.
+    func authenticationSucceeded() {
+        print("kakao map 인증 성공")
+
+        // ✅ 인증 직후에 1회만 직접 addViews 호출
+        guard !didCallAddViews else { return }
+        didCallAddViews = true
+        DispatchQueue.main.async { [weak self] in
+            self?.addViews()
+        }
+    }
+    
+    // 인증 실패시 호출.
+    func authenticationFailed(_ errorCode: Int, desc: String) {
+        print("error code: \(errorCode)")
+        print("desc: \(desc)")
+        switch errorCode {
+        case 400:
+            print("지도 종료(API인증 파라미터 오류)")
+            break;
+        case 401:
+            print("지도 종료(API인증 키 오류)")
+            break;
+        case 403:
+            print("지도 종료(API인증 권한 오류)")
+            break;
+        case 429:
+            print("지도 종료(API 사용쿼터 초과)")
+            break;
+        case 499:
+            print("지도 종료(네트워크 오류) 5초 후 재시도..")
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                print("retry auth...")
+                
+                self.mapController?.prepareEngine() // 인증 재시도
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    
+    func addViews() {
+        print("addViews")
+        // 여기에서 그릴 View(KakaoMap, Roadview)들을 추가한다.
+        let coord = viewModel.currentSelectedPlace?.coord ?? CLLocationCoordinate2D(latitude: 37.382605, longitude: 127.136328)
+        
+        let defaultPosition = MapPoint(
+            longitude: coord.longitude,   // 경도
+            latitude:  coord.latitude     // 위도
+        )
+        
+        // 지도(KakaoMap)를 그리기 위한 viewInfo를 생성
+        let mapviewInfo: MapviewInfo = MapviewInfo(viewName: "mapview", viewInfoName: "map", defaultPosition: defaultPosition, defaultLevel: zoomLevel)
+        
+        // KakaoMap 추가.
+        mapController?.addView(mapviewInfo)
+    }
+
+    func addViewSucceeded(_ viewName: String, viewInfoName: String) {
+        print("view Successed")
+        // Kakao Map 위치 설정
+        guard let mapview = mapController?.getView("mapview") as? KakaoMap else { return }
+        mapview.viewRect = mapContainer.bounds
+        let coord = viewModel.currentSelectedPlace?.coord ?? .init(latitude: 37.382605, longitude: 127.136328)
+        
+        setupLocationLayerAndStyle(on: mapview)
+        ensureLocationPoi(on: mapview, at: coord)
+        
+        moveCamera(to: coord, level: zoomLevel)
+    }
+    
+    // addView 실패 이벤트 delegate. 실패에 대한 오류 처리를 진행한다.
+    func addViewFailed(_ viewName: String, viewInfoName: String) {
+        print("Failed")
+    }
+    
+    func containerDidResized(_ size: CGSize) {
+        if let map = mapController?.getView("mapview") as? KakaoMap {
+            map.viewRect = CGRect(origin: .zero, size: size)
+        }
+    }
+    
+    private func updateMap(for place: Place) {
+        guard let mapview = mapController?.getView("mapview") as? KakaoMap else { return }
+        setupLocationLayerAndStyle(on: mapview)       // idempotent하게 작성됨
+        ensureLocationPoi(on: mapview, at: place.coord)
+        moveCamera(to: place.coord, level: zoomLevel)
     }
 }
