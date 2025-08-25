@@ -386,6 +386,39 @@
         }
       }
     },
+    "report.label.title.location" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 위치"
+          }
+        }
+      }
+    },
+    "report.label.title.time" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 시각"
+          }
+        }
+      }
+    },
+    "report.label.title.vote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "혼잡도를 투표해주세요"
+          }
+        }
+      }
+    },
     "settings.button.logout" : {
       "extractionState" : "manual",
       "localizations" : {

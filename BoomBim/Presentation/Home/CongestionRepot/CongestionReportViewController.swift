@@ -10,7 +10,7 @@ import CoreLocation
 import RxSwift
 import RxCocoa
 
-final class CongestionReportViewController: UIViewController {
+final class CongestionReportViewController: BaseViewController {
     private let viewModel: CongestionReportViewModel
     private let disposeBag = DisposeBag()
     
@@ -19,7 +19,129 @@ final class CongestionReportViewController: UIViewController {
     private let currentLocationSubject = PublishSubject<CLLocationCoordinate2D>()
     
     // MARK: - UI Components
-    private let locationSearchView = LocationSearchFieldView()
+    private let timeContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        
+        return view
+    }()
+    
+    private let timeImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = .iconTime
+        imageView.tintColor = .grayScale9
+        imageView.contentMode = .scaleAspectFit
+        
+        return imageView
+    }()
+    
+    private let timeTitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body02.medium.font
+        label.textColor = .grayScale10
+        label.textAlignment = .left
+        label.text = "report.label.title.time".localized()
+        label.sizeToFit()
+        
+        return label
+    }()
+    
+    private let timeLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body02.regular.font
+        label.textColor = .grayScale8
+        label.textAlignment = .left
+        label.text = AppDateFormatter.koChatDateTime.string(from: Date())
+        
+        return label
+    }()
+    
+    private let locationContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        
+        return view
+    }()
+    
+    private let locationImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = .iconPin
+        imageView.tintColor = .grayScale9
+        imageView.contentMode = .scaleAspectFit
+        
+        return imageView
+    }()
+    
+    private let locationTitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body02.medium.font
+        label.textColor = .grayScale10
+        label.textAlignment = .left
+        label.text = "report.label.title.location".localized()
+        label.sizeToFit()
+        
+        return label
+    }()
+    
+    private let locationTextField: AppSearchTextField = {
+        let textField = AppSearchTextField()
+        textField.tapOnly = true
+        
+        return textField
+    }()
+    
+    private let voteContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        
+        return view
+    }()
+    
+    private let voteImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = .iconVote
+        imageView.tintColor = .grayScale9
+        imageView.contentMode = .scaleAspectFit
+        
+        return imageView
+    }()
+    
+    private let voteTitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body02.medium.font
+        label.textColor = .grayScale10
+        label.textAlignment = .left
+        label.text = "report.label.title.vote".localized()
+        label.sizeToFit()
+        
+        return label
+    }()
+    
+    private let buttonStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .fill
+        stackView.distribution = .fillEqually
+        stackView.spacing = 8
+        
+        return stackView
+    }()
+    
+    private let relaxedButton = makeButton(off: .buttonUnselectedRelaxed, on: .buttonSelectedRelaxed)
+    private let normalButton  = makeButton(off: .buttonUnselectedNormal,  on: .buttonSelectedNormal)
+    private let busyButton   = makeButton(off: .buttonUnselectedBusy,  on: .buttonSelectedBusy)
+    private let crowdedButton = makeButton(off: .buttonUnselectedCrowded,   on: .buttonSelectedCrowded)
+    
+    private lazy var buttons: [UIButton] = [relaxedButton, normalButton, busyButton, crowdedButton]
+    
+    private static func makeButton(off: UIImage, on: UIImage) -> UIButton {
+        let button = UIButton()
+        button.setImage(off, for: .normal)
+        button.setImage(on,  for: .selected)
+        button.setImage(on,  for: [.selected, .highlighted])
+        
+        return button
+    }
     
     init(viewModel: CongestionReportViewModel) {
         self.viewModel = viewModel
@@ -33,10 +155,12 @@ final class CongestionReportViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setupUI()
-        bindAction()
-        
         bindViewModel()
+        
+        setupUI()
+        
+        bindAction()
+        setActions()
         
         setLocation()
     }
@@ -54,38 +178,153 @@ final class CongestionReportViewController: UIViewController {
             .subscribe(onNext: { [weak self] places in
                 guard let firstPlaceName = places.first?.name else { return }
                 
-                self?.locationSearchView.setText(firstPlaceName)
+                
             })
             .disposed(by: disposeBag)
     }
     
     // MARK: Setup UI
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .white
         
         configureNavigationBar()
-        configureSearchView()
+        
+        configureTime()
+        configureLocation()
+        configureVote()
     }
     
     private func configureNavigationBar() {
-        title = "혼잡도 공유"
+        self.title = "알리기"
+        
+        let backButton = UIButton(type: .system)
+        backButton.setImage(.iconLeftArrow, for: .normal)
+        backButton.tintColor = .grayScale9
+        backButton.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
     }
     
-    private func configureSearchView() {
-        view.addSubview(locationSearchView)
-        locationSearchView.translatesAutoresizingMaskIntoConstraints = false
+    private func configureTime() {
+        timeContainerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(timeContainerView)
+        
+        [timeImageView, timeTitleLabel, timeLabel].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            timeContainerView.addSubview(view)
+        }
+        
         NSLayoutConstraint.activate([
-            locationSearchView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            locationSearchView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            locationSearchView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+            timeContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            timeContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            timeContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            timeContainerView.heightAnchor.constraint(equalToConstant: 24),
+            
+            timeImageView.centerYAnchor.constraint(equalTo: timeContainerView.centerYAnchor),
+            timeImageView.leadingAnchor.constraint(equalTo: timeContainerView.leadingAnchor),
+            timeImageView.widthAnchor.constraint(equalToConstant: 18),
+            timeImageView.heightAnchor.constraint(equalToConstant: 18),
+            
+            timeTitleLabel.topAnchor.constraint(equalTo: timeContainerView.topAnchor),
+            timeTitleLabel.bottomAnchor.constraint(equalTo: timeContainerView.bottomAnchor),
+            timeTitleLabel.leadingAnchor.constraint(equalTo: timeImageView.trailingAnchor, constant: 4),
+            
+            timeLabel.topAnchor.constraint(equalTo: timeContainerView.topAnchor),
+            timeLabel.bottomAnchor.constraint(equalTo: timeContainerView.bottomAnchor),
+            timeLabel.leadingAnchor.constraint(equalTo: timeTitleLabel.trailingAnchor, constant: 10)
         ])
+    }
+    
+    private func configureLocation() {
+        locationContainerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(locationContainerView)
+        
+        [locationImageView, locationTitleLabel, locationTextField].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            locationContainerView.addSubview(view)
+        }
+        
+        NSLayoutConstraint.activate([
+            locationContainerView.topAnchor.constraint(equalTo: timeContainerView.bottomAnchor, constant: 18),
+            locationContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            locationContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            locationContainerView.heightAnchor.constraint(equalToConstant: 80),
+            
+            locationImageView.centerYAnchor.constraint(equalTo: locationTitleLabel.centerYAnchor),
+            locationImageView.leadingAnchor.constraint(equalTo: locationContainerView.leadingAnchor),
+            locationImageView.widthAnchor.constraint(equalToConstant: 18),
+            locationImageView.heightAnchor.constraint(equalToConstant: 18),
+            
+            locationTitleLabel.topAnchor.constraint(equalTo: locationContainerView.topAnchor),
+            locationTitleLabel.leadingAnchor.constraint(equalTo: timeImageView.trailingAnchor, constant: 4),
+            
+            locationTextField.topAnchor.constraint(equalTo: locationTitleLabel.bottomAnchor, constant: 10),
+            locationTextField.bottomAnchor.constraint(equalTo: locationContainerView.bottomAnchor),
+            locationTextField.leadingAnchor.constraint(equalTo: locationContainerView.leadingAnchor),
+            locationTextField.trailingAnchor.constraint(equalTo: locationContainerView.trailingAnchor),
+        ])
+    }
+    
+    private func configureVote() {
+        voteContainerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(voteContainerView)
+        
+        buttons.forEach { button in
+            button.translatesAutoresizingMaskIntoConstraints = false
+            buttonStackView.addArrangedSubview(button)
+        }
+        
+        [voteImageView, voteTitleLabel, buttonStackView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            voteContainerView.addSubview(view)
+        }
+        
+        NSLayoutConstraint.activate([
+            voteContainerView.topAnchor.constraint(equalTo: locationContainerView.bottomAnchor, constant: 18),
+            voteContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            voteContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            voteContainerView.heightAnchor.constraint(equalToConstant: 128),
+            
+            voteImageView.centerYAnchor.constraint(equalTo: voteTitleLabel.centerYAnchor),
+            voteImageView.leadingAnchor.constraint(equalTo: voteContainerView.leadingAnchor),
+            voteImageView.widthAnchor.constraint(equalToConstant: 18),
+            voteImageView.heightAnchor.constraint(equalToConstant: 18),
+            
+            voteTitleLabel.topAnchor.constraint(equalTo: voteContainerView.topAnchor),
+            voteTitleLabel.leadingAnchor.constraint(equalTo: voteImageView.trailingAnchor, constant: 4),
+            
+            buttonStackView.topAnchor.constraint(equalTo: voteTitleLabel.bottomAnchor, constant: 10),
+            buttonStackView.bottomAnchor.constraint(equalTo: voteContainerView.bottomAnchor),
+            buttonStackView.leadingAnchor.constraint(equalTo: voteContainerView.leadingAnchor),
+            buttonStackView.trailingAnchor.constraint(equalTo: voteContainerView.trailingAnchor),
+        ])
+        
+        buttonSetting()
+    }
+    
+    private func buttonSetting() {
+        buttons.forEach { button in
+            button.isSelected = true // 처음에 모두가 선택되어 on 된 상태 유지
+        }
     }
     
     // MARK: Bind Action
     private func bindAction() {
-        locationSearchView.onTapSearch = { [weak self] in
-            self?.viewModel.didTapSearch()
+        
+    }
+    
+    private func setActions() {
+        didTapLocation()
+    }
+    
+    private func didTapLocation() {
+        locationTextField.onTap = { [weak self] in
+            print("화면 이동")
         }
+    }
+    
+    @objc private func didTapClose() {
+        dismiss(animated: true)
     }
 }
 
