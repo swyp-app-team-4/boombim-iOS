@@ -119,7 +119,7 @@ final class VoteChatCell: UITableViewCell {
 
     
     private func setupView() {
-        contentView.backgroundColor = .tableViewBackground
+        contentView.backgroundColor = .white
         
         configureView()
         configureCardView()

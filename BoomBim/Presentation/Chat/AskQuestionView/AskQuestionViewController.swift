@@ -18,7 +18,8 @@ final class AskQuestionViewController: BaseViewController {
     
     private let currentLocationSubject = PublishSubject<CLLocationCoordinate2D>()
     
-    private var results: [Place] = []
+    private var places: [Place] = []
+    private var selectedPlace: Place?
     
     // MARK: - UI Components
     private let titleLabel: UILabel = {
@@ -62,6 +63,7 @@ final class AskQuestionViewController: BaseViewController {
     
     private let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
+        tableView.separatorStyle = .none
         tableView.backgroundColor = .white
         
         return tableView
@@ -76,6 +78,7 @@ final class AskQuestionViewController: BaseViewController {
 //        button.setTitleColor(.grayScale1, for: .normal)
 //        button.backgroundColor = .main
         button.layer.cornerRadius = 10
+        button.isEnabled = false
         
         return button
     }()
@@ -95,9 +98,11 @@ final class AskQuestionViewController: BaseViewController {
         setLocation()
         
         setupView()
-        bindAction()
         
         bindViewModel()
+        
+        bindAction()
+        setActions()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -130,7 +135,10 @@ final class AskQuestionViewController: BaseViewController {
             self.view.addSubview(view)
         }
         
+        tableView.delegate = self
         tableView.dataSource = self
+        tableView.register(PlaceTableViewCell.self, forCellReuseIdentifier: PlaceTableViewCell.identifier)
+        tableView.tableHeaderView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: 0.0, height: CGFloat.leastNonzeroMagnitude))
         
         let middleGuide = UILayoutGuide()
         view.addLayoutGuide(middleGuide)
@@ -161,8 +169,8 @@ final class AskQuestionViewController: BaseViewController {
             middleGuide.bottomAnchor.constraint(equalTo: nextButton.topAnchor),
             
             tableView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             tableView.bottomAnchor.constraint(equalTo: nextButton.topAnchor),
             
             illustrationImageView.centerXAnchor.constraint(equalTo: middleGuide.centerXAnchor),
@@ -201,7 +209,7 @@ final class AskQuestionViewController: BaseViewController {
         viewModel.results
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] items in
-                self?.results = items
+                self?.places = items
                 self?.tableView.reloadData()
             })
             .disposed(by: disposeBag)
@@ -216,22 +224,23 @@ final class AskQuestionViewController: BaseViewController {
         output.places
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] places in
-                guard let firstPlaceName = places.first?.name else { return }
+                guard let firstPlace = places.first else { return }
                 
-//                self?.searchTextField.text = firstPlaceName
-//                self?.locationSearchView.setText(firstPlaceName)
+                // TODO: Location 버튼 눌렀을 때만 동작하게
+//                self?.selectedPlace = firstPlace
+//                self?.searchTextField.text = firstPlace.name
             })
             .disposed(by: disposeBag)
     }
     
     // MARK: Bind Action
     private func bindAction() {
-//        locationSearchView.onTapSearch = { [weak self] in
-////            self?.viewModel.didTapSearch()
-//        }
         viewModel.bindSearch()
-        
+    }
+    
+    private func setActions() {
         locationButton.addTarget(self, action: #selector(didTapLocation), for: .touchUpInside)
+        nextButton.addTarget(self, action:  #selector(didTapNextButton), for: .touchUpInside)
     }
     
     @objc private func didTapLocation() {
@@ -240,6 +249,10 @@ final class AskQuestionViewController: BaseViewController {
     
     @objc private func didTapClose() {
         dismiss(animated: true)
+    }
+    
+    @objc private func didTapNextButton() {
+        print("selected Place : \(selectedPlace)")
     }
 }
 
@@ -307,18 +320,29 @@ extension AskQuestionViewController {
     }
 }
 
-extension AskQuestionViewController: UITableViewDataSource {
+extension AskQuestionViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return results.count
+        return places.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let item = results[indexPath.row]
-        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        cell.backgroundColor = .clear
-        cell.textLabel?.textColor = .grayScale10
-        print("item.name: \(item.name)")
-        cell.textLabel?.text = item.name
+        let index = indexPath.row
+        let place = places[index].name
+        let cell = tableView.dequeueReusableCell(withIdentifier: PlaceTableViewCell.identifier, for: indexPath) as! PlaceTableViewCell
+        
+        cell.configure(title: place)
+        
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let index = indexPath.row
+        
+        searchTextField.text = places[index].name
+        self.selectedPlace = places[index]
+        
+        nextButton.isEnabled = true
+        nextButton.setTitleColor(.grayScale1, for: .normal)
+        nextButton.backgroundColor = .main
     }
 }
