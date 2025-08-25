@@ -11,6 +11,7 @@ import CoreLocation
 final class AskQuestionViewCoordinator: Coordinator {
     var navigationController: UINavigationController
     
+    var onComplete: (() -> Void)?
     var onFinish: (() -> Void)?
     
     var service: KakaoLocalService?
@@ -55,6 +56,11 @@ final class AskQuestionViewCoordinator: Coordinator {
     func showCheckPlace(_ place: Place) {
         print("showCheckPlace")
         let viewModel = CheckPlaceViewModel(place: place)
+        
+        viewModel.onComplete = { [weak self] in
+            self?.onComplete?()
+        }
+        
         let viewController = CheckPlaceViewController(viewModel: viewModel)
         
         navigationController.pushViewController(viewController, animated: true)

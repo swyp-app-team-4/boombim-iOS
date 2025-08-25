@@ -118,6 +118,17 @@ final class ChatViewController: BaseViewController {
     @objc private func didTapFloatingButton() {
         viewModel.didTapFloating()
     }
+    
+    func showPage(_ page: Int, animated: Bool = false) {
+        let target = page
+        print("target: \(target), current: \(currentPageIndex)")
+        guard target != currentPageIndex else { return }
+        
+        let dir: UIPageViewController.NavigationDirection = target > currentPageIndex ? .forward : .reverse
+        currentPageIndex = target
+        headerView.updateSelection(index: target, animated: true)
+        pageViewController.setViewControllers([pages[target]], direction: dir, animated: animated)
+    }
 }
 
 extension ChatViewController: UIPageViewControllerDataSource, UIPageViewControllerDelegate {

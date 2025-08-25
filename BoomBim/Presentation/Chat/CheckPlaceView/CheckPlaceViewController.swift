@@ -53,7 +53,7 @@ final class CheckPlaceViewController: BaseViewController {
         button.setTitleColor(.grayScale1, for: .normal)
         button.backgroundColor = .main
         button.layer.cornerRadius = 10
-        button.isEnabled = false
+        button.isEnabled = true
         
         return button
     }()
@@ -86,6 +86,7 @@ final class CheckPlaceViewController: BaseViewController {
         setupUI()
         
         setText()
+        setActions()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -201,6 +202,16 @@ final class CheckPlaceViewController: BaseViewController {
     
     @objc private func didTapBack() {
         navigationController?.popViewController(animated: true)
+    }
+    
+    private func setActions() {
+        print("setActions")
+        nextButton.addTarget(self, action:  #selector(didTapNextButton), for: .touchUpInside)
+    }
+    
+    @objc private func didTapNextButton() {
+        print("didTapNextButton")
+        viewModel.onComplete?()
     }
 }
 
