@@ -13,6 +13,8 @@ final class CongestionReportCoordinator: Coordinator {
     
     var onFinish: (() -> Void)?
     
+    var childCoordinators: [Coordinator] = []
+    
     var service: KakaoLocalService?
     
     init(navigationController: UINavigationController) {
@@ -35,6 +37,11 @@ final class CongestionReportCoordinator: Coordinator {
             self?.onFinish?()
         }
         
+        viewModel.goToSearchPlaceView = { [weak self] in
+            print("goToSearchPlaceView")
+            self?.showSearchPlace()
+        }
+        
         navigationController.setViewControllers([viewController], animated: false)
         debugPrint(navigationController)
     }
@@ -43,6 +50,25 @@ final class CongestionReportCoordinator: Coordinator {
         print("showMapPicker")
         let viewModel = MapPickerViewModel(currentLocation: currentLocation)
         let viewController = MapPickerViewController(viewModel: viewModel)
+        
+        navigationController.pushViewController(viewController, animated: true)
+    }
+    
+    func showSearchPlace() {
+        print("showSearchPlace")
+ 
+        guard let service = self.service else { return }
+        
+        let coordinator = SearchPlaceCoordinator(navigationController: navigationController)
+        coordinator.service = service
+        coordinator.onPlaceComplete = { [weak self] place in
+            self?.navigationController.popToRootViewController(animated: true)
+        }
+        
+        let viewModel = SearchPlaceViewModel(service: service)
+        let viewController = SearchPlaceViewController(viewModel: viewModel)
+        
+        coordinator.start()
         
         navigationController.pushViewController(viewController, animated: true)
     }

@@ -36,8 +36,6 @@ final class ChatCoordinator: Coordinator {
         let viewController = AskQuestionViewController(viewModel: viewModel)
 //        navigationController.pushViewController(viewController, animated: true)
         
-        
-        
         // 모달 형식 구현시 사용 예정
         let navigationController = UINavigationController(rootViewController: viewController)
         

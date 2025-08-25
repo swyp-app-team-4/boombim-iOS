@@ -10,6 +10,7 @@ import CoreLocation
 final class CheckPlaceViewModel {
     
     var onComplete: (() -> Void)?
+    var onPlaceComplete: ((Place) -> Void)?
     
     private let place: Place
     

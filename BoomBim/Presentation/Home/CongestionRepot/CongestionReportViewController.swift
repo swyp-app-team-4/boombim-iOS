@@ -121,27 +121,63 @@ final class CongestionReportViewController: BaseViewController {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.alignment = .fill
-        stackView.distribution = .fillEqually
-        stackView.spacing = 8
+        stackView.distribution = .equalSpacing
         
         return stackView
     }()
     
-    private let relaxedButton = makeButton(off: .buttonUnselectedRelaxed, on: .buttonSelectedRelaxed)
-    private let normalButton  = makeButton(off: .buttonUnselectedNormal,  on: .buttonSelectedNormal)
-    private let busyButton   = makeButton(off: .buttonUnselectedBusy,  on: .buttonSelectedBusy)
-    private let crowdedButton = makeButton(off: .buttonUnselectedCrowded,   on: .buttonSelectedCrowded)
+    private let relaxedButton = makeButton(off: .buttonLargeUnselectedRelaxed, on: .buttonLargeSelectedRelaxed, disable: .buttonLargeDefaultRelaxed)
+    private let normalButton  = makeButton(off: .buttonLargeUnselectedNormal, on: .buttonLargeSelectedNormal, disable: .buttonLargeDefaultNormal)
+    private let busyButton   = makeButton(off: .buttonLargeUnselectedBusy, on: .buttonLargeSelectedBusy, disable: .buttonLargeDefaultBusy)
+    private let crowdedButton = makeButton(off: .buttonLargeUnselectedCrowded, on: .buttonLargeSelectedCrowded, disable: .buttonLargeDefaultCrowded)
     
     private lazy var buttons: [UIButton] = [relaxedButton, normalButton, busyButton, crowdedButton]
     
-    private static func makeButton(off: UIImage, on: UIImage) -> UIButton {
+    private static func makeButton(off: UIImage, on: UIImage, disable: UIImage) -> UIButton {
         let button = UIButton()
+        button.setImage(disable, for: .disabled)
         button.setImage(off, for: .normal)
         button.setImage(on,  for: .selected)
         button.setImage(on,  for: [.selected, .highlighted])
         
         return button
     }
+    
+    private lazy var descriptionContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.layer.cornerRadius = 12
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.grayScale4.cgColor
+        view.clipsToBounds = true
+        
+        return view
+    }()
+    
+    private let descriptionTextView: UITextView = {
+        let textView = UITextView()
+        textView.backgroundColor = .clear
+        textView.font = Typography.Body03.medium.font
+        
+        return textView
+    }()
+    
+    private let descriptionPlaceholder: UILabel = {
+        let label = UILabel()
+        label.text = "report.label.placeholder".localized()
+        label.font = Typography.Body03.regular.font
+        label.textColor = .grayScale7
+        
+        return label
+    }()
+    
+    private let descriptionCount: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body03.regular.font
+        label.textColor = .grayScale7
+        
+        return label
+    }()
     
     init(viewModel: CongestionReportViewModel) {
         self.viewModel = viewModel
@@ -155,32 +191,10 @@ final class CongestionReportViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        bindViewModel()
-        
         setupUI()
         
         bindAction()
         setActions()
-        
-        setLocation()
-    }
-    
-    // MARK: ViewModel binding
-    private func bindViewModel() {
-        let input = CongestionReportViewModel.Input(
-            currentLocation: currentLocationSubject.asObservable()
-        )
-        
-        let output = viewModel.transform(input: input)
-
-        output.places
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] places in
-                guard let firstPlaceName = places.first?.name else { return }
-                
-                
-            })
-            .disposed(by: disposeBag)
     }
     
     // MARK: Setup UI
@@ -192,6 +206,7 @@ final class CongestionReportViewController: BaseViewController {
         configureTime()
         configureLocation()
         configureVote()
+        configureTextView()
     }
     
     private func configureNavigationBar() {
@@ -304,8 +319,39 @@ final class CongestionReportViewController: BaseViewController {
     
     private func buttonSetting() {
         buttons.forEach { button in
-            button.isSelected = true // 처음에 모두가 선택되어 on 된 상태 유지
+            button.isEnabled = false
         }
+    }
+    
+    private func configureTextView() {
+        descriptionContainerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(descriptionContainerView)
+        
+        [descriptionTextView, descriptionPlaceholder, descriptionCount].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            descriptionContainerView.addSubview(view)
+        }
+        
+        NSLayoutConstraint.activate([
+            descriptionContainerView.topAnchor.constraint(equalTo: voteContainerView.bottomAnchor, constant: 18),
+            descriptionContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            descriptionContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            descriptionContainerView.heightAnchor.constraint(equalToConstant: 165),
+            
+            descriptionTextView.topAnchor.constraint(equalTo: descriptionContainerView.topAnchor, constant: 12),
+            descriptionTextView.bottomAnchor.constraint(equalTo: descriptionCount.topAnchor, constant: 4),
+            descriptionTextView.leadingAnchor.constraint(equalTo: descriptionContainerView.leadingAnchor, constant: 16),
+            descriptionTextView.trailingAnchor.constraint(equalTo: descriptionContainerView.trailingAnchor, constant: -16),
+            
+            descriptionPlaceholder.topAnchor.constraint(equalTo: descriptionTextView.topAnchor, constant: 8),
+            descriptionPlaceholder.leadingAnchor.constraint(equalTo: descriptionTextView.leadingAnchor, constant: 12),
+            descriptionPlaceholder.trailingAnchor.constraint(equalTo: descriptionTextView.trailingAnchor),
+            
+            descriptionCount.bottomAnchor.constraint(equalTo: descriptionContainerView.bottomAnchor, constant: -12),
+            descriptionCount.trailingAnchor.constraint(equalTo: descriptionContainerView.trailingAnchor, constant: -16),
+        ])
+        
+        descriptionTextView.delegate = self
     }
     
     // MARK: Bind Action
@@ -319,7 +365,7 @@ final class CongestionReportViewController: BaseViewController {
     
     private func didTapLocation() {
         locationTextField.onTap = { [weak self] in
-            print("화면 이동")
+            self?.viewModel.didTapSearch()
         }
     }
     
@@ -328,66 +374,13 @@ final class CongestionReportViewController: BaseViewController {
     }
 }
 
-// MARK: 현재 위치 권한 설정 및 View Rect 값 확인
-extension CongestionReportViewController {
-    private func setLocation() {
-        if locationManager.authorization.value == .notDetermined { // 권한 설정이 안된 경우 권한 요청
-            locationManager.requestWhenInUseAuthorization()
-        }
-        
-        // 권한 상태 스트림에서 '최종 상태(허용/거부)'만 대기 → 1회 처리
-        locationManager.authorization
-            .asObservable()
-            .startWith(locationManager.authorization.value) // 현재 상태 먼저 흘려보내기
-            .distinctUntilChanged()
-            .filter { status in
-                switch status {
-                case .authorizedWhenInUse, .authorizedAlways, .denied, .restricted:
-                    return true // 최종 상태만 통과
-                default:
-                    return false // .notDetermined은 대기
-                }
-            }
-            .take(1) // 허용 or 거부 중 첫 결과 한 번만
-            .flatMapLatest { [weak self] status -> Observable<CLLocationCoordinate2D> in
-                guard let self else { return .empty() }
-                switch status {
-                case .authorizedWhenInUse, .authorizedAlways:
-                    return locationManager.requestOneShotLocation(timeout: 5)
-                        .asObservable()
-                        .map {
-                            print("위도 : \($0.coordinate.latitude), 경도 : \($0.coordinate.longitude)")
-                            return $0.coordinate
-                        }
-                case .denied, .restricted:
-                    self.showLocationDeniedAlert()
-                    return .empty()
-                default:
-                    return .empty()
-                }
-            }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] coord in
-                print("coord : \(coord)")
-                self?.viewModel.setCurrentCoordinate(coord)
-                self?.currentLocationSubject.onNext(coord)
-            })
-            .disposed(by: disposeBag)
+extension CongestionReportViewController: UITextViewDelegate {
+    func textViewDidChange(_ textView: UITextView) {
+        descriptionPlaceholder.isHidden = !textView.text.isEmpty
+        updateCounter()
     }
     
-    /** 위치 접근 안내 Alert */
-    private func showLocationDeniedAlert() {
-        let alert = UIAlertController(
-            title: "위치 접근이 꺼져 있어요",
-            message: "현재 위치를 기반으로 검색하려면 설정 > 앱 > 위치에서 허용해 주세요.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-            if let url = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(url)
-            }
-        })
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        present(alert, animated: true)
+    private func updateCounter() {
+        descriptionCount.text = "\(descriptionTextView.text.count)/\(500)자"
     }
 }
