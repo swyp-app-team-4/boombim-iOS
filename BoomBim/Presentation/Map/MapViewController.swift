@@ -11,50 +11,146 @@ import CoreLocation
 import RxSwift
 import RxCocoa
 
-final class MapViewController: UIViewController {
+final class MapViewController: BaseViewController {
     private let viewModel: MapViewModel
     private let disposeBag = DisposeBag()
-
+    
     private var mapContainer: KMViewContainer!
     private var mapController: KMController!
-
+    
+    private let searchTextField: AppSearchTextField = {
+        let textField = AppSearchTextField()
+        textField.tapOnly = true
+        
+        return textField
+    }()
+    
+    private let buttonsContainer: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        
+        return view
+    }()
+    
+    private let favoriteButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setImage(.buttonUnselectedFavorite, for: .normal)
+        button.setImage(.buttonSelectedFavorite,  for: .selected)
+        
+        return button
+    }()
+    
+    private let dividerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .grayScale6
+        
+        return view
+    }()
+    
+    private lazy var publicButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("map.button.public".localized(), for: .normal)
+        button.titleLabel?.font = Typography.Body03.regular.font
+        button.setTitleColor(.grayScale8, for: .normal)
+        button.setTitleColor(.grayScale9, for: .selected)
+        button.backgroundColor = .grayScale1 // .grayScale4
+        
+        button.layer.cornerRadius = 17
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.grayScale6.cgColor // UIColor.grayScale7.cgColor
+        button.clipsToBounds = true
+        
+        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 16, bottom: 6, right: 16)
+        
+        return button
+    }()
+    
+    private lazy var realtimeButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("map.button.realtime".localized(), for: .normal)
+        button.titleLabel?.font = Typography.Body03.regular.font
+        button.setTitleColor(.grayScale8, for: .normal)
+        button.setTitleColor(.grayScale9, for: .selected)
+        button.backgroundColor = .grayScale1 // .grayScale4
+        
+        button.layer.cornerRadius = 17
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.grayScale6.cgColor // UIColor.grayScale7.cgColor
+        button.clipsToBounds = true
+        
+        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 16, bottom: 6, right: 16)
+        
+        return button
+    }()
+    
+    private let currentLocationButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.buttonCurrentLocation, for: .normal)
+        
+        return button
+    }()
+    
+    private let zoomStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.distribution = .fillEqually
+        
+        return stackView
+    }()
+    
+    private let zoomInButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.buttonZoomIn, for: .normal)
+        
+        return button
+    }()
+    
+    private let zoomOutButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.buttonZoomOut, for: .normal)
+        
+        return button
+    }()
+    
     // 카메라 이벤트 → VM 입력
     private let cameraRectSubject = PublishSubject<ViewportRect>()
     private let zoomLevelSubject = PublishSubject<Int>()
-
+    
     // POI 상태
     private var poiLayer: LabelLayer?
     private let layerID = "PoiLayer"
     private let poiStyleID = "StarbucksPoi"
     /** 기존에 표시 했던 Poi List */
     private var visibleIDs = Set<String>() // Set으로 설정한 이유는 중복 방지 및 연산 속도를 올리기 위해
-
+    
     // MARK: - init
     init(viewModel: MapViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        self.title = "지도"
+        
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     deinit {
         mapController?.pauseEngine()
         mapController?.resetEngine()
         NotificationCenter.default.removeObserver(self)
     }
-
+    
     // MARK: Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupUI()
-
+        
+        setActions()
+        
         bindViewModel()
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if mapController?.isEngineActive == false { mapController?.activateEngine() }
@@ -71,24 +167,28 @@ final class MapViewController: UIViewController {
             map.viewRect = mapContainer.bounds
         }
     }
-
+    
     // MARK: UI
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .white
+        
         configureMapUI()
         configureKakaoMap()
+        configureTextField()
+        configureButton()
+        configureMapButton()
     }
     
     private func configureMapUI() {
         mapContainer = KMViewContainer()
         mapContainer.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(mapContainer)
-        let g = view.safeAreaLayoutGuide
+        
         NSLayoutConstraint.activate([
-            mapContainer.topAnchor.constraint(equalTo: g.topAnchor),
-            mapContainer.leadingAnchor.constraint(equalTo: g.leadingAnchor),
-            mapContainer.trailingAnchor.constraint(equalTo: g.trailingAnchor),
-            mapContainer.bottomAnchor.constraint(equalTo: g.bottomAnchor)
+            mapContainer.topAnchor.constraint(equalTo: view.topAnchor),
+            mapContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            mapContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            mapContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
     
@@ -96,6 +196,105 @@ final class MapViewController: UIViewController {
         mapController = KMController(viewContainer: mapContainer)
         mapController.delegate = self
         mapController.prepareEngine()
+    }
+    
+    private func configureTextField() {
+        searchTextField.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(searchTextField)
+        
+        NSLayoutConstraint.activate([
+            searchTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            searchTextField.heightAnchor.constraint(equalToConstant: 46)
+        ])
+    }
+    
+    private func configureButton() {
+        buttonsContainer.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(buttonsContainer)
+        
+        [favoriteButton, dividerView, publicButton, realtimeButton].forEach { button in
+            button.translatesAutoresizingMaskIntoConstraints = false
+            buttonsContainer.addSubview(button)
+        }
+        
+        NSLayoutConstraint.activate([
+            buttonsContainer.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 16),
+            buttonsContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            buttonsContainer.heightAnchor.constraint(equalToConstant: 42),
+            
+            favoriteButton.topAnchor.constraint(equalTo: buttonsContainer.topAnchor),
+            favoriteButton.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
+            favoriteButton.bottomAnchor.constraint(equalTo: buttonsContainer.bottomAnchor),
+            favoriteButton.heightAnchor.constraint(equalToConstant: 42),
+            
+            dividerView.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
+            dividerView.leadingAnchor.constraint(equalTo: favoriteButton.trailingAnchor, constant: 4),
+            dividerView.widthAnchor.constraint(equalToConstant: 2),
+            dividerView.heightAnchor.constraint(equalToConstant: 15),
+            
+            publicButton.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
+            publicButton.leadingAnchor.constraint(equalTo: dividerView.trailingAnchor, constant: 4),
+            publicButton.heightAnchor.constraint(equalToConstant: 34),
+            
+            realtimeButton.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
+            realtimeButton.leadingAnchor.constraint(equalTo: publicButton.trailingAnchor, constant: 8),
+            realtimeButton.heightAnchor.constraint(equalToConstant: 34),
+        ])
+    }
+    
+    private func configureMapButton() {
+        [currentLocationButton, zoomStackView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            self.view.addSubview(view)
+        }
+        
+        [zoomInButton, zoomOutButton].forEach { button in
+            button.translatesAutoresizingMaskIntoConstraints = false
+            zoomStackView.addArrangedSubview(button)
+        }
+        
+        NSLayoutConstraint.activate([
+            currentLocationButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            currentLocationButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 18),
+            
+            zoomStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            zoomStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -170)
+        ])
+    }
+    
+    private func setActions() {
+        favoriteButton.addTarget(self, action: #selector(tapFavorite), for: .touchUpInside)
+        publicButton.addTarget(self, action: #selector(tapPublic), for: .touchUpInside)
+        realtimeButton.addTarget(self, action: #selector(tapRealtime), for: .touchUpInside)
+        currentLocationButton.addTarget(self, action: #selector(tapCurrentLocation), for: .touchUpInside)
+        zoomInButton.addTarget(self, action: #selector(tapZoomIn), for: .touchUpInside)
+        zoomOutButton.addTarget(self, action: #selector(tapZoomOut), for: .touchUpInside)
+    }
+    
+    @objc private func tapFavorite() {
+        print("tapFavorite")
+    }
+    
+    @objc private func tapPublic() {
+        print("tapPublic")
+    }
+    
+    @objc private func tapRealtime() {
+        print("tapRealtime")
+    }
+    
+    @objc private func tapCurrentLocation() {
+        print("tapCurrentLocation")
+    }
+    
+    @objc private func tapZoomIn() {
+        print("tapZoomIn")
+    }
+    
+    @objc private func tapZoomOut() {
+        print("tapZoomOut")
     }
 
     // MARK: ViewModel binding

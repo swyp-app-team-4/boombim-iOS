@@ -188,6 +188,28 @@
         }
       }
     },
+    "map.button.public" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "서울공공"
+          }
+        }
+      }
+    },
+    "map.button.realtime" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실시간"
+          }
+        }
+      }
+    },
     "my.label.question" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -18,6 +18,7 @@ final class MapCoordinator: Coordinator {
         let service = KakaoLocalService()
         let viewModel = MapViewModel(service: service)
         let viewController = MapViewController(viewModel: viewModel)
+        navigationController.setNavigationBarHidden(true, animated: false)
         navigationController.setViewControllers([viewController], animated: false)
     }
 }
