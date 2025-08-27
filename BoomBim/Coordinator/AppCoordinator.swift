@@ -26,17 +26,29 @@ final class AppCoordinator: Coordinator {
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
 
-        // TODO: 로그인 정보 값을 가진 상태에서 로그인 상태 유지 기능 필요
-//        if isLoggedIn() {
-//            showMainTabBar()
-//        } else {
-            showLogin()
-//        }
+        TokenManager.shared.authState
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] state in
+                switch state {
+                case .loggedOut:
+                    self?.showLogin()
+                case .loggedIn, .refreshing:
+                    self?.showMainTabBar()
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 앱 시작 시 사일런트 검사/갱신
+        if TokenManager.shared.isAccessValid() {
+            // 이미 메인 진입 가능
+        } else if TokenManager.shared.isRefreshValid() {
+            _ = TokenManager.shared.ensureValidAccessToken { rt in
+                AuthService.shared.refresh(rt)
+            }.subscribe()
+        } else {
+            TokenManager.shared.clear() // 로그인 화면으로
+        }
     }
-
-//    private func isLoggedIn() -> Bool {
-//        return TokenManager.shared.isLoggedIn
-//    }
 
     private func showLogin() {
         let loginCoordinator = LoginCoordinator(navigationController: navigationController)
