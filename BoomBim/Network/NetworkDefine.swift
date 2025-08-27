@@ -28,4 +28,8 @@ enum NetworkDefine {
         static let token = "api/alarm/fcm-token"
         static let alarm = "api/alarm/history?deviceType=IOS"
     }
+    
+    enum Place {
+        static let officialPlace = "official-places"
+    }
 }

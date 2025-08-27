@@ -1,0 +1,145 @@
+//
+//  MapOverlayManager.swift
+//  BoomBim
+//
+//  Created by 조영현 on 8/26/25.
+//
+
+import KakaoMapsSDK
+import UIKit
+
+/// 1) 카테고리 정의: 버튼이 늘어나면 여기만 추가
+enum OverlayGroup: String, CaseIterable {
+    case official       // 공식 장소
+    case favorite        // 여유
+    case realtime           // 붐빔
+    case crowded        // 매우 붐빔
+}
+
+/// 2) 그룹별 스타일 설정값
+struct GroupVisual {
+    let icon: UIImage
+    let fill: UIColor
+    let stroke: UIColor
+    let zPOI: Int      // LabelLayer z
+    let zShape: Int    // ShapeLayer z
+}
+
+final class MapOverlayManager {
+    private weak var map: KakaoMap?
+
+    // 그룹별 레이어/캐시
+    private var poiLayers:   [OverlayGroup: LabelLayer] = [:]
+    private var shapeLayers: [OverlayGroup: ShapeLayer] = [:]
+
+    init(map: KakaoMap) { self.map = map }
+
+    // ----- ID 생성 규칙 (그룹별로 유니크) -----
+    private func poiStyleID(_ g: OverlayGroup) -> String { "poi.style.\(g.rawValue)" }
+    private func poiLayerID(_ g: OverlayGroup) -> String { "poi.layer.\(g.rawValue)" }
+    private func polyStyleSetID(_ g: OverlayGroup) -> String { "poly.styleset.\(g.rawValue)" }
+    private func shapeLayerID(_ g: OverlayGroup) -> String { "shape.layer.\(g.rawValue)" }
+
+    // ----- 그룹 리소스 보장 -----
+    private func ensureResources(for g: OverlayGroup, visual: GroupVisual) {
+        guard let map = map else { return }
+
+        // 1) POI 스타일 + 레이어
+        let labelMgr = map.getLabelManager() // LabelLayer가 있어야 POI 생성 가능
+        if labelMgr.getPoiStyle(styleID: poiStyleID(g)) == nil {
+            let iconStyle = PoiIconStyle(symbol: visual.icon,
+                                         anchorPoint: CGPoint(x: 0.5, y: 1.0))
+            let per = PerLevelPoiStyle(iconStyle: iconStyle, level: 0)
+            let style = PoiStyle(styleID: poiStyleID(g), styles: [per])
+            labelMgr.addPoiStyle(style) // 1회 등록. 같은 ID는 중복등록 안됨
+        }
+        if poiLayers[g] == nil {
+            let opt = LabelLayerOptions(layerID: poiLayerID(g),
+                                        competitionType: .none,
+                                        competitionUnit: .symbolFirst,
+                                        orderType: .rank,
+                                        zOrder: visual.zPOI)
+            poiLayers[g] = labelMgr.addLabelLayer(option: opt)
+        }
+
+        // 2) 폴리곤 스타일셋 + 레이어
+        let shapeMgr = map.getShapeManager()
+        if shapeLayers[g] == nil {
+            shapeLayers[g] = shapeMgr.addShapeLayer(layerID: shapeLayerID(g), zOrder: visual.zShape)
+        }
+        if shapeMgr.getShapeLayer(layerID: polyStyleSetID(g)) == nil {
+            let per = PerLevelPolygonStyle(color: visual.fill,
+                                           strokeWidth: 2,
+                                           strokeColor: visual.stroke,
+                                           level: 0)
+            let polyStyle = PolygonStyle(styles: [per])
+            let set = PolygonStyleSet(styleSetID: polyStyleSetID(g), styles: [polyStyle])
+            shapeMgr.addPolygonStyleSet(set) // 같은 styleID로 overwrite 불가
+        }
+    }
+
+    // ----- 데이터 바인딩: POI -----
+    /// items: (고유ID, 위치)
+    func setPOIs(for g: OverlayGroup,
+                 items: [(id: String, point: MapPoint)],
+                 visual: GroupVisual)
+    {
+        ensureResources(for: g, visual: visual)
+        guard let layer = poiLayers[g] else { return }
+
+        layer.clearAllItems() // 기존 것 정리
+        let options: [PoiOptions] = items.map { item in
+            var opt = PoiOptions(styleID: poiStyleID(g), poiID: "poi.\(g.rawValue).\(item.id)")
+            opt.rank = 0
+            return opt
+        }
+        let positions = items.map { $0.point }
+
+        // 생성 완료 콜백에서 show() 호출
+        _ = layer.addPois(options: options, at: positions) { pois in
+            pois?.forEach { $0.show() }  // 각 POI 표출
+        }
+        layer.visible = true // 레이어 on (POI show와 둘 다 필요)
+    }
+
+    // ----- 데이터 바인딩: 폴리곤 -----
+    /// rings: 폴리곤 외곽선 배열들(복수 지역 가능)
+    func setPolygons(for g: OverlayGroup,
+                     rings: [[MapPoint]],
+                     visual: GroupVisual)
+    {
+        ensureResources(for: g, visual: visual)
+        guard let layer = shapeLayers[g] else { return }
+
+        layer.clearAllShapes()
+        for (idx, ring) in rings.enumerated() {
+            var opt = MapPolygonShapeOptions(shapeID: "poly.\(g.rawValue).\(idx)",
+                                             styleID: polyStyleSetID(g),
+                                             zOrder: 0)
+            let polygon = MapPolygon(exteriorRing: ring, hole: nil, styleIndex: 0)
+            opt.polygons = [polygon]
+            let shp = layer.addMapPolygonShape(opt)
+            shp?.show()
+        }
+        layer.visible = true
+    }
+
+    // ----- 보이기/숨기기 -----
+    func show(_ g: OverlayGroup) {
+        poiLayers[g]?.visible = true
+        shapeLayers[g]?.visible = true
+    }
+    func hide(_ g: OverlayGroup) {
+        poiLayers[g]?.visible = false
+        shapeLayers[g]?.visible = false
+    }
+    func showOnly(_ g: OverlayGroup) {
+        OverlayGroup.allCases.forEach { group in
+            if group == g { show(group) } else { hide(group) }
+        }
+    }
+    func clear(_ g: OverlayGroup) {
+        poiLayers[g]?.clearAllItems()
+        shapeLayers[g]?.clearAllShapes()
+    }
+}

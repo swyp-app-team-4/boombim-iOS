@@ -14,6 +14,7 @@
 		CF820D182E3B7B5A0048B51C /* RxKakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D172E3B7B5A0048B51C /* RxKakaoSDKCommon */; };
 		CF820D1A2E3B7B5A0048B51C /* RxKakaoSDKShare in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D192E3B7B5A0048B51C /* RxKakaoSDKShare */; };
 		CF820D1C2E3B7B5A0048B51C /* RxKakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = CF820D1B2E3B7B5A0048B51C /* RxKakaoSDKUser */; };
+		E25DC8AC2E5D4A1F00307CF0 /* FloatingPanel in Frameworks */ = {isa = PBXBuildFile; productRef = E25DC8AB2E5D4A1F00307CF0 /* FloatingPanel */; };
 		E28330722E56C0730092EAEB /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = E28330712E56C0730092EAEB /* FirebaseCore */; };
 		E28330742E56C0730092EAEB /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = E28330732E56C0730092EAEB /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
@@ -49,6 +50,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E28330742E56C0730092EAEB /* FirebaseMessaging in Frameworks */,
+				E25DC8AC2E5D4A1F00307CF0 /* FloatingPanel in Frameworks */,
 				CF820D1C2E3B7B5A0048B51C /* RxKakaoSDKUser in Frameworks */,
 				CF820D1A2E3B7B5A0048B51C /* RxKakaoSDKShare in Frameworks */,
 				CF820D182E3B7B5A0048B51C /* RxKakaoSDKCommon in Frameworks */,
@@ -108,6 +110,7 @@
 				CF2142302E48A65900F05030 /* KakaoMapsSDK-SPM */,
 				E28330712E56C0730092EAEB /* FirebaseCore */,
 				E28330732E56C0730092EAEB /* FirebaseMessaging */,
+				E25DC8AB2E5D4A1F00307CF0 /* FloatingPanel */,
 			);
 			productName = SwypTeam4;
 			productReference = CF820C872E3B72750048B51C /* BoomBim.app */;
@@ -143,6 +146,7 @@
 				CF820D122E3B7B5A0048B51C /* XCRemoteSwiftPackageReference "kakao-ios-sdk-rx" */,
 				CF21422F2E48A65900F05030 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */,
 				E28330702E56C0730092EAEB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				E25DC8AA2E5D4A1F00307CF0 /* XCRemoteSwiftPackageReference "FloatingPanel" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CF820C882E3B72750048B51C /* Products */;
@@ -406,6 +410,14 @@
 				minimumVersion = 2.24.6;
 			};
 		};
+		E25DC8AA2E5D4A1F00307CF0 /* XCRemoteSwiftPackageReference "FloatingPanel" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scenee/FloatingPanel.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.1;
+			};
+		};
 		E28330702E56C0730092EAEB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
@@ -451,6 +463,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CF820D122E3B7B5A0048B51C /* XCRemoteSwiftPackageReference "kakao-ios-sdk-rx" */;
 			productName = RxKakaoSDKUser;
+		};
+		E25DC8AB2E5D4A1F00307CF0 /* FloatingPanel */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E25DC8AA2E5D4A1F00307CF0 /* XCRemoteSwiftPackageReference "FloatingPanel" */;
+			productName = FloatingPanel;
 		};
 		E28330712E56C0730092EAEB /* FirebaseCore */ = {
 			isa = XCSwiftPackageProductDependency;
