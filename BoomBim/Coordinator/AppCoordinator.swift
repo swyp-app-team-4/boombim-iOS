@@ -34,9 +34,9 @@ final class AppCoordinator: Coordinator {
 //        }
     }
 
-    private func isLoggedIn() -> Bool {
-        return TokenManager.shared.isLoggedIn
-    }
+//    private func isLoggedIn() -> Bool {
+//        return TokenManager.shared.isLoggedIn
+//    }
 
     private func showLogin() {
         let loginCoordinator = LoginCoordinator(navigationController: navigationController)

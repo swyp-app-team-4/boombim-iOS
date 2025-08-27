@@ -34,7 +34,7 @@ final class OfficialPlaceService: OfficialPlaceServiceType {
 
         var headers: HTTPHeaders = ["Content-Type": "application/json"]
         headers["Accept"] = "application/json"
-        if let token = TokenManager.shared.accessToken, token.isEmpty == false {
+        if let token = TokenManager.shared.currentAccessToken(), token.isEmpty == false {
             headers.add(name: "Authorization", value: "Bearer \(token)")
         }
 

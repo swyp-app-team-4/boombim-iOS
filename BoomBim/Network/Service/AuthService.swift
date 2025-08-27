@@ -9,51 +9,45 @@ import Foundation
 import RxSwift
 import Alamofire
 
+// MARK: - Request & Response DTO
+typealias LoginRequest = SocialLoginPayload
+
+struct RefreshRequest: Encodable {
+    let refreshToken: String
+}
+
 final class AuthService {
     static let shared = AuthService()
     private init() {}
     
-    func requestLogin(type: SocialProvider, tokenInfo: TokenInfo) -> Observable<Result<TokenResponse, Error>> {
-        return Observable.create { observer in
-            let url = NetworkDefine.apiHost + NetworkDefine.Auth.login + type.rawValue
-            
-            var headers:HTTPHeaders = ["Content-Type": "application/json"]
-            headers["Accept"] = "application/json"
-            
-            let params: [String: Any] = [
-                "accessToken": tokenInfo.accessToken,
-                "refreshToken": tokenInfo.refreshToken,
-                "expiresIn": tokenInfo.expiresIn,
-                "idToken": tokenInfo.idToken,
-            ]
-            
-            print("params: \(params)")
-            
-            CommonRequest.shared.request(
-                url: url,
-                method: .post,
-                parameters: params,
-                headers: headers,
-                encoding: JSONEncoding.default,
-                responseType: TokenResponse.self
-            ) { result in
-                
-                debugPrint(result)
-                
-                switch result {
-                    case .success(let token):
-                        // TokenResponse 디코딩 성공
-                        observer.onNext(.success(token))
-                        
-                    case .failure(let error):
-                        // error가 ServerErrorResponse 기반이면 디코딩된 NSError가 올 수 있음
-                        observer.onNext(.failure(error))
-                    }
+    func socialLogin(provider: SocialProvider, body: LoginRequest) -> Single<TokenPair> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Auth.login + provider.rawValue
+        
+        return request(url, method: .post, body: body)
+    }
 
-                    observer.onCompleted()
-            }
-            
-            return Disposables.create()
+    func refresh(_ refreshToken: String) -> Single<TokenPair> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Auth.refresh
+        
+        return request(url, method: .post, body: RefreshRequest(refreshToken: refreshToken))
+    }
+    
+    private func request<T: Decodable, B: Encodable>(_ url: String, method: HTTPMethod, body: B) -> Single<T> {
+        
+        var headers:HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        
+        return Single.create { single in
+            let req = AF.request(url, method: method, parameters: body, encoder: JSONParameterEncoder.default, headers: headers)
+                .validate()
+                .responseDecodable(of: T.self) { resp in
+                    debugPrint(resp)
+                    switch resp.result {
+                    case .success(let value): single(.success(value))
+                    case .failure(let error): single(.failure(error))
+                    }
+                }
+            return Disposables.create { req.cancel() }
         }
     }
 }

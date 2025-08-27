@@ -17,6 +17,7 @@ enum NetworkDefine {
         }
         
         static let login = "api/oauth2/login/"
+        static let refresh = "api/reissue"
     }
     
     enum Search {
