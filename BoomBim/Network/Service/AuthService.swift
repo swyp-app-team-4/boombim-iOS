@@ -25,6 +25,10 @@ struct RefreshRequest: Encodable {
 
 typealias LogoutRequest = RefreshRequest
 
+struct WithdrawRequest: Encodable {
+    let leaveReason: String
+}
+
 // Profile
 struct NicknameRequest: Encodable { let name: String }
 struct ProfileImageRequest: Encodable { let image: String } // 서버 스펙에 맞춰 키명 수정
@@ -63,6 +67,16 @@ final class AuthService {
         return requestVoid(url, method: .post, header: headers, body: LogoutRequest(refreshToken: refreshToken))
     }
     
+    func withdraw(accessToken: String, leaveReason: String) -> Single<Void> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Auth.withdraw
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        headers["Authorization"] = "Bearer \(accessToken)"
+        
+        return requestVoid(url, method: .delete, header: headers, body: WithdrawRequest(leaveReason: leaveReason))
+    }
+    
     func logoutAndClear() -> Single<Void> {
         print("logoutAndClear")
         // (a) 현재 refreshToken 확보 (없으면 서버 호출 생략)
@@ -77,6 +91,22 @@ final class AuthService {
         }
 
         // (b) 서버 호출 끝나면 로컬 정리 & (선택) 소셜 SDK 로그아웃
+        return serverCall.do(onSuccess: { _ in
+            TokenManager.shared.clear()
+        })
+    }
+    
+    func withdrawAndClear(leaveReason: String) -> Single<Void> {
+        print("withdrawAndClear")
+        let at = TokenManager.shared.currentAccessToken()
+
+        let serverCall: Single<Void>
+        if let at {
+            serverCall = withdraw(accessToken: at, leaveReason: leaveReason).catchAndReturn(())
+        } else {
+            serverCall = .just(())
+        }
+
         return serverCall.do(onSuccess: { _ in
             TokenManager.shared.clear()
         })

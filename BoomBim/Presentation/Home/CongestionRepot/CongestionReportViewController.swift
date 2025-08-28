@@ -467,6 +467,7 @@ extension CongestionReportViewController: UITextViewDelegate {
         updateCounter()
     }
     
+    
     private func updateCounter() {
         descriptionCount.text = "\(descriptionTextView.text.count)/\(500)자"
     }

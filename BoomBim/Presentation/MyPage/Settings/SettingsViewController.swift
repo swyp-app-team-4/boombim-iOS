@@ -108,7 +108,8 @@ final class SettingsViewController: BaseViewController {
     private func bind() {
         // 1) Input
         let input = SettingsViewModel.Input(
-            logoutTap: tableFooterView.logoutButton.rx.tap.asSignal()
+            logoutTap: tableFooterView.logoutButton.rx.tap.asSignal(),
+            withdrawTap: tableFooterView.withdrawButton.rx.tap.asSignal()
         )
         
         // 2) Transform
@@ -131,7 +132,24 @@ final class SettingsViewController: BaseViewController {
                 self?.presentAlert(title: "오류", message: msg)
             })
             .disposed(by: disposeBag)
+        
+        // ✅ 피드백에서 사유가 도착하면 알럿 표시
+        viewModel.reasonSelected
+            .emit(onNext: { [weak self] reason in
+                self?.presentWithdrawConfirm(reason: reason)
+            })
+            .disposed(by: disposeBag)
     }
+    
+    private func presentWithdrawConfirm(reason: String) {
+            let msg = "작성하신 탈퇴 사유:\n\"\(reason)\"\n정말 탈퇴하시겠어요?"
+            let ac = UIAlertController(title: "회원 탈퇴", message: msg, preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "취소", style: .cancel))
+            ac.addAction(UIAlertAction(title: "확인", style: .destructive) { [weak self] _ in
+                self?.viewModel.confirmWithdraw(reason: reason) // ← VM에 실행 요청
+            })
+            present(ac, animated: true)
+        }
 }
 
 extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {

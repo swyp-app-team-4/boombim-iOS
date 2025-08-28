@@ -95,9 +95,9 @@ final class LoginViewModel {
                 
                 // 2) nameFlag로 분기
                 if resp.nameFlag {
-                    self.routeRelay.accept(.nickname)  // 닉네임 필요
-                } else {
                     self.routeRelay.accept(.mainTab)   // 바로 메인
+                } else {
+                    self.routeRelay.accept(.nickname)  // 닉네임 필요
                 }
             }, onError: { [weak self] err in
                 self?.errorRelay.accept(err.localizedDescription)
