@@ -72,7 +72,7 @@ import UIKit
 
 /// Sign in with Apple 흐름:
 /// 1) ASAuthorizationController로 Apple 로그인 → identityToken(JWT) 획득
-/// 2) 서버 소셜 로그인 API에 provider=.apple, body(idToken만 채움) 요청
+/// 2) 서버 소셜 로그인 API에 provider=.apple, body(idToken만 채움ㅇ) 요청
 /// 3) 서버가 발급한 TokenPair(access/refresh) 반환
 final class AppleLoginService: NSObject, SocialLoginService {
     private var singleObserver: ((SingleEvent<(idToken: String, authCode: String?)>) -> Void)?

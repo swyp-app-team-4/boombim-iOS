@@ -80,6 +80,13 @@ class BaseViewController: UIViewController {
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }
+    
+    // MARK: Alert
+    public func presentAlert(title: String, message: String) {
+        let ac = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "확인", style: .default))
+        present(ac, animated: true)
+    }
 }
 
 extension BaseViewController: UIGestureRecognizerDelegate {

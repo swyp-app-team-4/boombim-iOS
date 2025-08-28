@@ -10,7 +10,7 @@ import RxSwift
 import NidThirdPartyLogin
 import AuthenticationServices
 
-final class LoginViewController: UIViewController {
+final class LoginViewController: BaseViewController {
     private let viewModel: LoginViewModel
     private let disposeBag = DisposeBag()
 
@@ -190,11 +190,5 @@ final class LoginViewController: UIViewController {
                 self?.presentAlert(title: "로그인 실패", message: message)
             })
             .disposed(by: disposeBag)
-    }
-    
-    private func presentAlert(title: String, message: String) {
-        let ac = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "확인", style: .default))
-        present(ac, animated: true)
     }
 }

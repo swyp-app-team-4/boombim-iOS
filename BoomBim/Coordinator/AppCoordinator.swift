@@ -31,6 +31,7 @@ final class AppCoordinator: Coordinator {
             .subscribe(onNext: { [weak self] state in
                 switch state {
                 case .loggedOut:
+                    print("AppCoordinator loggedOut")
                     self?.showLogin()
                 case .loggedIn, .refreshing:
                     self?.showMainTabBar()
@@ -49,6 +50,14 @@ final class AppCoordinator: Coordinator {
             TokenManager.shared.clear() // 로그인 화면으로
         }
     }
+    
+    private func resetRoot(_ vc: UIViewController, animated: Bool = true) {
+        // 떠 있는 모달 닫기
+        window.rootViewController?.presentedViewController?.dismiss(animated: false)
+        let apply = { self.window.rootViewController = vc }
+        guard animated else { apply(); return }
+        UIView.transition(with: window, duration: 0.25, options: .transitionCrossDissolve) { apply() }
+    }
 
     private func showLogin() {
         let loginCoordinator = LoginCoordinator(navigationController: navigationController)
@@ -63,6 +72,7 @@ final class AppCoordinator: Coordinator {
         
         self.loginCoordinator = loginCoordinator
         loginCoordinator.start()
+        resetRoot(navigationController)
     }
 
     private func showMainTabBar() {
@@ -72,5 +82,6 @@ final class AppCoordinator: Coordinator {
         tabBarCoordinator.start()
         
         window.rootViewController = tabBarCoordinator.tabBarController
+        resetRoot(tabBarCoordinator.tabBarController)
     }
 }
