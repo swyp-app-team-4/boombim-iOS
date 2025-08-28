@@ -32,6 +32,7 @@ final class LoginCoordinator: Coordinator {
         viewModel.route
             .emit(onNext: { [weak self] route in
                 guard let self = self else { return }
+                print("route: \(route)")
                 switch route {
                 case .nickname:
                     // 신규/온보딩 사용자: 닉네임 화면으로

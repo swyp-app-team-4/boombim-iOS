@@ -80,7 +80,7 @@ final class AppleLoginService: NSObject, SocialLoginService {
     // 필요 시 nonce를 생성해 요청에 추가(백엔드 검증 강화 시)
     private let nonce = UUID().uuidString
 
-    func loginAndIssueBackendToken() -> Single<TokenPair> {
+    func loginAndIssueBackendToken() -> Single<LoginResponse> {
         return appleSDKLogin() // 1) Apple SDK 로그인 → (idToken, authCode)
             .map { token in
                 LoginRequest(

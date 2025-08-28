@@ -29,12 +29,16 @@ final class AppCoordinator: Coordinator {
         TokenManager.shared.authState
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] state in
+                guard let self = self else { return }
                 switch state {
                 case .loggedOut:
                     print("AppCoordinator loggedOut")
-                    self?.showLogin()
+                    self.showLogin()
                 case .loggedIn, .refreshing:
-                    self?.showMainTabBar()
+                    print("AppCoordinator loggedIn, refreshing")
+                    // ✅ 로그인 코디네이터가 진행 중이라면, 여기서 메인으로 넘기지 않음
+                    guard self.loginCoordinator == nil else { return }
+                    self.showMainTabBar()
                 }
             })
             .disposed(by: disposeBag)

@@ -12,6 +12,12 @@ import Alamofire
 // MARK: - Request & Response DTO
 typealias LoginRequest = SocialLoginPayload
 
+struct LoginResponse: Decodable {
+    let accessToken: String
+    let refreshToken: String
+    let nameFlag: Bool
+}
+
 struct RefreshRequest: Encodable {
     let refreshToken: String
 }
@@ -22,7 +28,7 @@ final class AuthService {
     static let shared = AuthService()
     private init() {}
     
-    func socialLogin(provider: SocialProvider, body: LoginRequest) -> Single<TokenPair> {
+    func socialLogin(provider: SocialProvider, body: LoginRequest) -> Single<LoginResponse> {
         let url = NetworkDefine.apiHost + NetworkDefine.Auth.login + provider.rawValue
         
         return request(url, method: .post, body: body)

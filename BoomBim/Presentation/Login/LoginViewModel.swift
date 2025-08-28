@@ -82,18 +82,23 @@ final class LoginViewModel {
     }
     
     /// 공통 로그인 흐름: 서비스에서 TokenPair 받고 저장 + 라우트
-    private func runLoginFlow(_ issue: @escaping () -> Single<TokenPair>) -> Observable<Void> {
+    private func runLoginFlow(_ issue: @escaping () -> Single<LoginResponse>) -> Observable<Void> {
         loadingRelay.accept(true)
         return issue()
             .observe(on: MainScheduler.instance) // UI 업데이트는 메인 스레드
-            .do(onSuccess: { pair in
-                print("pair : \(pair)")
+            .do(onSuccess: { resp in
+                print("resp : \(resp)")
                 // Keychain 저장 + 상태 전이(.loggedIn)
+                // 1) 토큰 저장
+                let pair = TokenPair(accessToken: resp.accessToken, refreshToken: resp.refreshToken)
                 TokenManager.shared.set(pair: pair)
                 
-                // 라우팅 정책: 일단 닉네임 화면으로.
-                // 서버가 isNewUser/hasProfile 등을 준다면 분기 로직으로 개선 권장.
-                self.routeRelay.accept(.nickname)
+                // 2) nameFlag로 분기
+                if resp.nameFlag {
+                    self.routeRelay.accept(.nickname)  // 닉네임 필요
+                } else {
+                    self.routeRelay.accept(.mainTab)   // 바로 메인
+                }
             }, onError: { [weak self] err in
                 self?.errorRelay.accept(err.localizedDescription)
             }, onDispose: { [weak self] in

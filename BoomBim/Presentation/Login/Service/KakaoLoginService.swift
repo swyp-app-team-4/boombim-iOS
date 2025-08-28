@@ -11,7 +11,7 @@ import KakaoSDKAuth
 import KakaoSDKUser
 
 final class KakaoLoginService: SocialLoginService {
-    func loginAndIssueBackendToken() -> Single<TokenPair> {
+    func loginAndIssueBackendToken() -> Single<LoginResponse> {
         // 1) 카카오 SDK로 로그인 → OAuthToken
         kakaoSDKLogin()
             // 2) OAuthToken → SocialLoginBody

@@ -15,7 +15,7 @@ import NidThirdPartyLogin
 /// 3) 서버가 발급한 TokenPair(access/refresh) 반환
 final class NaverLoginService: SocialLoginService {
 
-    func loginAndIssueBackendToken() -> Single<TokenPair> {
+    func loginAndIssueBackendToken() -> Single<LoginResponse> {
         return naverSDKLogin() // 1) SDK 로그인
             .map { token in
                 LoginRequest(
