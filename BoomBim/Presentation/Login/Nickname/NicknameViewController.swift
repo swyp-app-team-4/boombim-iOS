@@ -251,34 +251,15 @@ final class NicknameViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
         
-        // 선택된 이미지는 imageView에 표시
-//        pickedImageRelay
-//            .bind(to: profileImageView.rx.image)
-//            .disposed(by: disposeBag)
-        
         let placeholder = UIImage.iconEmptyProfile
+        
+        print("image : \(profileImageView.image)")
 
         pickedImageRelay
             .asDriver()
             .map { $0 ?? placeholder }     // ← nil일 때 기본 이미지 유지
             .drive(profileImageView.rx.image)
             .disposed(by: disposeBag)
-
-
-        
-//        output.isSignupEnabled
-//            .drive(onNext: { [weak self] isEnabled in
-//                self?.signUpButton.isEnabled = isEnabled
-//                switch isEnabled {
-//                case true:
-//                    self?.signUpButton.backgroundColor = .main
-//                    self?.signUpButton.setTitleColor(.grayScale1, for: .normal)
-//                case false:
-//                    self?.signUpButton.backgroundColor = UIColor.grayScale4
-//                    self?.signUpButton.setTitleColor(.grayScale7, for: .normal)
-//                }
-//            })
-//            .disposed(by: disposeBag)
     }
     
     // MARK: - Action
@@ -365,6 +346,7 @@ extension NicknameViewController: UIImagePickerControllerDelegate, UINavigationC
             guard let image else { return }
             
             self.profileImageView.image = image
+            self.pickedImageRelay.accept(image)
         }
     }
     
@@ -416,6 +398,7 @@ extension NicknameViewController: UIImagePickerControllerDelegate, UINavigationC
             
             DispatchQueue.main.async {
                 self?.profileImageView.image = image
+                self?.pickedImageRelay.accept(image)
             }
         }
     }

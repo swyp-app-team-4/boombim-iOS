@@ -53,6 +53,7 @@ final class NicknameViewModel {
             .withLatestFrom(latest)
             .emit(onNext: { [weak self] (name, image) in
                 print("프로필 설정 버튼 tap!")
+                print("image : \(image)")
                 self?.submit(name: name, image: image)
             })
             .disposed(by: disposeBag)
@@ -73,23 +74,30 @@ final class NicknameViewModel {
     
     private func submit(name: String, image: UIImage?) {
         loadingRelay.accept(true)
-        
+        print("submit image : \(image)")
         // (1) 닉네임 저장 (필수)
         let nickCall: Single<Void> = AuthService.shared.setNickname(name)
         
         // (2) 프로필 업로드 (선택)
         let photoCall: Single<Void> = {
             guard let image = image,
-                  let data = image.jpegData(compressionQuality: 0.85) else {
+                  let data = image.uploadPayload(maxBytes: 900_000, maxDimension: 1080, baseName: "profile") else {
                 return .just(()) // 이미지 없으면 스킵
             }
-            return AuthService.shared.setProfileImage(data)
+            
+            print("upload size: \(Double(data.data.count)/1024/1024) MB")
+            print("profile : \(data.data)")
+            
+            return AuthService.shared.setProfileImage(data.data)
                 .do(onSuccess: { savedPath in
+                    print("savePath : \(savedPath)")
                     // 필요 시 로컬 캐시/모델 반영
                     UserDefaults.standard.set(savedPath, forKey: "profileImagePath")
                 })
                 .map { _ in () }
         }()
+        
+        print("photoCall : \(photoCall)")
         
         // (3) 병렬 실행 후 완료
         Single.zip(nickCall, photoCall)

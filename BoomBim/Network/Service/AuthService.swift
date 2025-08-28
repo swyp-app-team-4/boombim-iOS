@@ -135,6 +135,8 @@ final class AuthService {
             headers["Authorization"] = "Bearer \(token)"
         }
         
+        print("image : \(image)")
+        
         return requestMultipartFormData(url, data: image, fileName: fileName, method: .patch, header: headers)
     }
     
@@ -190,9 +192,12 @@ final class AuthService {
         return Single.create { single in
             let req = AF.upload(
                 multipartFormData: { form in
-                    form.append(data, withName: "file", fileName: fileName, mimeType: "image/jpeg")},
+                    print("form : \(form)")
+                    print("data : \(data)")
+                    debugPrint(form)
+                    return form.append(data, withName: "multipartFile", fileName: fileName, mimeType: "image/jpeg")},
                 to: url,
-                method: .post,
+                method: method,
                 headers: header)
                 .validate()
                 .responseString { resp in
