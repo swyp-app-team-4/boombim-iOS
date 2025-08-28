@@ -9,7 +9,10 @@ import RxSwift
 import RxCocoa
 
 final class MyPageViewModel {
-    struct Input { let appear: Signal<Void> } // viewDidAppear 등에서 트리거
+    struct Input {
+        let appear: Signal<Void> // viewDidAppear 등에서 트리거
+    }
+    
     struct Output {
         let isLoading: Driver<Bool>
         let error: Signal<String>
@@ -35,7 +38,7 @@ final class MyPageViewModel {
     func transform(_ input: Input) -> Output {
         input.appear
             .emit(onNext: { [weak self] in self?.load() })
-            .disposed(by: bag)
+            .disposed(by: disposeBag)
         
         return Output(
             isLoading: loading.asDriver(),
@@ -46,7 +49,7 @@ final class MyPageViewModel {
     
     private func load() {
         loading.accept(true)
-        AuthService.shared.fetchMyProfile()
+        AuthService.shared.getProfile()
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] p in
                 self?.loading.accept(false)
@@ -55,6 +58,6 @@ final class MyPageViewModel {
                 self?.loading.accept(false)
                 self?.errorRelay.accept(err.localizedDescription)
             })
-            .disposed(by: bag)
+            .disposed(by: disposeBag)
     }
 }

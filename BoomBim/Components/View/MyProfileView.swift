@@ -122,8 +122,15 @@ final class MyProfileView: UIView {
         ])
     }
     
-    func configure(name: String, vote: String, question: String) {
+    func configure(name: String, profile: String?, email: String, socialProvider: String, vote: Int, question: Int) {
+        print("profile : \(profile)")
+        print("vote : \(vote)")
+        print("question : \(question)")
+        
         nameLabel.text = name
+        
+        profieImageView.setProfileImage(from: profile)
+        
         voteView.configure(title: "my.label.vote".localized(), count: vote)
         questionView.configure(title: "my.label.question".localized(), count: question)
     }

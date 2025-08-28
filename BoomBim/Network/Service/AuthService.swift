@@ -35,6 +35,7 @@ final class AuthService {
     static let shared = AuthService()
     private init() {}
     
+    // MARK: - Login & Logout
     func socialLogin(provider: SocialProvider, body: LoginRequest) -> Single<LoginResponse> {
         let url = NetworkDefine.apiHost + NetworkDefine.Auth.login + provider.rawValue
         
@@ -81,6 +82,7 @@ final class AuthService {
         })
     }
     
+    // MARK: - Profile
     func setNickname(_ name: String) -> Single<Void> {
         let url = NetworkDefine.apiHost + NetworkDefine.Profile.nickname
         

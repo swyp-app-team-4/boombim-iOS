@@ -21,7 +21,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         // Override point for customization after application launch.
         
         // Keychain Token Manager
-        
         TokenManager.configure(store: KeychainTokenStore(key: KeychainIDs.backendTokenPair(env: AppEnvironment.current)))
         
         // Kakao
@@ -52,6 +51,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         
         // FCM 토큰 콜백
         Messaging.messaging().delegate = self
+        
+        // Image
+        ImageBootstrap.configure()
         
         return true
     }
