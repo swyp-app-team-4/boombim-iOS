@@ -21,6 +21,11 @@ enum NetworkDefine {
         static let logout = "api/oauth2/logout"
     }
     
+    enum Profile {
+        static let nickname = "api/member/name"
+        static let image = "api/member/profile"
+    }
+    
     enum Search {
         static let keyword = "v2/local/search/keyword.json"
         static let category = "v2/local/search/category.json"

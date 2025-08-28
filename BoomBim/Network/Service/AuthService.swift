@@ -10,6 +10,7 @@ import RxSwift
 import Alamofire
 
 // MARK: - Request & Response DTO
+// Login 및 Logout
 typealias LoginRequest = SocialLoginPayload
 
 struct LoginResponse: Decodable {
@@ -24,6 +25,10 @@ struct RefreshRequest: Encodable {
 
 typealias LogoutRequest = RefreshRequest
 
+// Profile
+struct NicknameRequest: Encodable { let name: String }
+struct ProfileImageRequest: Encodable { let image: String } // 서버 스펙에 맞춰 키명 수정
+
 final class AuthService {
     static let shared = AuthService()
     private init() {}
@@ -31,19 +36,28 @@ final class AuthService {
     func socialLogin(provider: SocialProvider, body: LoginRequest) -> Single<LoginResponse> {
         let url = NetworkDefine.apiHost + NetworkDefine.Auth.login + provider.rawValue
         
-        return request(url, method: .post, body: body)
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        
+        return request(url, method: .post, header: headers, body: body)
     }
 
     func refresh(_ refreshToken: String) -> Single<TokenPair> {
         let url = NetworkDefine.apiHost + NetworkDefine.Auth.refresh
         
-        return request(url, method: .post, body: RefreshRequest(refreshToken: refreshToken))
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        
+        return request(url, method: .post, header: headers, body: RefreshRequest(refreshToken: refreshToken))
     }
     
     func logout(refreshToken: String) -> Single<Void> {
         let url = NetworkDefine.apiHost + NetworkDefine.Auth.logout
         
-        return requestVoid(url, method: .post, body: LogoutRequest(refreshToken: refreshToken))
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        
+        return requestVoid(url, method: .post, header: headers, body: LogoutRequest(refreshToken: refreshToken))
     }
     
     func logoutAndClear() -> Single<Void> {
@@ -65,13 +79,39 @@ final class AuthService {
         })
     }
     
-    private func request<T: Decodable, B: Encodable>(_ url: String, method: HTTPMethod, body: B) -> Single<T> {
+    
+    
+    func setNickname(_ name: String) -> Single<Void> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Profile.nickname
         
-        var headers:HTTPHeaders = ["Content-Type": "application/json"]
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
         headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestVoid(url, method: .patch, header: headers, body: NicknameRequest(name: name))
+    }
+    
+    
+    
+    func setProfileImage(_ image: Data) -> Single<String> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Profile.image
+        let fileName = "profile.jpg"
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestMultipartFormData(url, data: image, fileName: fileName, method: .patch, header: headers)
+    }
+    
+    private func request<T: Decodable, B: Encodable>(_ url: String, method: HTTPMethod, header: HTTPHeaders, body: B) -> Single<T> {
         
         return Single.create { single in
-            let req = AF.request(url, method: method, parameters: body, encoder: JSONParameterEncoder.default, headers: headers)
+            let req = AF.request(url, method: method, parameters: body, encoder: JSONParameterEncoder.default, headers: header)
                 .validate()
                 .responseDecodable(of: T.self) { resp in
                     debugPrint(resp)
@@ -85,17 +125,13 @@ final class AuthService {
     }
     
     // 서버가 바디 없는 2xx만 주는 엔드포인트용
-    private func requestVoid<B: Encodable>(_ url: String,
-                                           method: HTTPMethod,
-                                           body: B) -> Single<Void> {
-        var headers: HTTPHeaders = ["Content-Type": "application/json",
-                                    "Accept": "application/json"]
+    private func requestVoid<B: Encodable>(_ url: String, method: HTTPMethod, header: HTTPHeaders, body: B) -> Single<Void> {
         return Single.create { single in
             let req = AF.request(url,
                                  method: method,
                                  parameters: body,
                                  encoder: JSONParameterEncoder.default,
-                                 headers: headers)
+                                 headers: header)
                 .validate()
                 .response { resp in
                     debugPrint(resp)
@@ -104,6 +140,29 @@ final class AuthService {
                     case .failure(let error): single(.failure(error))
                     }
                 }
+            return Disposables.create { req.cancel() }
+        }
+    }
+    
+    private func requestMultipartFormData<T: Decodable>(_ url: String, data: Data, fileName: String, method: HTTPMethod, header: HTTPHeaders) -> Single<T> {
+        return Single.create { single in
+            let req = AF.upload(
+                multipartFormData: { form in
+                    form.append(data, withName: "file", fileName: fileName, mimeType: "image/jpeg")},
+                to: url,
+                method: .post,
+                headers: header)
+                .validate()
+                .responseString { resp in
+                    debugPrint(resp)
+                    switch resp.result {
+                    case .success(let pathString):
+                        single(.success(pathString as! T))
+                    case .failure(let error):
+                        single(.failure(error))
+                    }
+                }
+            
             return Disposables.create { req.cancel() }
         }
     }

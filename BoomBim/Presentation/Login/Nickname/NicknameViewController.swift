@@ -7,13 +7,19 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 import PhotosUI
 
 final class NicknameViewController: BaseViewController {
     private let viewModel: NicknameViewModel
     private let disposeBag = DisposeBag()
     
+    // 이미지 선택 값을 담아 ViewModel로 전달
+    private let pickedImageRelay = BehaviorRelay<UIImage?>(value: nil)
+    
     // MARK: - UI
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
+    
     private let nicknameTitleLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor.grayScale9
@@ -203,12 +209,28 @@ final class NicknameViewController: BaseViewController {
     private func bind() {
         let input = NicknameViewModel.Input(
             nicknameText: nicknameTextField.rx.text.orEmpty.asDriver(),
+            pickedImage: pickedImageRelay.asDriver(), // UIImage? 전달
             signupTap: signUpButton.rx.tap.asSignal()
         )
         
         let output = viewModel.tansform(input: input)
         
-        output.isSignupEnabled
+        // 로딩 인디케이터
+        output.isLoading
+            .drive(activityIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        // 로딩 동안 전체 입력 비활성화
+        output.isLoading
+            .map { !$0 }
+            .drive(onNext: { [weak self] enabled in
+                self?.nicknameTextField.isEnabled = enabled
+                self?.cameraButton.isEnabled = enabled
+            })
+            .disposed(by: disposeBag)
+        
+        // 버튼 활성 (검증 결과 ∧ 로딩 아님)
+        Driver.combineLatest(output.isSignupEnabled, output.isLoading.map { !$0 }) { $0 && $1 }
             .drive(onNext: { [weak self] isEnabled in
                 self?.signUpButton.isEnabled = isEnabled
                 switch isEnabled {
@@ -221,6 +243,42 @@ final class NicknameViewController: BaseViewController {
                 }
             })
             .disposed(by: disposeBag)
+        
+        // 에러 표시
+        output.error
+            .emit(onNext: { [weak self] msg in
+                self?.presentAlert(title: "오류", message: msg)
+            })
+            .disposed(by: disposeBag)
+        
+        // 선택된 이미지는 imageView에 표시
+//        pickedImageRelay
+//            .bind(to: profileImageView.rx.image)
+//            .disposed(by: disposeBag)
+        
+        let placeholder = UIImage.iconEmptyProfile
+
+        pickedImageRelay
+            .asDriver()
+            .map { $0 ?? placeholder }     // ← nil일 때 기본 이미지 유지
+            .drive(profileImageView.rx.image)
+            .disposed(by: disposeBag)
+
+
+        
+//        output.isSignupEnabled
+//            .drive(onNext: { [weak self] isEnabled in
+//                self?.signUpButton.isEnabled = isEnabled
+//                switch isEnabled {
+//                case true:
+//                    self?.signUpButton.backgroundColor = .main
+//                    self?.signUpButton.setTitleColor(.grayScale1, for: .normal)
+//                case false:
+//                    self?.signUpButton.backgroundColor = UIColor.grayScale4
+//                    self?.signUpButton.setTitleColor(.grayScale7, for: .normal)
+//                }
+//            })
+//            .disposed(by: disposeBag)
     }
     
     // MARK: - Action
