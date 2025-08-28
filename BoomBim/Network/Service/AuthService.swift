@@ -29,6 +29,8 @@ typealias LogoutRequest = RefreshRequest
 struct NicknameRequest: Encodable { let name: String }
 struct ProfileImageRequest: Encodable { let image: String } // 서버 스펙에 맞춰 키명 수정
 
+typealias ProfileResponse = UserProfile
+
 final class AuthService {
     static let shared = AuthService()
     private init() {}
@@ -79,8 +81,6 @@ final class AuthService {
         })
     }
     
-    
-    
     func setNickname(_ name: String) -> Single<Void> {
         let url = NetworkDefine.apiHost + NetworkDefine.Profile.nickname
         
@@ -93,8 +93,6 @@ final class AuthService {
         return requestVoid(url, method: .patch, header: headers, body: NicknameRequest(name: name))
     }
     
-    
-    
     func setProfileImage(_ image: Data) -> Single<String> {
         let url = NetworkDefine.apiHost + NetworkDefine.Profile.image
         let fileName = "profile.jpg"
@@ -106,6 +104,18 @@ final class AuthService {
         }
         
         return requestMultipartFormData(url, data: image, fileName: fileName, method: .patch, header: headers)
+    }
+    
+    func getProfile() -> Single<ProfileResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Profile.profile
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
     }
     
     private func request<T: Decodable, B: Encodable>(_ url: String, method: HTTPMethod, header: HTTPHeaders, body: B) -> Single<T> {
@@ -163,6 +173,22 @@ final class AuthService {
                     }
                 }
             
+            return Disposables.create { req.cancel() }
+        }
+    }
+    
+    private func requestGet<T: Decodable>(_ url: String, method: HTTPMethod, header: HTTPHeaders) -> Single<T> {
+        
+        return Single.create { single in
+            let req = AF.request(url, method: method, headers: header)
+                .validate()
+                .responseDecodable(of: T.self) { resp in
+                    debugPrint(resp)
+                    switch resp.result {
+                    case .success(let value): single(.success(value))
+                    case .failure(let error): single(.failure(error))
+                    }
+                }
             return Disposables.create { req.cancel() }
         }
     }

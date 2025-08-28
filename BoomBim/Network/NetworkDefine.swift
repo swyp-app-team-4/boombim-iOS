@@ -24,6 +24,7 @@ enum NetworkDefine {
     enum Profile {
         static let nickname = "api/member/name"
         static let image = "api/member/profile"
+        static let profile = "api/member"
     }
     
     enum Search {

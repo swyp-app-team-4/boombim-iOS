@@ -12,6 +12,15 @@ enum FavoriteSection {
     case main
 }
 
+struct UserProfile: Decodable {
+    let name: String
+    let profile: String?
+    let email: String
+    let socialProvider: String
+    let voteCnt: Int
+    let questionCnt: Int
+}
+
 struct VoteItem: Hashable {
     let id = UUID()
     let image: UIImage
