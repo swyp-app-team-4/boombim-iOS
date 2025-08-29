@@ -28,6 +28,10 @@ enum NetworkDefine {
         static let profile = "api/member"
     }
     
+    enum Vote {
+        static let create = "api/vote"
+    }
+    
     enum Search {
         static let keyword = "v2/local/search/keyword.json"
         static let category = "v2/local/search/category.json"

@@ -57,7 +57,7 @@ final class SearchPlaceCoordinator: Coordinator {
     
     func showCheckPlace(_ place: Place) {
         print("showCheckPlace")
-        let viewModel = CheckPlaceViewModel(place: place, mode: .returnPlace)
+        let viewModel = CheckPlaceViewModel(place: place, userLocation: .init(latitude: 15, longitude: 53), mode: .returnPlace)
         
         viewModel.onPlaceComplete = { [weak self] place in
             self?.onPlaceComplete?(place)
