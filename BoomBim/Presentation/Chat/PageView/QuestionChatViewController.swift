@@ -8,6 +8,7 @@
 import UIKit
 
 final class QuestionChatViewController: UIViewController {
+    private let viewModel: QuestionChatViewModel
     
     private var questions: [QuestionChatItem] = []
     private var filter: PollFilter = .all
@@ -49,6 +50,15 @@ final class QuestionChatViewController: UIViewController {
         
         return tableView
     }()
+    
+    init(viewModel: QuestionChatViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()

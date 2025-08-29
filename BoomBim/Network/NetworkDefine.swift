@@ -30,6 +30,7 @@ enum NetworkDefine {
     
     enum Vote {
         static let create = "api/vote"
+        static let fetch = "api/vote"
     }
     
     enum Search {

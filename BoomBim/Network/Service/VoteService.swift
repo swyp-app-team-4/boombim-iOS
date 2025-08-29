@@ -18,6 +18,36 @@ struct CreateVoteRequest: Encodable {
     let posName: String
 }
 
+enum VoteStatus: String, Decodable {
+    case PROGRESS, END
+}
+
+struct VoteListRequest: Encodable {
+    let latitude: Double
+    let longitude: Double
+}
+
+struct VoteItemResponse: Decodable {
+    let voteId: Int
+    let profile: String?
+    let voteDuplicationCnt: Int
+    let createdAt: Date                    // ISO8601(소수초) 대응
+    let posName: String
+    let posImage: String?                  // myVote에는 없으니 optional
+    let relaxedCnt: Int
+    let commonly: Int
+    let slightlyBusyCnt: Int
+    let crowedCnt: Int
+    let allType: String
+    let voteFlag: Bool
+    let voteStatus: VoteStatus?            // others에는 없으니 optional
+}
+
+struct VoteListResponse: Decodable {
+    let voteResList: [VoteItemResponse]            // “투표하기” 리스트
+    let myVoteResList: [VoteItemResponse]          // “내 질문” 리스트 (필드 차이는 optional로 커버)
+}
+
 enum CreateVoteError: LocalizedError {
     case outOfRadius        // 403
     case userNotFound       // 404
@@ -54,12 +84,22 @@ final class VoteService: Service {
     func createVote(_ body: CreateVoteRequest) -> Single<Void> {
         let url = NetworkDefine.apiHost + NetworkDefine.Vote.create
         
-        // Authorization 필요
         var headers: HTTPHeaders = ["Accept": "application/json"]
         if let access = TokenManager.shared.currentAccessToken() {
             headers["Authorization"] = "Bearer \(access)"
         }
         
         return requestVoid(url, method: .post, header: headers, body: body)
+    }
+    
+    func fetchVoteList(_ body: VoteListRequest) -> Single<VoteListResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Vote.create
+        
+        var headers: HTTPHeaders = ["Accept": "application/json"]
+        if let access = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(access)"
+        }
+        
+        return requestGet(url, method: .post, header: headers, body: body)
     }
 }
