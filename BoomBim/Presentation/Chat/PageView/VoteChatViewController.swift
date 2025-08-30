@@ -6,11 +6,21 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class VoteChatViewController: UIViewController {
     private let viewModel: VoteChatViewModel
+    private let disposeBag = DisposeBag()
+    
+    private let endVoteRelay = PublishRelay<Int>()
     
     private var votes: [VoteChatItem] = []
+    
+    // 부모(상위 탭/페이지)에게 새로고침을 부탁할 콜백
+    var onNeedRefresh: (() -> Void)?
+    
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
     
     private let emptyStackView: UIStackView = {
         let stackView = UIStackView()
@@ -63,27 +73,20 @@ final class VoteChatViewController: UIViewController {
         
         setupView()
         
-        // dummy Data
-        votes = [
-            .init(profileImage: [nil, nil, nil], people: 10, update: "5", title: "서울역", roadImage: nil, congestion: .relaxed, isVoting: true),
-            .init(profileImage: [nil, nil], people: 13, update: "15", title: "강남역", roadImage: nil, congestion: .busy, isVoting: false),
-            .init(profileImage: [nil], people: 6, update: "25", title: "신촌역", roadImage: nil, congestion: .relaxed, isVoting: true),
-            .init(profileImage: [nil], people: 9, update: "35", title: "양재역", roadImage: nil, congestion: .crowded, isVoting: false),
-            .init(profileImage: [nil], people: 11, update: "55", title: "건대입구역", roadImage: nil, congestion: .normal, isVoting: true)
-        ]
+        bind()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-        if votes.isEmpty {
-            emptyStackView.isHidden = false
-            voteTableView.isHidden = true
-        } else {
-            emptyStackView.isHidden = true
-            voteTableView.isHidden = false
-        }
-    }
+//    override func viewWillAppear(_ animated: Bool) {
+//        super.viewWillAppear(animated)
+//        
+//        if votes.isEmpty {
+//            emptyStackView.isHidden = false
+//            voteTableView.isHidden = true
+//        } else {
+//            emptyStackView.isHidden = true
+//            voteTableView.isHidden = false
+//        }
+//    }
     
     private func setupView() {
         view.backgroundColor = .tableViewBackground
@@ -108,8 +111,8 @@ final class VoteChatViewController: UIViewController {
     }
     
     private func configureTableView() {
-        voteTableView.delegate = self
-        voteTableView.dataSource = self
+        voteTableView.delegate = nil
+        voteTableView.dataSource = nil
         voteTableView.register(VoteChatCell.self, forCellReuseIdentifier: VoteChatCell.identifier)
         
         voteTableView.translatesAutoresizingMaskIntoConstraints = false
@@ -122,35 +125,104 @@ final class VoteChatViewController: UIViewController {
             voteTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
-}
-
-extension VoteChatViewController: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        votes.count
-    }
-
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 16
-    }
     
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let index = indexPath.row
-        let vote = votes[index]
-        let cell = tableView.dequeueReusableCell(withIdentifier: VoteChatCell.identifier, for: indexPath) as! VoteChatCell
+    private func bind() {
+        let output = viewModel.transform(.init(endVoteTap: endVoteRelay.asSignal()))
         
-        cell.configure(vote)
-        cell.onVote = { [weak self, weak tableView] selectedIndex in
-            guard let self, let tableView, let currentIndexPath = tableView.indexPath(for: cell) // 재사용 대비, 최신 indexPath 구하기
-            else { return }
-            
-            print("vote Button Tapped : \(currentIndexPath.row)")
-            print("selectedIndex : \(selectedIndex)")
+        // 목록 바인딩(예시)
+        output.items
+            .drive(voteTableView.rx.items(cellIdentifier: VoteChatCell.identifier, cellType: VoteChatCell.self)) { [weak self] _, item, cell in
+                print("item: \(item)")
+                
+                let voteChatItem: VoteChatItem = .init(
+                    profileImage: item.profile,
+                    people: item.profile.count,
+                    update: "1분", // TODO: Update 날짜 계산 createdAt
+                    title: item.posName,
+                    roadImage: item.posImage,
+                    congestion: .crowded, // TODO: 혼잡도 값 기반으로 젤 큰 것 설정
+                    isVoting: !item.voteFlag)
+                
+                cell.configure(voteChatItem)
+                cell.onVote = { selectedIndex in
+                    
+                    self?.confirmEnd(voteId: item.voteId)
+                    print("selectedIndex : \(selectedIndex)")
+                }
+            }
+            .disposed(by: disposeBag)
+        
+        // 로딩/토스트
+        output.isLoading
+            .drive(activityIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        let isEmpty = output.items
+            .map { $0.isEmpty }
+            .distinctUntilChanged()
+        
+        Driver.combineLatest(output.isLoading, isEmpty) { isLoading, isEmpty -> (Bool, Bool) in
+            (isLoading, isEmpty)
         }
+        .drive(onNext: { [weak self] isLoading, isEmpty in
+            guard let self = self else { return }
+            if isLoading {
+                self.voteTableView.isHidden = true
+                self.emptyStackView.isHidden = true
+            } else {
+                self.voteTableView.isHidden = isEmpty
+                self.emptyStackView.isHidden = !isEmpty
+            }
+        })
+        .disposed(by: disposeBag)
         
-        return cell
+//        output.toast
+//            .emit(onNext: { [weak self] msg in self?.showToast(msg) })
+//            .disposed(by: disposeBag)
+        
+        // 종료 성공 → 부모에게 목록 갱신 요청
+        output.ended
+            .emit(onNext: { [weak self] _ in self?.onNeedRefresh?() })
+            .disposed(by: disposeBag)
+    }
+    
+    private func confirmEnd(voteId: Int) {
+        let ac = UIAlertController(title: "투표 종료", message: "이 투표를 종료할까요?", preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "취소", style: .cancel))
+        ac.addAction(UIAlertAction(title: "종료", style: .destructive, handler: { [weak self] _ in
+            self?.endVoteRelay.accept(voteId)  // ✅ VM으로 전달
+        }))
+        present(ac, animated: true)
     }
 }
+
+//extension VoteChatViewController: UITableViewDelegate, UITableViewDataSource {
+//    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+//        votes.count
+//    }
+//
+//    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+//        return 16
+//    }
+//    
+//    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+//        return UITableView.automaticDimension
+//    }
+//    
+//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//        let index = indexPath.row
+//        let vote = votes[index]
+//        let cell = tableView.dequeueReusableCell(withIdentifier: VoteChatCell.identifier, for: indexPath) as! VoteChatCell
+//        
+////        cell.configure(vote)
+////        cell.onVote = { [weak self, weak tableView] selectedIndex in
+////            guard let self, let tableView, let currentIndexPath = tableView.indexPath(for: cell) // 재사용 대비, 최신 indexPath 구하기
+////            else { return }
+////            
+////            print("vote Button Tapped : \(currentIndexPath.row)")
+////            print("selectedIndex : \(selectedIndex)")
+////        }
+//        
+//        return cell
+//    }
+//}

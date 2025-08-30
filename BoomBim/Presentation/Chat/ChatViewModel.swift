@@ -14,12 +14,13 @@ final class ChatViewModel {
         let appear: Signal<Void>                 // viewDidAppear 등
         let refresh: Signal<Void>                // 당겨서 새로고침 or 상단 버튼
         let location: Driver<CLLocationCoordinate2D>   // (lat, lng)
+//        let vote: Signal<Void>
     }
     struct Output {
         let isLoading: Driver<Bool>
         let error: Signal<String>
         let voteList: Driver<[VoteItemResponse]>
-        let myVoteList: Driver<[VoteItemResponse]>
+        let myVoteList: Driver<[MyVoteItemResponse]>
     }
 
     private let loading = BehaviorRelay<Bool>(value: false)
@@ -42,19 +43,13 @@ final class ChatViewModel {
         refreshD.drive(onNext: { print("VM: refresh!") }).disposed(by: disposeBag)
         
         let coordD: Driver<CLLocationCoordinate2D> = Driver
-            .combineLatest(triggerD, input.location) { _, loc in
-                print("combineLatest(triggerD, input.location)")
-                return loc
-            }
+            .combineLatest(triggerD, input.location) { _, loc in loc }
         
-        triggerD.do(onNext: { _ in print("VM: trigger!") })
-        coordD.do(onNext: { c in print("VM: coord ready", c) })
         // 3) 네트워크 호출
         let shared: Driver<VoteListResponse> = coordD
             .do(onNext: { [loading] _ in loading.accept(true) })
             .flatMapLatest { coord -> Driver<VoteListResponse> in
                 let req = VoteListRequest(latitude: coord.latitude, longitude: coord.longitude)
-                print("fetchVote Reqeust : \(req)")
                 return VoteService.shared.fetchVoteList(req)
                     .asObservable()
                     .do(onError: { [weak self] err in
@@ -66,23 +61,13 @@ final class ChatViewModel {
             }
             .do(onNext: { [loading] _ in loading.accept(false) })
 
-        // 한 번 호출해서 결과를 공유 (두 페이지가 구독해도 네트워크 1회)
-//        let shared: Driver<VoteListResponse> = trigger
-//            .withLatestFrom(input.location)
-//            .do(onNext: { [loading] _ in loading.accept(true) })
-//            .flatMapLatest { coord -> Driver<VoteListResponse> in
-//                let request: VoteListRequest = .init(latitude: coord.latitude, longitude: coord.longitude)
-//                print("fetchVote Reqeust : \(request)")
-//                return VoteService.shared.fetchVoteList(request)
-//                    .asObservable()
-//                    .do(onError: { [weak self] error in
-//                        self?.loading.accept(false)
-//                        self?.errorRelay.accept(error.localizedDescription)
-//                    })
-//                    .catch { _ in .empty() }               // 에러를 빈 스트림으로 대체
-//                    .asDriver(onErrorDriveWith: .empty())  // Driver로 승격
+//        input.vote
+//            .flatMapLatest { id -> Driver<Void> in
+//                let id: VoteFinishRequest = .init(voteId: id)
+//                VoteService.shared.finishVote(id)
 //            }
-//            .do(onNext: { [loading] _ in loading.accept(false) })
+//            .drive()
+//            .disposed(by: disposeBag)
 
         let voteList = shared.map { $0.voteResList }
         let myVoteList = shared.map { $0.myVoteResList }

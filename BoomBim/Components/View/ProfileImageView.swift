@@ -28,7 +28,7 @@ final class ProfileImageView: UIView {
     }
 
     // 셀에서 호출
-    func configure(with urls: [URL?]) {
+    func configure(with urls: [String?]) {
         // 정리
         imageViews.forEach { $0.removeFromSuperview() }
         leadingConstraints.removeAll()
@@ -61,15 +61,7 @@ final class ProfileImageView: UIView {
             iv.image = .iconEmptyProfile
             
             if let u = urls[i] {
-                // Nuke 사용 시:
-                // let opts = ImageLoadingOptions(placeholder: placeholderImage,
-                //                                failureImage: placeholderImage,
-                //                                transition: .fadeIn(duration: 0.2))
-                // Nuke.loadImage(with: u, options: opts, into: iv)
-                
-                // 기본 URLSession 로더 사용 시:
-//                iv.boundURL = u                      // 레이스컨디션 방지용 바인딩
-//                loadWithURLSession(u, into: iv, placeholder: .iconEmptyProfile)
+                iv.setProfileImage(from: u)
             } else {
                 // ✅ URL이 없으면 기본 이미지 유지
                 iv.image = .iconEmptyProfile

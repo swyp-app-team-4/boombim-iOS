@@ -92,13 +92,15 @@ class Service {
     func requestGet<T: Decodable, B: Encodable>(_ url: String, method: HTTPMethod, header: HTTPHeaders, body: B) -> Single<T> {
         
         return Single.create { single in
-            let req = AF.request(url, method: method, parameters: body, encoder: JSONParameterEncoder.default, headers: header)
+            let req = AF.request(url, method: method, parameters: body, encoder: URLEncodedFormParameterEncoder(destination: .queryString), headers: header)
                 .validate()
                 .responseDecodable(of: T.self) { resp in
                     debugPrint(resp)
                     switch resp.result {
                     case .success(let value): single(.success(value))
-                    case .failure(let error): single(.failure(error))
+                    case .failure(let error):
+                        print("error : \(error)")
+                        single(.failure(error))
                     }
                 }
             return Disposables.create { req.cancel() }

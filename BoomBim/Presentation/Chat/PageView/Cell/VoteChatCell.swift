@@ -199,8 +199,7 @@ final class VoteChatCell: UITableViewCell {
         
         voteUIAction = UIAction { [weak self] _ in
             guard let self else { return }
-            self.onVote?(self.selectedIndex)   // <- 선택 인덱스 전달
-            print("selectedIndex:", self.selectedIndex as Any)
+            self.onVote?(self.selectedIndex)
         }
         if let action = voteUIAction {
             voteButton.addAction(action, for: .touchUpInside)

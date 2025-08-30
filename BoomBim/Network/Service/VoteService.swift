@@ -29,23 +29,41 @@ struct VoteListRequest: Encodable {
 
 struct VoteItemResponse: Decodable {
     let voteId: Int
-    let profile: String?
+    let profile: [String]
     let voteDuplicationCnt: Int
-    let createdAt: Date                    // ISO8601(소수초) 대응
+    let createdAt: String
     let posName: String
-    let posImage: String?                  // myVote에는 없으니 optional
+    let posImage: String
     let relaxedCnt: Int
     let commonly: Int
     let slightlyBusyCnt: Int
     let crowedCnt: Int
     let allType: String
     let voteFlag: Bool
-    let voteStatus: VoteStatus?            // others에는 없으니 optional
+}
+
+struct MyVoteItemResponse: Decodable {
+    let voteId: Int
+    let profile: [String]
+    let voteDuplicationCnt: Int
+    let createdAt: String
+    let posName: String
+    let relaxedCnt: Int
+    let commonly: Int
+    let slightlyBusyCnt: Int
+    let crowedCnt: Int
+    let allType: String
+    let voteStatus: String
+    let voteFlag: Bool
 }
 
 struct VoteListResponse: Decodable {
     let voteResList: [VoteItemResponse]            // “투표하기” 리스트
-    let myVoteResList: [VoteItemResponse]          // “내 질문” 리스트 (필드 차이는 optional로 커버)
+    let myVoteResList: [MyVoteItemResponse]          // “내 질문” 리스트 (필드 차이는 optional로 커버)
+}
+
+struct VoteFinishRequest: Encodable {
+    let voteId: Int
 }
 
 enum CreateVoteError: LocalizedError {
@@ -76,6 +94,34 @@ enum CreateVoteError: LocalizedError {
     }
 }
 
+enum EndVoteError: LocalizedError {
+    case forbidden        // 403: 권한 없음(내 투표 아님 등)
+    case notFound         // 404
+    case conflict         // 409: 이미 종료
+    case server
+    case unknown
+
+    static func from(status: Int?) -> EndVoteError {
+        switch status {
+        case 403: return .forbidden
+        case 404: return .notFound
+        case 409: return .conflict
+        case .some(let s) where 500...599 ~= s: return .server
+        default: return .unknown
+        }
+    }
+
+    var errorDescription: String? {
+        switch self {
+        case .forbidden: return "해당 투표를 종료할 권한이 없어요."
+        case .notFound:  return "투표를 찾을 수 없어요."
+        case .conflict:  return "이미 종료된 투표예요."
+        case .server:    return "서버 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
+        case .unknown:   return "알 수 없는 오류가 발생했어요."
+        }
+    }
+}
+
 final class VoteService: Service {
     static let shared = VoteService()
     
@@ -93,13 +139,27 @@ final class VoteService: Service {
     }
     
     func fetchVoteList(_ body: VoteListRequest) -> Single<VoteListResponse> {
-        let url = NetworkDefine.apiHost + NetworkDefine.Vote.create
+        let url = NetworkDefine.apiHost + NetworkDefine.Vote.fetch
         
         var headers: HTTPHeaders = ["Accept": "application/json"]
         if let access = TokenManager.shared.currentAccessToken() {
             headers["Authorization"] = "Bearer \(access)"
         }
         
-        return requestGet(url, method: .post, header: headers, body: body)
+        print("body: \(body)")
+        
+        return requestGet(url, method: .get, header: headers, body: body)
+    }
+    
+    func finishVote(_ body: VoteFinishRequest) -> Single<Void> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Vote.finish
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestVoid(url, method: .patch, header: headers, body: body)
     }
 }

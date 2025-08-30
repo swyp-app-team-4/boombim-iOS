@@ -39,7 +39,7 @@ final class ChatViewController: BaseViewController {
     private let locationRelay = BehaviorRelay<CLLocationCoordinate2D?>(value: nil)
     
     private var voteList: Driver<[VoteItemResponse]>!
-    private var myVoteList: Driver<[VoteItemResponse]>!
+    private var myVoteList: Driver<[MyVoteItemResponse]>!
     
     private var voteChatViewController: VoteChatViewController!
     private var questionChatViewController: QuestionChatViewController!
@@ -167,18 +167,15 @@ final class ChatViewController: BaseViewController {
         self.voteList = output.voteList
         self.myVoteList = output.myVoteList
         
-        output.voteList
-            .drive(onNext: { items in print("PARENT: vote items ->", items.count) })
-            .disposed(by: disposeBag)
-
-        output.myVoteList
-            .drive(onNext: { items in print("PARENT: my items ->", items.count) })
-            .disposed(by: disposeBag)
-        
         let voteChatViewModel = VoteChatViewModel(items: voteList)
         let questionChatViewModel = QuestionChatViewModel(items: myVoteList)
         
         voteChatViewController = VoteChatViewController(viewModel: voteChatViewModel)
+        voteChatViewController.onNeedRefresh = { [weak self] in
+            print("cell 변화가 있었으니까 화면 초기화해야됩니다")
+            self?.refreshRelay.accept(()) // 부모의 조회 트리거 → 최신 목록 재요청
+        }
+        
         questionChatViewController = QuestionChatViewController(viewModel: questionChatViewModel)
         
         self.pages = [voteChatViewController, questionChatViewController]
