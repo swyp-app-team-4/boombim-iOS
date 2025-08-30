@@ -13,7 +13,7 @@ final class VoteChatViewController: UIViewController {
     private let viewModel: VoteChatViewModel
     private let disposeBag = DisposeBag()
     
-    private let endVoteRelay = PublishRelay<Int>()
+    private let endVoteRelay = PublishRelay<(Int, Int)>()
     
     private var votes: [VoteChatItem] = []
     
@@ -145,9 +145,11 @@ final class VoteChatViewController: UIViewController {
                 
                 cell.configure(voteChatItem)
                 cell.onVote = { selectedIndex in
-                    
-                    self?.confirmEnd(voteId: item.voteId)
+                    guard let selectedIndex = selectedIndex else { return }
                     print("selectedIndex : \(selectedIndex)")
+                    self?.endVoteRelay.accept((item.voteId, selectedIndex))
+//                    self?.confirmEnd(voteId: item.voteId, congestionLevel: selectedIndex)
+                    
                 }
             }
             .disposed(by: disposeBag)
@@ -186,11 +188,12 @@ final class VoteChatViewController: UIViewController {
             .disposed(by: disposeBag)
     }
     
-    private func confirmEnd(voteId: Int) {
+    // TODO: 투표하기
+    private func confirmEnd(voteId: Int, congestionLevel: Int) {
         let ac = UIAlertController(title: "투표 종료", message: "이 투표를 종료할까요?", preferredStyle: .alert)
         ac.addAction(UIAlertAction(title: "취소", style: .cancel))
         ac.addAction(UIAlertAction(title: "종료", style: .destructive, handler: { [weak self] _ in
-            self?.endVoteRelay.accept(voteId)  // ✅ VM으로 전달
+            self?.endVoteRelay.accept((voteId, congestionLevel))
         }))
         present(ac, animated: true)
     }

@@ -53,7 +53,7 @@ struct MyVoteItemResponse: Decodable {
     let slightlyBusyCnt: Int
     let crowedCnt: Int
     let allType: String
-    let voteStatus: String
+    let voteStatus: VoteStatus
     let voteFlag: Bool
 }
 
@@ -62,8 +62,28 @@ struct VoteListResponse: Decodable {
     let myVoteResList: [MyVoteItemResponse]          // “내 질문” 리스트 (필드 차이는 optional로 커버)
 }
 
-struct VoteFinishRequest: Encodable {
+struct FinishVoteRequest: Encodable {
     let voteId: Int
+}
+
+enum VoteAnswerType: String, Encodable {
+    case RELAXED, COMMONLY, SLIGHTLY_BUSY, CROWDED
+    
+    init(index: Int) {
+        switch index {
+        case 0: self = .RELAXED
+        case 1: self = .COMMONLY
+        case 2: self = .SLIGHTLY_BUSY
+        case 3: self = .CROWDED
+        default:
+            self = .CROWDED
+        }
+    }
+}
+
+struct CastVoteRequest: Encodable {
+    let voteId: Int
+    let voteAnswerType: VoteAnswerType
 }
 
 enum CreateVoteError: LocalizedError {
@@ -151,7 +171,7 @@ final class VoteService: Service {
         return requestGet(url, method: .get, header: headers, body: body)
     }
     
-    func finishVote(_ body: VoteFinishRequest) -> Single<Void> {
+    func finishVote(_ body: FinishVoteRequest) -> Single<Void> {
         let url = NetworkDefine.apiHost + NetworkDefine.Vote.finish
         
         var headers: HTTPHeaders = ["Content-Type": "application/json"]
@@ -161,5 +181,16 @@ final class VoteService: Service {
         }
         
         return requestVoid(url, method: .patch, header: headers, body: body)
+    }
+    
+    func castVote(_ body: CastVoteRequest) -> Single<Void> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Vote.answer
+        
+        var headers: HTTPHeaders = ["Accept": "application/json"]
+        if let access = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(access)"
+        }
+        
+        return requestVoid(url, method: .post, header: headers, body: body)
     }
 }

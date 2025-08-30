@@ -16,7 +16,7 @@ final class VoteChatViewModel {
     }
 
     struct Input {
-        let endVoteTap: Signal<Int>  // ✅ 종료 버튼 탭(voteId)
+        let endVoteTap: Signal<(Int, Int)>
     }
     struct Output {
         let isLoading: Driver<Bool>
@@ -34,12 +34,13 @@ final class VoteChatViewModel {
         input.endVoteTap
             .throttle(.milliseconds(500))
             .do(onNext: { [loading] _ in loading.accept(true) })
-            .flatMapLatest { id -> Signal<Int> in
+            .flatMapLatest { id, congestionLevel -> Signal<(Int, Int)> in
                 // 파라미터 이름과 다른 이름 사용
-                let body = VoteFinishRequest(voteId: id)
+                let body = CastVoteRequest(voteId: id,
+                                           voteAnswerType: VoteAnswerType(index: congestionLevel))
 
                 // return 명시 + 에러를 Signal로 처리
-                return VoteService.shared.finishVote(body)   // Single<Void> 가정
+                return VoteService.shared.castVote(body)   // Single<Void> 가정
                     .asSignal(onErrorRecover: { [weak self] error in
                         self?.loading.accept(false)
                         if let e = error as? EndVoteError {
@@ -49,10 +50,9 @@ final class VoteChatViewModel {
                         }
                         return .empty() // Signal<Void>
                     })
-                    // 최종적으로 Signal<Int>로 맞춤: 성공 시 원래 id 방출
-                    .map { _ in id }
+                    .map { _ in (id, congestionLevel) }
             }
-            .emit(onNext: { [weak self] id in
+            .emit(onNext: { [weak self] (id, congestionLevel) in
                 self?.loading.accept(false)
                 self?.toastRelay.accept("투표를 종료했어요.")
                 self?.endedRelay.accept(id)

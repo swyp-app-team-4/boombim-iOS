@@ -36,7 +36,7 @@ final class QuestionChatViewModel {
             .do(onNext: { [loading] _ in loading.accept(true) })
             .flatMapLatest { id -> Signal<Int> in
                 // 파라미터 이름과 다른 이름 사용
-                let body = VoteFinishRequest(voteId: id)
+                let body = FinishVoteRequest(voteId: id)
 
                 // return 명시 + 에러를 Signal로 처리
                 return VoteService.shared.finishVote(body)   // Single<Void> 가정
