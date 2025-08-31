@@ -35,12 +35,12 @@ struct ViewportRect: Equatable {
 }
 
 // MARK: - Request DTO
-struct OfficialPlacesRequest: Encodable {
-    struct Coord: Encodable { let latitude: Double; let longitude: Double }
-    let topLeft: Coord
-    let bottomRight: Coord
-    let memberCoordinate: Coord
-}
+//struct OfficialPlacesRequest: Encodable {
+//    struct Coord: Encodable { let latitude: Double; let longitude: Double }
+//    let topLeft: Coord
+//    let bottomRight: Coord
+//    let memberCoordinate: Coord
+//}
 
 // MARK: - Response DTO
 struct APIResponse<T: Decodable>: Decodable {

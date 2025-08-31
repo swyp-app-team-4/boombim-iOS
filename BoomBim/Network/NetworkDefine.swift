@@ -47,5 +47,6 @@ enum NetworkDefine {
     
     enum Place {
         static let officialPlace = "official-place"
+        static let userPlace = "member-place"
     }
 }

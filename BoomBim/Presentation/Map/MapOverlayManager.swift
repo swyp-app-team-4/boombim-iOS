@@ -8,12 +8,10 @@
 import KakaoMapsSDK
 import UIKit
 
-/// 1) 카테고리 정의: 버튼이 늘어나면 여기만 추가
 enum OverlayGroup: String, CaseIterable {
-    case official       // 공식 장소
-    case favorite        // 여유
-    case realtime           // 붐빔
-    case crowded        // 매우 붐빔
+    case official
+    case favorite
+    case realtime
 }
 
 /// 2) 그룹별 스타일 설정값

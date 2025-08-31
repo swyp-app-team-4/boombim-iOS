@@ -16,23 +16,20 @@ final class MapViewModel {
         let didTapMyLocation: Observable<Void> // 현재 위치 버튼
     }
     struct Output {
-        let places: Observable<[Place]>
-        let officialPlace: Observable<OfficialPlace>
+        let places: Observable<[UserPlaceItem]>
+        let officialPlace: Observable<[OfficialPlaceItem]>
         let myCoordinate: Observable<Coordinate?> // 뷰에서 카메라 이동 등에 활용
     }
     
     private(set) var currentCoordinate: CLLocationCoordinate2D?
     
     private let service: KakaoLocalService
-    private let officialService: OfficialPlaceServiceType
     private let locationRepo: LocationRepositoryType
     private let disposeBag = DisposeBag()
     
     init(service: KakaoLocalService,
-         officialService: OfficialPlaceServiceType,
          locationRepo: LocationRepositoryType) {
         self.service = service
-        self.officialService = officialService
         self.locationRepo = locationRepo
     }
     
@@ -44,7 +41,9 @@ final class MapViewModel {
         
         let rectWhenZoomOK = Observable
             .combineLatest(input.cameraRect, input.zoomLevel.startWith(14))
-            .filter { _, zoom in zoom >= 11 }
+            .filter { _, zoom in
+                print("🍎 줌 레벨 : \(zoom)")
+                return zoom >= 11 }
             .map { rect, _ in rect }
             .distinctUntilChanged { a, b in
                 func r6(_ d: Double) -> Double { (d * 1e6).rounded() / 1e6 }
@@ -66,28 +65,67 @@ final class MapViewModel {
             .merge(locationRepo.coordinate, refreshTap)
             .share(replay: 1, scope: .whileConnected)
         
-        let places = rectWhenZoomOK
-            .flatMapLatest { [service] rect in
-                service.searchStarbucks(in: rect).asObservable() // TEST를 위한 스타벅스 조회 API
-                    .catchAndReturn([])
-            }
+        // 최신 줌값 스트림 (기본값 14)
+        let zoom = input.zoomLevel
+            .startWith(14)
+            .distinctUntilChanged()
             .share(replay: 1, scope: .whileConnected)
         
-        let officialPlace = Observable
-            .combineLatest(rectWhenZoomOK, myCoord)
-            .flatMapLatest { [officialService] rect, memberOpt in
+        // 공식 장소: rect + 내 좌표 + 줌을 묶어서 서버 조회
+        let zipped: Observable<(ViewportRect, CLLocationCoordinate2D?, Int)> =
+        Observable.combineLatest(
+            rectWhenZoomOK,
+            myCoord,
+            zoom,
+            resultSelector: { rect, memberOpt, z in (rect, memberOpt, z) }
+        )
+        
+        let officialPlace: Observable<[OfficialPlaceItem]> =
+        zipped
+            .flatMapLatest { (rect, memberOpt, z) -> Observable<[OfficialPlaceItem]> in
+                
                 let member = memberOpt ?? rect.centerCoord
-                return officialService.fetchOfficialPlace(
-                    topLeft: rect.topLeftCoord,
-                    bottomRight: rect.bottomRightCoord,
-                    member: member
-                )
-                .asObservable()
-                .catch { _ in .empty() }
+                
+                let requestBody: OfficialPlaceRequest = .init(
+                    topLeft: Coord(latitude: rect.top, longitude: rect.left),
+                    bottomRight: Coord.init(latitude: rect.bottom, longitude: rect.right),
+                    memberCoordinate: Coord(latitude: member.latitude, longitude: member.longitude),
+                    zoomLevel: z)
+                
+                return PlaceService.shared.fetchOfficialPlace(body: requestBody)
+                    .map{ $0.data }
+                    .asObservable()
+                    .catchAndReturn([]) // 에러시 빈 배열
             }
             .share(replay: 1, scope: .whileConnected)
         
-        return .init(places: places,
+        let userPlaces: Observable<[UserPlaceItem]> =
+        zipped
+            .flatMapLatest { (rect, memberOpt, z) -> Observable<[UserPlaceItem]> in
+                
+                let member = memberOpt ?? rect.centerCoord
+                
+                let requestBody: UserPlaceRequest = .init(
+                    topLeft: Coord(latitude: rect.top, longitude: rect.left),
+                    bottomRight: Coord.init(latitude: rect.bottom, longitude: rect.right),
+                    memberCoordinate: Coord(latitude: member.latitude, longitude: member.longitude),
+                    zoomLevel: z)
+                
+                return PlaceService.shared.fetchUserPlace(body: requestBody)
+                    .map{ $0.data }
+                    .asObservable()
+                    .catchAndReturn([]) // 에러시 빈 배열
+            }
+            .share(replay: 1, scope: .whileConnected)
+        
+//        let places = rectWhenZoomOK
+//            .flatMapLatest { [service] rect in
+//                service.searchStarbucks(in: rect).asObservable() // TEST를 위한 스타벅스 조회 API
+//                    .catchAndReturn([])
+//            }
+//            .share(replay: 1, scope: .whileConnected)
+        
+        return .init(places: userPlaces,
                      officialPlace: officialPlace,
                      myCoordinate: myCoord)
     }

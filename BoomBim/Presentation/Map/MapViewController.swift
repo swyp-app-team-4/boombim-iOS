@@ -24,6 +24,7 @@ final class MapViewController: BaseViewController {
     private var overlay: MapOverlayManager!
     
     private let mapReady = PublishRelay<Void>()
+    private let modeRelay = BehaviorRelay<OverlayGroup>(value: .realtime)
 
     // MARK: - Rx (카메라 이벤트 파이프)
     private let cameraRectSubject = PublishSubject<ViewportRect>()
@@ -306,13 +307,16 @@ final class MapViewController: BaseViewController {
 
         // places → 실시간 그룹 POI
         output.places
+            .withLatestFrom(modeRelay) { places, mode in (places, mode) }
+            .filter { $0.1 == .realtime }
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] places in
+            .subscribe(onNext: { [weak self] places, _ in
                 guard let self, let map = self.kakaoMap else { return }
                 let visual = self.visual(for: .realtime)
+                
                 let items: [(id: String, point: MapPoint)] = places.map {
-                    (id: $0.id,
-                     point: MapPoint(longitude: $0.coord.longitude, latitude: $0.coord.latitude))
+                    (id: String($0.memberPlaceId),
+                     point: MapPoint(longitude: $0.coordinate.longitude, latitude: $0.coordinate.latitude))
                 }
                 self.overlay.setPOIs(for: .realtime, items: items, visual: visual)
 //                map.commit()
@@ -321,21 +325,31 @@ final class MapViewController: BaseViewController {
 
         // officialPlace → 폴리곤/센터
         output.officialPlace
+            .withLatestFrom(modeRelay) { official, mode in (official, mode) }
+            .filter { $0.1 == .official }
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] official in
-                guard let self, let map = self.kakaoMap else { return }
+            .subscribe(onNext: { [weak self] official, _ in
+                guard let self else { return }
                 let visual = self.visual(for: .official)
 
-                if let exterior = official.centroid as? [CLLocationCoordinate2D], !exterior.isEmpty {
-                    let ring = exterior.map { MapPoint(longitude: $0.longitude, latitude: $0.latitude) }
-                    self.overlay.setPolygons(for: .official, rings: [ring], visual: visual)
+                let items: [(id: String, point: MapPoint)] = official.map {
+                    (id: String($0.id),
+                     point: MapPoint(longitude: $0.coordinate.longitude, latitude: $0.coordinate.latitude))
                 }
-                if let center = official.centroid as? CLLocationCoordinate2D {
-                    let items = [(id: "official.center",
-                                  point: MapPoint(longitude: center.longitude, latitude: center.latitude))]
-                    self.overlay.setPOIs(for: .official, items: items, visual: visual)
+                self.overlay.setPOIs(for: .official, items: items, visual: visual)
+            })
+            .disposed(by: disposeBag)
+        
+        favoriteButton.rx.tap
+            .bind(onNext: { [weak self] in
+                guard let self else { return }
+                favoriteButton.isSelected.toggle()
+                
+                if favoriteButton.isSelected {
+                    self.overlay.show(.favorite)
+                } else {
+                    self.overlay.hide(.favorite)
                 }
-//                map.commit()
             })
             .disposed(by: disposeBag)
         
@@ -366,7 +380,6 @@ final class MapViewController: BaseViewController {
     // MARK: - Mode / Visual
     private func selectMode(_ group: OverlayGroup) {
         // 버튼 선택 상태/스타일 변경
-        let groups: [OverlayGroup] = [.official, .realtime]
         publicButton.isSelected   = (group == .official)
         realtimeButton.isSelected = (group == .realtime)
 
@@ -375,6 +388,7 @@ final class MapViewController: BaseViewController {
         realtimeButton.layer.borderColor = (realtimeButton.isSelected ? UIColor.grayScale9 : .grayScale6).cgColor
 
         // 오버레이 표시 모드
+        modeRelay.accept(group)
         overlay.showOnly(group)
 //        kakaoMap?.commit()
     }
@@ -383,31 +397,24 @@ final class MapViewController: BaseViewController {
         switch group {
         case .official:
             return .init(
-                icon: UIImage(named: "poi.official") ?? UIImage(systemName: "star.circle.fill")!,
+                icon: .iconPublicMapPoi,
                 fill: UIColor.systemBlue.withAlphaComponent(0.2),
                 stroke: .systemBlue,
                 zPOI: 3000, zShape: 2500
             )
         case .favorite:
             return .init(
-                icon: UIImage(named: "poi.favorite") ?? UIImage(systemName: "heart.circle.fill")!,
+                icon: .iconFavoriteStar,
                 fill: UIColor.systemGreen.withAlphaComponent(0.2),
                 stroke: .systemGreen,
                 zPOI: 2200, zShape: 1800
             )
         case .realtime:
             return .init(
-                icon: UIImage(named: "poi.realtime") ?? UIImage(systemName: "mappin.circle.fill")!,
+                icon: .iconRedMapPoi,
                 fill: UIColor.systemOrange.withAlphaComponent(0.2),
                 stroke: .systemOrange,
                 zPOI: 2400, zShape: 1900
-            )
-        case .crowded:
-            return .init(
-                icon: UIImage(named: "poi.crowded") ?? UIImage(systemName: "exclamationmark.circle.fill")!,
-                fill: UIColor.systemRed.withAlphaComponent(0.2),
-                stroke: .systemRed,
-                zPOI: 2600, zShape: 2000
             )
         }
     }
