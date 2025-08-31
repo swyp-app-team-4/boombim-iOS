@@ -10,43 +10,46 @@ import CoreLocation
 import RxSwift
 import RxCocoa
 
-public final class AppLocationManager: NSObject, LocationProviding {
+public enum LocationError: LocalizedError {
+    case timeout
+    case deniedOrRestricted
+    public var errorDescription: String? {
+        switch self {
+        case .timeout: return "현재 위치를 가져오지 못했습니다. (시간 초과)"
+        case .deniedOrRestricted: return "위치 권한이 없어 현재 위치를 사용할 수 없습니다."
+        }
+    }
+}
+
+public final class AppLocationManager: NSObject {
     public static let shared = AppLocationManager()
 
-    // MARK: - Observables
+    // MARK: - Relays (외부 구독용)
     public let authorization = BehaviorRelay<CLAuthorizationStatus>(value: .notDetermined)
     public let currentLocation = BehaviorRelay<CLLocation?>(value: nil)
-    public let locationError = PublishRelay<Error>()
-    
-    public let heading = BehaviorRelay<CLHeading?>(value: nil)                  // 최신 CLHeading 보관
-    public let headingDegrees = PublishRelay<CLLocationDirection>()             // degree(0~360) 스트림
+
+    public let heading = BehaviorRelay<CLHeading?>(value: nil)          // 최신 Heading
+    public let headingDegrees = PublishRelay<CLLocationDirection>()      // 0~360
 
     // MARK: - Private
     private let manager = CLLocationManager()
-    private let disposeBag = DisposeBag()
-
     private var pendingOneShot: ((Result<CLLocation, Error>) -> Void)?
     private var oneShotTimer: Timer?
 
     private override init() {
         super.init()
         manager.delegate = self
-        // 필요 정확도/소모 고려해서 설정
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         manager.distanceFilter = 30 // 30m 이상 이동 시 업데이트
-        updateAuthRelay()
+        authorization.accept(manager.authorizationStatus)
     }
+}
 
-    // MARK: - Public API 현재 위치
-    public func requestWhenInUseAuthorization() {
-        manager.requestWhenInUseAuthorization()
-    }
+// MARK: - Public API
+public extension AppLocationManager {
 
-    public func startUpdatingLocation() {
-        // 권한 허용일 때만 시작
+    func requestWhenInUseAuthorizationIfNeeded() {
         switch manager.authorizationStatus {
-        case .authorizedWhenInUse, .authorizedAlways:
-            manager.startUpdatingLocation()
         case .notDetermined:
             manager.requestWhenInUseAuthorization()
         default:
@@ -54,27 +57,26 @@ public final class AppLocationManager: NSObject, LocationProviding {
         }
     }
 
-    public func stopUpdatingLocation() {
-        manager.stopUpdatingLocation()
-    }
-
-    /// 현재 좌표를 1회만 가져오고 끝내는 편의 함수
-    public func requestOneShotLocation(timeout: TimeInterval = 5) -> Single<CLLocation> {
-        return Single<CLLocation>.create { [weak self] single in
+    /// 현재 좌표 1회 요청 (권한 OK + 타임아웃 관리)
+    func requestOneShotLocation(timeout: TimeInterval = 5) -> Single<CLLocation> {
+        Single<CLLocation>.create { [weak self] single in
             guard let self else { return Disposables.create() }
 
-            // 이미 최신 위치가 있으면 즉시 반환
+            let status = self.manager.authorizationStatus
+            guard status == .authorizedWhenInUse || status == .authorizedAlways else {
+                if status == .notDetermined { self.manager.requestWhenInUseAuthorization() }
+                single(.failure(LocationError.deniedOrRestricted))
+                return Disposables.create()
+            }
+
+            // 최신값이 아주 최근이라면 즉시 반환(10초 내)
             if let loc = self.currentLocation.value,
                Date().timeIntervalSince(loc.timestamp) < 10 {
                 single(.success(loc))
                 return Disposables.create()
             }
 
-            // 권한 체크
-            let status = self.manager.authorizationStatus
-            if status == .notDetermined { self.manager.requestWhenInUseAuthorization() }
-
-            // 콜백 래치
+            // 콜백 세팅
             self.pendingOneShot = { result in
                 switch result {
                 case .success(let loc): single(.success(loc))
@@ -88,40 +90,37 @@ public final class AppLocationManager: NSObject, LocationProviding {
                 self?.finishOneShot(.failure(LocationError.timeout))
             }
 
-            // 실제 요청
-            self.manager.requestLocation() // 한 번만 요청
+            // 실제 한 번 요청
+            self.manager.requestLocation()
+
             return Disposables.create { [weak self] in
                 self?.oneShotTimer?.invalidate()
                 self?.pendingOneShot = nil
             }
         }
     }
-    
-    // MARK: - Public API Heading 방향
-    public func startUpdatingHeading(filter: CLLocationDegrees = 5,
-                                     orientation: CLDeviceOrientation? = nil) {
+
+    // MARK: Heading (나침반)
+    func startUpdatingHeading(filter: CLLocationDegrees = 5,
+                              orientation: CLDeviceOrientation? = nil) {
         guard CLLocationManager.headingAvailable() else { return }
         if let orientation { manager.headingOrientation = orientation }
         manager.headingFilter = filter
         manager.startUpdatingHeading()
     }
 
-    public func stopUpdatingHeading() {
+    func stopUpdatingHeading() {
         manager.stopUpdatingHeading()
     }
 
-    /// 화면 회전 시 호출해 주면 좋습니다.
-    public func setHeadingOrientation(_ orientation: CLDeviceOrientation) {
+    func setHeadingOrientation(_ orientation: CLDeviceOrientation) {
         manager.headingOrientation = orientation
     }
+}
 
-
-    // MARK: - Helpers
-    private func updateAuthRelay() {
-        authorization.accept(manager.authorizationStatus)
-    }
-
-    private func finishOneShot(_ result: Result<CLLocation, Error>) {
+// MARK: - Private Helpers
+private extension AppLocationManager {
+    func finishOneShot(_ result: Result<CLLocation, Error>) {
         oneShotTimer?.invalidate()
         oneShotTimer = nil
         pendingOneShot?(result)
@@ -131,13 +130,9 @@ public final class AppLocationManager: NSObject, LocationProviding {
 
 // MARK: - CLLocationManagerDelegate
 extension AppLocationManager: CLLocationManagerDelegate {
-    // iOS 14+
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        updateAuthRelay()
-        if manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways {
-            // 필요 시 자동 시작
-            manager.startUpdatingLocation()
-        }
+        authorization.accept(manager.authorizationStatus)
+        // 권한 허용 시 백그라운드 지속 추적은 하지 않고, 필요 시 원샷으로만 사용
     }
 
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -147,33 +142,19 @@ extension AppLocationManager: CLLocationManagerDelegate {
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        locationError.accept(error)
         finishOneShot(.failure(error))
     }
-    
+
     public func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        // 정확도 음수면 무시
         guard newHeading.headingAccuracy >= 0 else { return }
-
-        // trueHeading(진북) 우선, 없으면 magneticHeading(자북)
         let deg = newHeading.trueHeading > 0 ? newHeading.trueHeading : newHeading.magneticHeading
-
         heading.accept(newHeading)
         headingDegrees.accept(deg)
     }
 
     public func locationManagerShouldDisplayHeadingCalibration(_ manager: CLLocationManager) -> Bool {
-        // 보정 화면이 자주 뜨면 UX상 좋지 않으니 기본 false 권장
+        // 필요할 때 VC에서 UX적으로 안내 후 true로 열어도 됨
         return false
     }
 }
 
-// MARK: - Errors
-public enum LocationError: LocalizedError {
-    case timeout
-    public var errorDescription: String? {
-        switch self {
-        case .timeout: return "현재 위치를 가져오지 못했습니다. (시간 초과)"
-        }
-    }
-}

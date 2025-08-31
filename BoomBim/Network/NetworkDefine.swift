@@ -46,6 +46,6 @@ enum NetworkDefine {
     }
     
     enum Place {
-        static let officialPlace = "official-places"
+        static let officialPlace = "official-place"
     }
 }

@@ -237,7 +237,7 @@ extension ChatViewController: UIPageViewControllerDataSource, UIPageViewControll
 extension ChatViewController {
     private func setLocation() {
         if locationManager.authorization.value == .notDetermined { // 권한 설정이 안된 경우 권한 요청
-            locationManager.requestWhenInUseAuthorization()
+//            locationManager.requestWhenInUseAuthorization()
         }
         
         // 권한 상태 스트림에서 '최종 상태(허용/거부)'만 대기 → 1회 처리
