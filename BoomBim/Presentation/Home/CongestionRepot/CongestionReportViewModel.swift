@@ -49,4 +49,8 @@ final class CongestionReportViewModel {
         print("didTapShare")
         backToHome?()
     }
+    
+    func postCongestionReport() {
+        
+    }
 }

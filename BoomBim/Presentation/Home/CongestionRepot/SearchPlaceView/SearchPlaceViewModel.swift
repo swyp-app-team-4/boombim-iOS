@@ -20,49 +20,35 @@ final class SearchPlaceViewModel {
     let results = BehaviorRelay<[Place]>(value: [])
     
     struct Input {
-        let currentLocation: Observable<CLLocationCoordinate2D>
+        let searchText: Observable<String>          // 검색어 변경 스트림
+//        let currentLocation: Observable<CLLocationCoordinate2D>
     }
     struct Output {
         let places: Observable<[Place]>
+        let myCoordinate: Observable<Coordinate?> // 뷰에서 카메라 이동 등에 활용
+        let results: Observable<[Place]>
     }
     
     private let service: KakaoLocalService
+    private let locationRepo: LocationRepositoryType
     
-    private(set) var currentCoordinate: CLLocationCoordinate2D?
-    
-    init(service: KakaoLocalService) {
+    init(service: KakaoLocalService, locationRepo: LocationRepositoryType) {
         self.service = service
-    }
-    
-    // 검색 관련
-    func bindSearch() {
-        query
-            .skip(1)
-            .distinctUntilChanged()
-            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] query in
-                print("query : \(query)")
-                self?.search(query: query)
-            })
-            .disposed(by: disposeBag)
-    }
-
-    private func search(query: String) {
-        guard let currentCoordinate = currentCoordinate else { return }
-        print("currentCoordinate : \(currentCoordinate.longitude),\(currentCoordinate.latitude)")
-        service.searchByKeyword(query: query, x: currentCoordinate.longitude, y: currentCoordinate.latitude)
-            .observe(on: MainScheduler.instance)
-            .subscribe(with: self, onSuccess: { owner, items in
-                print("items : \(items)")
-                owner.results.accept(items)
-            }, onFailure: { owner, error in
-                print("search error:", error)
-            })
-            .disposed(by: disposeBag)
+        self.locationRepo = locationRepo
     }
     
     func transform(input: Input) -> Output {
-        let places = input.currentLocation
+        // 1) 권한 요청(미결정이면)
+        locationRepo.requestAuthorizationIfNeeded()
+        // 초기 프리워밍(필요 시)
+        locationRepo.getCoordinate(ttl: 180).subscribe().disposed(by: disposeBag)
+        
+        let myCoord = Observable
+            .merge(locationRepo.coordinate)
+            .share(replay: 1, scope: .whileConnected)
+        
+        let places = myCoord
+            .compactMap { $0 }
             .take(1)
             .flatMapLatest { [service] coord in
                 service.searchNearbyAcrossCategories(x: coord.longitude, y: coord.latitude)
@@ -70,19 +56,23 @@ final class SearchPlaceViewModel {
                     .catchAndReturn([])
             }
             .share(replay: 1, scope: .whileConnected)
-
-        return Output(places: places)
-    }
-    
-    func setCurrentCoordinate(_ coord: CLLocationCoordinate2D) {
-        currentCoordinate = coord
-    }
-    
-    // MARK: Action
-    func didTapSearch() {
-        print("didTapSearch")
-        guard let currentCoordinate = self.currentCoordinate else { return }
-        goToMapPickerView?(currentCoordinate)
+        
+        let results = input.searchText
+            .skip(1)
+            .distinctUntilChanged()
+            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
+            .withLatestFrom(myCoord.compactMap { $0 }) { (query: $0, coord: $1) }
+            .flatMapLatest { [service] pair -> Observable<[Place]> in
+                let (query, coord) = (pair.query, pair.coord)
+                guard !query.isEmpty else { return .just([]) }
+                return service.searchByKeyword(query: query, x: coord.longitude, y: coord.latitude)
+                    .asObservable()
+                    .catchAndReturn([])
+            }
+            .do(onNext: { [weak self] in self?.results.accept($0) }) // 기존 BehaviorRelay도 유지하고 싶으면
+            .share(replay: 1, scope: .whileConnected)
+        
+        return Output(places: places, myCoordinate: myCoord, results: results)
     }
     
     func didTapExit() {

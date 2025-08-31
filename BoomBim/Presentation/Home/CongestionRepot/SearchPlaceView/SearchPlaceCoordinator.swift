@@ -16,6 +16,7 @@ final class SearchPlaceCoordinator: Coordinator {
     var onFinish: (() -> Void)?
     
     var service: KakaoLocalService?
+    var locationRepo: LocationRepository?
     
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -23,8 +24,8 @@ final class SearchPlaceCoordinator: Coordinator {
     
     func start() {
         print("SearchPlaceCoordinator start")
-        guard let service = self.service else { return }
-        let viewModel = SearchPlaceViewModel(service: service)
+        guard let service = self.service, let locationRepo = self.locationRepo else { return }
+        let viewModel = SearchPlaceViewModel(service: service, locationRepo: locationRepo)
         let viewController = SearchPlaceViewController(viewModel: viewModel)
         
         viewModel.goToMapPickerView = { [weak self] location in

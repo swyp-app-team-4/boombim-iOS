@@ -485,12 +485,6 @@ extension MapViewController: MapControllerDelegate {
     }
         
     func addViews() {
-        // KakaoMap 준비
-//        if let map = mapController.getView("mapView") as? KakaoMap {
-//            kakaoMap = map
-//        } else {
-//            
-//        }
         let defaultPosition = MapPoint(longitude: 127.108678, latitude: 37.402001)
         
         let mapviewInfo = MapviewInfo(viewName: "mapview",

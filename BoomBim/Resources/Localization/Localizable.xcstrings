@@ -408,6 +408,17 @@
         }
       }
     },
+    "report.button.post" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공유하기"
+          }
+        }
+      }
+    },
     "report.label.placeholder" : {
       "extractionState" : "manual",
       "localizations" : {
