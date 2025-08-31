@@ -96,7 +96,6 @@ final class MapViewController: BaseViewController {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.distribution = .fillEqually
-        stackView.spacing = 8
         return stackView
     }()
 
@@ -212,10 +211,10 @@ final class MapViewController: BaseViewController {
         view.addSubview(currentLocationButton)
         currentLocationButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            currentLocationButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            currentLocationButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 18),
             currentLocationButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            currentLocationButton.widthAnchor.constraint(equalToConstant: 44),
-            currentLocationButton.heightAnchor.constraint(equalToConstant: 44)
+            currentLocationButton.widthAnchor.constraint(equalToConstant: 40),
+            currentLocationButton.heightAnchor.constraint(equalToConstant: 40)
         ])
 
         // 줌 스택(현재 위치 버튼 위쪽에 세로 배치)
@@ -226,13 +225,13 @@ final class MapViewController: BaseViewController {
         zoomInButton.translatesAutoresizingMaskIntoConstraints = false
         zoomOutButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            zoomStackView.trailingAnchor.constraint(equalTo: currentLocationButton.trailingAnchor),
-            zoomStackView.bottomAnchor.constraint(equalTo: currentLocationButton.topAnchor, constant: -12),
+            zoomStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            zoomStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -170),
 
-            zoomInButton.widthAnchor.constraint(equalToConstant: 44),
-            zoomInButton.heightAnchor.constraint(equalToConstant: 44),
-            zoomOutButton.widthAnchor.constraint(equalToConstant: 44),
-            zoomOutButton.heightAnchor.constraint(equalToConstant: 44)
+            zoomInButton.widthAnchor.constraint(equalToConstant: 40),
+            zoomInButton.heightAnchor.constraint(equalToConstant: 40),
+            zoomOutButton.widthAnchor.constraint(equalToConstant: 40),
+            zoomOutButton.heightAnchor.constraint(equalToConstant: 40)
         ])
 
         // 맵이 맨 뒤로
@@ -288,11 +287,11 @@ final class MapViewController: BaseViewController {
 
         // 줌 인/아웃 (SDK 버전에 맞춰 필요 시 교체)
         zoomInButton.rx.tap
-            .bind(onNext: { [weak self] in self?.applyZoom(delta: -1) })
+            .bind(onNext: { [weak self] in self?.applyZoom(delta: +1) })
             .disposed(by: disposeBag)
 
         zoomOutButton.rx.tap
-            .bind(onNext: { [weak self] in self?.applyZoom(delta: +1) })
+            .bind(onNext: { [weak self] in self?.applyZoom(delta: -1) })
             .disposed(by: disposeBag)
     }
 
@@ -314,12 +313,26 @@ final class MapViewController: BaseViewController {
                 guard let self, let map = self.kakaoMap else { return }
                 let visual = self.visual(for: .realtime)
                 
-                let items: [(id: String, point: MapPoint)] = places.map {
-                    (id: String($0.memberPlaceId),
-                     point: MapPoint(longitude: $0.coordinate.longitude, latitude: $0.coordinate.latitude))
+                let items: [POIItem] = places.map {
+                    .init(
+                        id: String($0.memberPlaceId),
+                        point: MapPoint(longitude: $0.coordinate.longitude,
+                                        latitude:  $0.coordinate.latitude),
+                        styleKey: self.styleKey(for: $0)       // ✅ 메서드 호출
+                    )
                 }
-                self.overlay.setPOIs(for: .realtime, items: items, visual: visual)
-//                map.commit()
+                
+                self.overlay.setPOIs(
+                    for: .realtime,
+                    items: items,
+                    visual: visual,
+                    iconProvider: self.iconForStyleKey)
+                
+//                let items: [(id: String, point: MapPoint)] = places.map {
+//                    (id: String($0.memberPlaceId),
+//                     point: MapPoint(longitude: $0.coordinate.longitude, latitude: $0.coordinate.latitude))
+//                }
+//                self.overlay.setPOIs(for: .realtime, items: items, visual: visual)
             })
             .disposed(by: disposeBag)
 
@@ -376,6 +389,29 @@ final class MapViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
     }
+    
+    private func styleKey(for p: UserPlaceItem) -> String {
+        // 혼잡도명/브랜드/카테고리 등 원하는 규칙으로 키 생성
+        let key = p.congestionLevelName.lowercased()
+        print("key : \(key)")
+        switch key {
+        case "relaxed", "여유":     return "congestion.relaxed"
+        case "normal",  "보통":     return "congestion.normal"
+        case "busy",    "약간 붐빔":     return "congestion.busy"
+        case "crowded", "붐빔": return "congestion.crowded"
+        default:                    return "congestion.default"
+        }
+    }
+
+    private func iconForStyleKey(_ key: String) -> UIImage {
+        switch key {
+        case "congestion.relaxed": return .iconGreenMapPoi
+        case "congestion.normal":  return .iconBlueMapPoi
+        case "congestion.busy":    return .iconYellowMapPoi
+        case "congestion.crowded": return .iconRedMapPoi
+        default:                   return .iconGreenMapPoi
+        }
+    }
 
     // MARK: - Mode / Visual
     private func selectMode(_ group: OverlayGroup) {
@@ -393,7 +429,7 @@ final class MapViewController: BaseViewController {
 //        kakaoMap?.commit()
     }
 
-    private func visual(for group: OverlayGroup) -> GroupVisual {
+    private func visual(for group: OverlayGroup, level: Int = 1) -> GroupVisual {
         switch group {
         case .official:
             return .init(

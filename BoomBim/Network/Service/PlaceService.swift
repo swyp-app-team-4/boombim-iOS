@@ -59,6 +59,44 @@ struct UserPlaceListResponse: Decodable {
     let data: [UserPlaceItem]
 }
 
+struct RegisterPlaceRequest: Encodable {
+    let uuid: String
+    let name: String
+    let latitude: Double
+    let longitude: Double
+}
+
+struct RegisterPlaceId: Decodable {
+    let memberPlaceId: Int
+}
+
+struct RegisterPlaceResponse: Decodable {
+    let code: Int
+    let status: String
+    let message: String
+    let data: RegisterPlaceId
+}
+
+struct PostPlaceRequest: Encodable {
+    let memberPlaceId: Int
+    let congestionLevelId: Int
+    let congestionMessage: String
+    let latitude: Double
+    let longitude: Double
+}
+
+struct ReportData: Decodable {
+    let memberCongestionId: Int
+    let memberPlaceName: String
+}
+
+struct PostPlaceResponse: Decodable {
+    let code: Int
+    let status: String
+    let message: String
+    let data: ReportData
+}
+
 final class PlaceService: Service {
     static let shared = PlaceService()
     override private init() {}
@@ -77,6 +115,30 @@ final class PlaceService: Service {
     
     func fetchUserPlace(body: UserPlaceRequest) -> Single<UserPlaceListResponse> {
         let url = NetworkDefine.apiHost + NetworkDefine.Place.userPlace
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return request(url, method: .post, header: headers, body: body)
+    }
+    
+    func registerReport(body: RegisterPlaceRequest) -> Single<RegisterPlaceResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.registerPostPlace
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return request(url, method: .post, header: headers, body: body)
+    }
+    
+    func postReport(body: PostPlaceRequest) -> Single<PostPlaceResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.postPlace
         
         var headers: HTTPHeaders = ["Content-Type": "application/json"]
         headers["Accept"] = "application/json"

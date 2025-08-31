@@ -67,12 +67,12 @@ final class CongestionReportCoordinator: Coordinator {
         childCoordinator.locationRepo = locationRepo
         
         // 결과 전달
-        childCoordinator.onPlaceComplete = { [weak self, weak childCoordinator] place in
+        childCoordinator.onPlaceComplete = { [weak self, weak childCoordinator] place, id in
             guard let self else { return }
             // 필요 시 pop 완료 후 루트에 전달
             CATransaction.begin()
             CATransaction.setCompletionBlock {
-                self.rootViewModel?.setSelectedPlace(place)
+                self.rootViewModel?.setSelectedPlace(place: place, id: id)
             }
             self.navigationController.popToRootViewController(animated: true)
             CATransaction.commit()

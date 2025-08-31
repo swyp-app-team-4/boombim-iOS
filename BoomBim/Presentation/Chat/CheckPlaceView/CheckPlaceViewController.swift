@@ -46,7 +46,7 @@ final class CheckPlaceViewController: BaseViewController {
         return label
     }()
     
-    private let nextButton: UIButton = {
+    public var nextButton: UIButton = {
         let button = UIButton()
         button.setTitle("check.button.ask".localized(), for: .normal)
         button.titleLabel?.font = Typography.Body02.medium.font

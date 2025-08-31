@@ -12,7 +12,7 @@ final class SearchPlaceCoordinator: Coordinator {
     var navigationController: UINavigationController
     
     var onComplete: (() -> Void)?
-    var onPlaceComplete: ((Place) -> Void)?
+    var onPlaceComplete: ((Place, Int) -> Void)?
     var onFinish: (() -> Void)?
     
     var service: KakaoLocalService?
@@ -60,11 +60,12 @@ final class SearchPlaceCoordinator: Coordinator {
         print("showCheckPlace")
         let viewModel = CheckPlaceViewModel(place: place, userLocation: .init(latitude: 15, longitude: 53), mode: .returnPlace)
         
-        viewModel.onPlaceComplete = { [weak self] place in
-            self?.onPlaceComplete?(place)
+        viewModel.onPlaceComplete = { [weak self] place, id in
+            self?.onPlaceComplete?(place, id)
         }
         
         let viewController = CheckPlaceViewController(viewModel: viewModel)
+        viewController.nextButton.setTitle("report.button.register".localized(), for: .normal)
         
         navigationController.pushViewController(viewController, animated: true)
     }

@@ -48,5 +48,7 @@ enum NetworkDefine {
     enum Place {
         static let officialPlace = "official-place"
         static let userPlace = "member-place"
+        static let registerPostPlace = "member-place/resolve"
+        static let postPlace = "member-congestion/create"
     }
 }

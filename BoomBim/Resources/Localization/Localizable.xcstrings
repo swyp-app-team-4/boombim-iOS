@@ -419,6 +419,17 @@
         }
       }
     },
+    "report.button.register" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 위치로 등록"
+          }
+        }
+      }
+    },
     "report.label.placeholder" : {
       "extractionState" : "manual",
       "localizations" : {

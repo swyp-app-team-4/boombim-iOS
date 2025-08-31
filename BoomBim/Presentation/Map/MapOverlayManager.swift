@@ -23,6 +23,14 @@ struct GroupVisual {
     let zShape: Int    // ShapeLayer z
 }
 
+typealias IconProvider = (String) -> UIImage
+
+struct POIItem {
+    let id: String
+    let point: MapPoint
+    let styleKey: String  // 아이템별 아이콘 식별자 (예: "congestion.relaxed")
+}
+
 final class MapOverlayManager {
     private weak var map: KakaoMap?
 
@@ -37,6 +45,18 @@ final class MapOverlayManager {
     private func poiLayerID(_ g: OverlayGroup) -> String { "poi.layer.\(g.rawValue)" }
     private func polyStyleSetID(_ g: OverlayGroup) -> String { "poly.styleset.\(g.rawValue)" }
     private func shapeLayerID(_ g: OverlayGroup) -> String { "shape.layer.\(g.rawValue)" }
+    
+    private var poiStyleRegistry: [String: String] = [:] // styleKey -> styleID
+    private func ensurePoiStyle(styleKey: String, icon: UIImage, on map: KakaoMap) -> String {
+        if let id = poiStyleRegistry[styleKey] { return id }
+        let styleID = "poi.style.\(styleKey)" // 유니크
+        let mgr = map.getLabelManager()
+        let iconStyle = PoiIconStyle(symbol: icon, anchorPoint: CGPoint(x: 0.5, y: 1.0))
+        let per = PerLevelPoiStyle(iconStyle: iconStyle, level: 0)
+        mgr.addPoiStyle(PoiStyle(styleID: styleID, styles: [per]))
+        poiStyleRegistry[styleKey] = styleID
+        return styleID
+    }
 
     // ----- 그룹 리소스 보장 -----
     private func ensureResources(for g: OverlayGroup, visual: GroupVisual) {
@@ -80,8 +100,7 @@ final class MapOverlayManager {
     /// items: (고유ID, 위치)
     func setPOIs(for g: OverlayGroup,
                  items: [(id: String, point: MapPoint)],
-                 visual: GroupVisual)
-    {
+                 visual: GroupVisual){
         ensureResources(for: g, visual: visual)
         guard let layer = poiLayers[g] else { return }
 
@@ -98,6 +117,38 @@ final class MapOverlayManager {
             pois?.forEach { $0.show() }  // 각 POI 표출
         }
         layer.visible = true // 레이어 on (POI show와 둘 다 필요)
+    }
+    
+    func setPOIs(for g: OverlayGroup,
+                 items: [POIItem],
+                 visual: GroupVisual,
+                 iconProvider: IconProvider)
+    {
+        ensureResources(for: g, visual: visual)
+        guard let layer = poiLayers[g], let map = map else { return }
+
+        layer.clearAllItems()
+
+        var options = [PoiOptions]()
+        var positions = [MapPoint]()
+        options.reserveCapacity(items.count)
+        positions.reserveCapacity(items.count)
+
+        for item in items {
+            let icon = iconProvider(item.styleKey)
+            let styleID = ensurePoiStyle(styleKey: item.styleKey, icon: icon, on: map)
+
+            var opt = PoiOptions(styleID: styleID,
+                                 poiID: "poi.\(g.rawValue).\(item.id)")
+            opt.rank = 0
+            options.append(opt)
+            positions.append(item.point)
+        }
+
+        _ = layer.addPois(options: options, at: positions) { pois in
+            pois?.forEach { $0.show() }
+        }
+        layer.visible = true
     }
 
     // ----- 데이터 바인딩: 폴리곤 -----

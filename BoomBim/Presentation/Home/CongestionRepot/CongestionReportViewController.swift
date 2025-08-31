@@ -17,6 +17,7 @@ final class CongestionReportViewController: BaseViewController {
     
     private let locationManager = AppLocationManager.shared
     
+    private let selectedLevelRelay = BehaviorRelay<Int?>(value: nil) // 0~3 or 서버의 levelId
     private let currentLocationSubject = PublishSubject<CLLocationCoordinate2D>()
     
     private var isMapPrepared = false
@@ -31,6 +32,8 @@ final class CongestionReportViewController: BaseViewController {
     private var isViewVisible = false
     
     // MARK: - UI Components
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
+    
     private let timeContainerView: UIView = {
         let view = UIView()
         view.backgroundColor = .clear
@@ -157,6 +160,8 @@ final class CongestionReportViewController: BaseViewController {
         button.setImage(off, for: .normal)
         button.setImage(on,  for: .selected)
         button.setImage(on,  for: [.selected, .highlighted])
+        button.isEnabled = false
+        button.isSelected = false
         
         return button
     }
@@ -251,56 +256,189 @@ final class CongestionReportViewController: BaseViewController {
         }
     }
     
+    // MARK: - Bind
     private func bind() {
-        viewModel.selectedPlace
-            .drive(onNext: { [weak self] place in
-                guard let self = self else { return }
-
-                // UI 바인딩
-                self.locationTextField.text = place?.name
-                let enabled = (place != nil)
-                self.postButton.isEnabled = enabled
-                self.postButton.setTitleColor(enabled ? .grayScale1 : .grayScale7, for: .normal)
-                self.postButton.backgroundColor = enabled ? .main : .grayScale4
-
-                // 지도 표시 로직
-                guard let place = place else {
-                    // 선택 해제 시: 엔진을 멈추고(화면 계속 보여줄거면 생략 가능)
-                    if self.isEngineActive {
-                        self.mapController.pauseEngine()
-                        self.isEngineActive = false
-                    }
-                    // 필요하면 지도 섹션 숨김
-                    // self.hideMapSection()
-                    return
-                }
-
-                // 선택됨: 지도 섹션을 보여주고 엔진 준비/활성화
-                self.showMapSection()
-
-                if !self.isEnginePrepared {
-                    self.configureKakaoMap()
-                    self.isEnginePrepared = true
-
-                    // 화면이 이미 보이는 상태라면 지금 바로 활성화
-                    if self.isViewVisible && !self.isEngineActive {
-                        self.mapController.activateEngine()
-                        self.isEngineActive = true
-                    }
-                    // addViews → addViewSucceeded 델리게이트가 이어서 불립니다.
-                    // 카메라/오버레이 첫 세팅은 addViewSucceeded에서 처리하세요.
-                } else {
-                    // 이미 맵 존재: 필요 시 활성화 보장
-                    if self.isViewVisible && !self.isEngineActive {
-                        self.mapController.activateEngine()
-                        self.isEngineActive = true
-                    }
-                    // 바로 업데이트
-                    self.updateMap(for: place)
-                }
+        // 1) 버튼 단일 선택 + 선택값 저장
+        let relaxedTap = relaxedButton.rx.tap.map { 0 }
+        let normalTap  = normalButton.rx.tap.map { 1 }
+        let busyTap    = busyButton.rx.tap.map { 2 }
+        let crowdedTap = crowdedButton.rx.tap.map { 3 }
+        
+        Observable.merge(relaxedTap, normalTap, busyTap, crowdedTap)
+            .subscribe(onNext: { [weak self] idx in
+                guard let self else { return }
+                // 단일 선택
+                for (i, b) in self.buttons.enumerated() { b.isSelected = (i == idx) }
+                // 상태 저장(서버가 1~4면 idx+1로 변환)
+                self.selectedLevelRelay.accept(idx)
+                UIAccessibility.post(notification: .announcement, argument: "혼잡도 \(idx) 선택")
             })
             .disposed(by: disposeBag)
+        
+        // 2) 장소 선택 바인딩 (지도/버튼 활성화 제어 + 위치 텍스트 표시)
+        viewModel.selectedPlace
+            .drive(onNext: { [weak self] place in
+                guard let self else { return }
+                self.locationTextField.text = place?.name
+                
+                // 지도 준비/활성화
+                if let p = place {
+                    self.showMapSection()
+                    if !self.isEnginePrepared {
+                        self.configureKakaoMap()
+                        self.isEnginePrepared = true
+                        if self.isViewVisible && !self.isEngineActive {
+                            self.mapController.activateEngine()
+                            self.isEngineActive = true
+                        }
+                    } else if self.isViewVisible && !self.isEngineActive {
+                        self.mapController.activateEngine()
+                        self.isEngineActive = true
+                    }
+                    self.updateMap(for: p)
+                }
+                
+                // 장소가 있어야만 레벨 버튼 사용 가능(=off 이미지 → 탭 가능)
+                let enableLevelButtons = (place != nil)
+                self.buttons.forEach { $0.isEnabled = enableLevelButtons }
+            })
+            .disposed(by: disposeBag)
+        
+        // 3) 텍스트뷰 placeholder/count
+        descriptionTextView.rx.text.orEmpty
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] text in
+                guard let self else { return }
+                self.descriptionPlaceholder.isHidden = !text.isEmpty
+                self.descriptionCount.text = "\(text.count)/500자"
+            })
+            .disposed(by: disposeBag)
+        
+        // 4) ViewModel I/O
+        // levelSelect: 선택된 레벨 스트림(옵션 → 반드시 값 있을 때만 흘림)
+        let levelSelect = selectedLevelRelay.compactMap { $0 }.asSignal(onErrorSignalWith: .empty())
+        
+        // message: 텍스트뷰 내용(Driver)
+        let message = descriptionTextView.rx.text.orEmpty
+            .map { String($0.prefix(500)) } // 500자 제한
+            .asDriver(onErrorJustReturn: "")
+        
+        // place: ViewModel이 이미 selectedPlace를 Driver<Place?>로 노출하고 있으므로 그대로 전달
+        let input = CongestionReportViewModel.Input(
+            postTap: postButton.rx.tap.asSignal(),
+            levelSelect: levelSelect,
+            message: message,
+            place: viewModel.selectedPlace
+        )
+        let output = viewModel.transform(input: input)
+        
+        // post 버튼 enable 제어
+        output.postEnabled
+            .drive(onNext: { [weak self] isEnabled in
+                guard let self else { return }
+                self.postButton.isEnabled = isEnabled
+                self.postButton.setTitleColor(isEnabled ? .grayScale1 : .grayScale7, for: .normal)
+                self.postButton.backgroundColor = isEnabled ? .main : .grayScale4
+            })
+            .disposed(by: disposeBag)
+        
+        output.completed
+            .emit(onNext: { [weak self] in
+                self?.viewModel.didTapPost() // 라우팅/닫기 등
+            })
+            .disposed(by: disposeBag)
+        
+        output.error
+            .emit(onNext: { [weak self] message in
+                self?.presentAlert(title: "오류", message: message)
+            })
+            .disposed(by: disposeBag)
+        
+        output.loading
+            .drive(activityIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
     }
+    
+//    private func bind() {
+//        // 각 버튼 탭 → 인덱스(0~3)로 매핑
+//            let relaxedTap = relaxedButton.rx.tap.map { 0 }
+//            let normalTap  = normalButton.rx.tap.map { 1 }
+//            let busyTap    = busyButton.rx.tap.map { 2 }
+//            let crowdedTap = crowdedButton.rx.tap.map { 3 }
+//
+//            Observable.merge(relaxedTap, normalTap, busyTap, crowdedTap)
+//                .subscribe(onNext: { [weak self] idx in
+//                    guard let self else { return }
+//                    // 1) UI 상태: 단일 선택
+//                    for (i, b) in self.buttons.enumerated() {
+//                        b.isSelected = (i == idx)
+//                    }
+//                    // 2) 선택 레벨 저장(필요하면 서버의 levelId로 매핑)
+//                    self.selectedLevelRelay.accept(idx)
+//                    // 3) 접근성 힌트(optional)
+//                    UIAccessibility.post(notification: .announcement, argument: "혼잡도 \(idx) 선택")
+//                })
+//                .disposed(by: disposeBag)
+//        
+//        viewModel.selectedPlace
+//            .drive(onNext: { [weak self] place in
+//                guard let self = self else { return }
+//                
+//                // UI 바인딩
+//                self.locationTextField.text = place?.name
+//                let enabled = (place != nil)
+//                self.postButton.isEnabled = enabled
+//                self.postButton.setTitleColor(enabled ? .grayScale1 : .grayScale7, for: .normal)
+//                self.postButton.backgroundColor = enabled ? .main : .grayScale4
+//                
+//                // 지도 표시 로직
+//                guard let place = place else {
+//                    // 선택 해제 시: 엔진을 멈추고(화면 계속 보여줄거면 생략 가능)
+//                    if self.isEngineActive {
+//                        self.mapController.pauseEngine()
+//                        self.isEngineActive = false
+//                    }
+//                    // 필요하면 지도 섹션 숨김
+//                    // self.hideMapSection()
+//                    return
+//                }
+//                
+//                // 선택됨: 지도 섹션을 보여주고 엔진 준비/활성화
+//                self.showMapSection()
+//                
+//                if !self.isEnginePrepared {
+//                    self.configureKakaoMap()
+//                    self.isEnginePrepared = true
+//                    
+//                    // 화면이 이미 보이는 상태라면 지금 바로 활성화
+//                    if self.isViewVisible && !self.isEngineActive {
+//                        self.mapController.activateEngine()
+//                        self.isEngineActive = true
+//                    }
+//                    // addViews → addViewSucceeded 델리게이트가 이어서 불립니다.
+//                    // 카메라/오버레이 첫 세팅은 addViewSucceeded에서 처리하세요.
+//                } else {
+//                    // 이미 맵 존재: 필요 시 활성화 보장
+//                    if self.isViewVisible && !self.isEngineActive {
+//                        self.mapController.activateEngine()
+//                        self.isEngineActive = true
+//                    }
+//                    // 바로 업데이트
+//                    self.updateMap(for: place)
+//                }
+//            })
+//            .disposed(by: disposeBag)
+//        
+//        let input = CongestionReportViewModel.Input(
+//            postTap: postButton.rx.tap.asSignal(),
+//            levelSelect: selectedLevelRelay.compactMap { $0 }.asSignal(onErrorJustReturn: 0)
+//        )
+//        let output = viewModel.transform(input: input)
+//        
+//        output.completed
+//            .emit(onNext: { [weak self] _ in self?.viewModel.didTapPost() })
+//            .disposed(by: disposeBag)
+//    }
 
     
     // MARK: Setup UI
@@ -538,14 +676,6 @@ final class CongestionReportViewController: BaseViewController {
     
     @objc private func didTapClose() {
         dismiss(animated: true)
-    }
-    
-    private func didTapPost() {
-        postButton.addTarget(self, action: #selector(didTapPostButton), for: .touchUpInside)
-    }
-    
-    @objc private func didTapPostButton() {
-        viewModel.didTapShare()
     }
 }
 
