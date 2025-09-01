@@ -573,7 +573,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     // MARK: Floating Panel
     private func showListPanel(with places: [OfficialPlaceItem]) {
         if placeListViewController == nil { placeListViewController = PlaceListViewController() }
-//        placeListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
+        placeListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
         if floatingPanel.contentViewController !== placeListViewController {
             floatingPanel.set(contentViewController: placeListViewController!)
         }
