@@ -13,6 +13,17 @@ enum CongestionLevel: Int, CaseIterable {
     case busy          // 약간 붐빔
     case crowded       // 붐빔
     
+    init?(ko name: String) {
+        let s = name.replacingOccurrences(of: " ", with: "")
+        switch s {
+        case "여유":   self = .relaxed
+        case "보통":   self = .normal
+        case "약간 붐빔": self = .busy
+        case "붐빔":   self = .crowded
+        default: return nil
+        }
+    }
+    
     var description: String {
         switch self {
         case .relaxed: return "base.congestion.relaxed".localized()

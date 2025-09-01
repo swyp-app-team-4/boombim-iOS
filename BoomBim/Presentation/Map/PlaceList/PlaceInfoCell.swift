@@ -71,12 +71,25 @@ final class PlaceInfoCell: UITableViewCell {
     private let card = UIView()
 
     // Top row
-    private let titleLabel = UILabel()
-    private let badgeLabel = PaddingLabel()
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body02.semiBold.font
+        label.textColor = .grayScale10
+        
+        return label
+    }()
+    
+//    private let badgeLabel = UIImageView()
+    private let congestionImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        
+        return imageView
+    }()
 
     // Meta row
-    private let metaIcon = UIImageView(image: UIImage(systemName: "clock.fill"))
-    private let metaLabel = UILabel()
+//    private let metaIcon = UIImageView(image: UIImage(systemName: "clock.fill"))
+//    private let metaLabel = UILabel()
 
     // Images
     private let imagesStack = UIStackView()
@@ -93,8 +106,8 @@ final class PlaceInfoCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
-        backgroundColor = .clear
-        contentView.backgroundColor = .clear
+        backgroundColor = .white
+        contentView.backgroundColor = .white
         setupViews()
         setupLayout()
     }
@@ -115,8 +128,8 @@ final class PlaceInfoCell: UITableViewCell {
     func configure(with item: OfficialPlaceItem) {
         titleLabel.text = item.name
 //        metaLabel.text = "\(item.minutesAgo)분 전 · \(item.address)"
-
-        badgeLabel.text = item.congestionLevelName
+        congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
+//        badgeLabel.text = item.congestionLevelName
 //        badgeLabel.backgroundColor = item.congestion.backgroundColor
 //        badgeLabel.textColor = item.congestion.textColor
 
@@ -151,7 +164,7 @@ final class PlaceInfoCell: UITableViewCell {
     private func setupViews() {
         // Card
         contentView.addSubview(card)
-        card.backgroundColor = .systemBackground
+        card.backgroundColor = .white
         card.layer.cornerRadius = 16
         card.layer.masksToBounds = false
         card.layer.shadowColor = UIColor.black.cgColor
@@ -160,22 +173,16 @@ final class PlaceInfoCell: UITableViewCell {
         card.layer.shadowOffset = CGSize(width: 0, height: 2)
 
         // Title
-        titleLabel.font = UIFont.preferredFont(forTextStyle: .headline)
+        titleLabel.font = Typography.Body02.semiBold.font
         titleLabel.adjustsFontForContentSizeCategory = true
-        titleLabel.textColor = .label
-
-        // Badge
-        badgeLabel.font = UIFont.preferredFont(forTextStyle: .subheadline)
-        badgeLabel.adjustsFontForContentSizeCategory = true
-        badgeLabel.layer.cornerRadius = 14
-        badgeLabel.layer.masksToBounds = true
+        titleLabel.textColor = .grayScale10
 
         // Meta
-        metaIcon.tintColor = .secondaryLabel
-        metaIcon.contentMode = .scaleAspectFit
-        metaLabel.font = UIFont.preferredFont(forTextStyle: .subheadline)
-        metaLabel.textColor = .secondaryLabel
-        metaLabel.adjustsFontForContentSizeCategory = true
+//        metaIcon.tintColor = .secondaryLabel
+//        metaIcon.contentMode = .scaleAspectFit
+//        metaLabel.font = UIFont.preferredFont(forTextStyle: .subheadline)
+//        metaLabel.textColor = .secondaryLabel
+//        metaLabel.adjustsFontForContentSizeCategory = true
 
         // Images
         imagesStack.axis = .horizontal
@@ -208,7 +215,7 @@ final class PlaceInfoCell: UITableViewCell {
         }
 
         // Add subviews to card
-        [titleLabel, badgeLabel, metaIcon, metaLabel, imagesStack].forEach { v in
+        [titleLabel, congestionImageView, imagesStack].forEach { v in
             v.translatesAutoresizingMaskIntoConstraints = false
             card.addSubview(v)
         }
@@ -227,26 +234,14 @@ final class PlaceInfoCell: UITableViewCell {
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),
             titleLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
-            badgeLabel.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-            badgeLabel.leadingAnchor.constraint(greaterThanOrEqualTo: titleLabel.trailingAnchor, constant: 8),
-            badgeLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14)
-        ])
-
-        // Meta row
-        NSLayoutConstraint.activate([
-            metaIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
-            metaIcon.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
-            metaIcon.widthAnchor.constraint(equalToConstant: 14),
-            metaIcon.heightAnchor.constraint(equalTo: metaIcon.widthAnchor),
-
-            metaLabel.centerYAnchor.constraint(equalTo: metaIcon.centerYAnchor),
-            metaLabel.leadingAnchor.constraint(equalTo: metaIcon.trailingAnchor, constant: 6),
-            metaLabel.trailingAnchor.constraint(lessThanOrEqualTo: card.trailingAnchor, constant: -14)
+            congestionImageView.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            congestionImageView.leadingAnchor.constraint(greaterThanOrEqualTo: titleLabel.trailingAnchor, constant: 8),
+            congestionImageView.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14)
         ])
 
         // Images row (1:1 aspect)
         NSLayoutConstraint.activate([
-            imagesStack.topAnchor.constraint(equalTo: metaLabel.bottomAnchor, constant: 10),
+            imagesStack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
             imagesStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
             imagesStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
             imagesStack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -12),

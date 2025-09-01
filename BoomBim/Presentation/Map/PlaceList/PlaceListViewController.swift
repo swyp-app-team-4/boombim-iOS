@@ -110,9 +110,9 @@ private extension PlaceListViewController {
         headerIcon.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         headerLabel.text = "내 주변 여유로운 장소예요!"
-        headerLabel.font = UIFont.preferredFont(forTextStyle: .headline)
+        headerLabel.font = Typography.Body01.medium.font
         headerLabel.adjustsFontForContentSizeCategory = true
-        headerLabel.textColor = .label
+        headerLabel.textColor = .grayScale10
 
         // Empty
         emptyView.text = "주변에 표시할 장소가 없어요"
@@ -158,18 +158,18 @@ private extension PlaceListViewController {
         let grabberTop: CGFloat = 8
 
         headerContainer.translatesAutoresizingMaskIntoConstraints = false
-        grabber.translatesAutoresizingMaskIntoConstraints = false
+//        grabber.translatesAutoresizingMaskIntoConstraints = false
         headerStack.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.deactivate(headerContainer.constraints + grabber.constraints + headerStack.constraints)
 
         NSLayoutConstraint.activate([
-            grabber.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: grabberTop),
-            grabber.centerXAnchor.constraint(equalTo: headerContainer.centerXAnchor),
-            grabber.widthAnchor.constraint(equalToConstant: 44),
-            grabber.heightAnchor.constraint(equalToConstant: 5),
+//            grabber.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: grabberTop),
+//            grabber.centerXAnchor.constraint(equalTo: headerContainer.centerXAnchor),
+//            grabber.widthAnchor.constraint(equalToConstant: 44),
+//            grabber.heightAnchor.constraint(equalToConstant: 5),
 
-            headerStack.topAnchor.constraint(equalTo: grabber.bottomAnchor, constant: 12),
+            headerStack.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: 45),
             headerStack.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 16),
             headerStack.trailingAnchor.constraint(lessThanOrEqualTo: headerContainer.trailingAnchor, constant: -16),
             headerStack.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: -12)
@@ -178,7 +178,7 @@ private extension PlaceListViewController {
         // 헤더의 실제 높이 계산
         headerContainer.setNeedsLayout()
         headerContainer.layoutIfNeeded()
-        let targetHeight: CGFloat = grabberTop + 5 + 12 + headerStack.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height + 12 + contentInsetTop
+        let targetHeight: CGFloat = grabberTop + 5 + 12 + headerStack.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height + 12 + contentInsetTop + 30
         headerContainer.frame = CGRect(x: 0, y: 0, width: width, height: targetHeight)
         tableView.tableHeaderView = headerContainer
     }
