@@ -10,8 +10,9 @@ import KakaoMapsSDK
 import CoreLocation
 import RxSwift
 import RxCocoa
+import FloatingPanel
 
-final class MapViewController: BaseViewController {
+final class MapViewController: BaseViewController, FloatingPanelControllerDelegate {
 
     // MARK: - DI
     private let viewModel: MapViewModel
@@ -29,8 +30,22 @@ final class MapViewController: BaseViewController {
     // MARK: - Rx (카메라 이벤트 파이프)
     private let cameraRectSubject = PublishSubject<ViewportRect>()
     private let zoomLevelSubject  = PublishSubject<Int>()
+    
+    // id ↔︎ Place 매핑(POI 탭 시 detail로 전환하기 위해
+    private var placeIndex = [String: OfficialPlaceItem]()
 
-    // MARK: - UI (요청하신 구성 그대로)
+    // MARK: - UI
+    private lazy var floatingPanel: FloatingPanelController = {
+        let f = FloatingPanelController()
+        f.surfaceView.grabberHandle.isHidden = false
+        f.isRemovalInteractionEnabled = true
+        f.delegate = self
+        return f
+    }()
+    
+    private var placeListViewController: PlaceListViewController?
+    private var placeDetailViewController: PlaceListViewController?
+    
     private let searchTextField: AppSearchTextField = {
         let textField = AppSearchTextField()
         textField.tapOnly = true
@@ -121,9 +136,14 @@ final class MapViewController: BaseViewController {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         setupMapContainer()
+        setupBottomSheet()
+        
         buildUI()
+        
         setupMapEngine()
+        
         bindUI()
         bindViewModel()
     }
@@ -146,6 +166,26 @@ final class MapViewController: BaseViewController {
     }
 
     // MARK: - Build UI
+    private func setupBottomSheet() {
+        // 탭바 위까지만 보이도록 레이아웃
+        let tabBarH = tabBarController?.tabBar.frame.height ?? 49
+        floatingPanel.layout = AboveTabBarLayout(tabBarHeight: tabBarH)
+        
+        // 첫 컨텐트는 비워두거나 "peek 카드"
+        let placeholder = UIViewController()
+        placeholder.view.backgroundColor = .clear
+        floatingPanel.set(contentViewController: placeholder)
+        
+        
+        // 둥근 모서리(상단 좌/우만)
+        floatingPanel.surfaceView.layer.cornerRadius = 20
+        floatingPanel.surfaceView.clipsToBounds = true
+        
+        // 부모에 장착
+        floatingPanel.addPanel(toParent: self) // 제약조건 자동
+        floatingPanel.move(to: .tip, animated: false)
+    }
+    
     private func setupMapContainer() {
         mapContainer = KMViewContainer()
         mapContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -212,7 +252,7 @@ final class MapViewController: BaseViewController {
         currentLocationButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             currentLocationButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 18),
-            currentLocationButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            currentLocationButton.bottomAnchor.constraint(equalTo: floatingPanel.surfaceView.topAnchor, constant: -16),
             currentLocationButton.widthAnchor.constraint(equalToConstant: 40),
             currentLocationButton.heightAnchor.constraint(equalToConstant: 40)
         ])
@@ -350,6 +390,16 @@ final class MapViewController: BaseViewController {
                      point: MapPoint(longitude: $0.coordinate.longitude, latitude: $0.coordinate.latitude))
                 }
                 self.overlay.setPOIs(for: .official, items: items, visual: visual)
+                
+                // id ↔︎ Place 보관 (POI 탭 → 상세 전환용)
+                self.placeIndex = Dictionary(uniqueKeysWithValues: official.map { (String($0.id), $0) })
+                
+                // 결과가 있으면 목록 패널을 .half로 띄움, 없으면 .tip
+                if official.isEmpty {
+                    self.floatingPanel.move(to: .tip, animated: true)
+                } else {
+                    self.showListPanel(with: official) // 아래 함수
+                }
             })
             .disposed(by: disposeBag)
         
@@ -518,6 +568,16 @@ final class MapViewController: BaseViewController {
             right:  ne.wgsCoord.longitude,
             top:    ne.wgsCoord.latitude
         )
+    }
+    
+    // MARK: Floating Panel
+    private func showListPanel(with places: [OfficialPlaceItem]) {
+        if placeListViewController == nil { placeListViewController = PlaceListViewController() }
+//        placeListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
+        if floatingPanel.contentViewController !== placeListViewController {
+            floatingPanel.set(contentViewController: placeListViewController!)
+        }
+        floatingPanel.move(to: .tip, animated: true)
     }
 }
 
