@@ -200,9 +200,7 @@ final class VoteChatCell: UITableViewCell {
         voteUIAction = UIAction { [weak self] _ in
             guard let self else { return }
             
-            // TODO: 버튼으로 어떤 상태인지 선택한 경우에만 투표하게 진행
             self.onVote?(self.selectedIndex)   // <- 선택 인덱스 전달
-            print("selectedIndex:", self.selectedIndex as Any)
         }
         if let action = voteUIAction {
             voteButton.addAction(action, for: .touchUpInside)
@@ -218,10 +216,10 @@ final class VoteChatCell: UITableViewCell {
 //        onChange?(selectedIndex)
     }
     
-    func setSelected(index: Int?) { // 외부에서 설정할 때
-        selectedIndex = index
+    func setSelected(index: Int) { // 외부에서 설정할 때
+        selectedIndex = index - 1
         for (i, b) in buttons.enumerated() {
-            b.isSelected = (i == index)
+            b.isSelected = (i == selectedIndex)
         }
     }
     
@@ -246,8 +244,6 @@ final class VoteChatCell: UITableViewCell {
         
 //        roadImageView - // TODO: URL로 이미지 가져오기
         
-        setSelected(index: item.congestion.rawValue)
-        
         voteButton.backgroundColor = item.isVoting ? .main : .grayScale4
         voteButton.setTitleColor(item.isVoting ? .grayScale1 : .grayScale7, for: .normal)
         
@@ -260,7 +256,7 @@ final class VoteChatCell: UITableViewCell {
         if item.isVoting {
             setButtonActions()
         } else {
-            print("button Actions disable")
+            setSelected(index: item.congestion.rawValue)
         }
     }
 }

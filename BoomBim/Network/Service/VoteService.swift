@@ -67,13 +67,13 @@ struct FinishVoteRequest: Encodable {
 }
 
 enum VoteAnswerType: String, Encodable {
-    case RELAXED, COMMONLY, SLIGHTLY_BUSY, CROWDED
+    case RELAXED, COMMONLY, BUSY, CROWDED
     
     init(index: Int) {
         switch index {
         case 0: self = .RELAXED
         case 1: self = .COMMONLY
-        case 2: self = .SLIGHTLY_BUSY
+        case 2: self = .BUSY
         case 3: self = .CROWDED
         default:
             self = .CROWDED

@@ -139,7 +139,7 @@ final class ChatViewController: BaseViewController {
             appear: rx.methodInvoked(#selector(UIViewController.viewDidAppear(_:)))
                 .map { _ in () }
                 .asSignal(onErrorSignalWith: .empty()),
-            refresh: .empty(),
+            refresh: refreshRelay.asSignal(),
             location: locationRelay
                         .compactMap { $0 }                    // nil 제거
                         .asDriver(onErrorDriveWith: .empty())

@@ -132,7 +132,6 @@ final class VoteChatViewController: UIViewController {
         // 목록 바인딩(예시)
         output.items
             .drive(voteTableView.rx.items(cellIdentifier: VoteChatCell.identifier, cellType: VoteChatCell.self)) { [weak self] _, item, cell in
-                print("item: \(item)")
                 
                 let voteChatItem: VoteChatItem = .init(
                     profileImage: item.profile,
@@ -140,7 +139,7 @@ final class VoteChatViewController: UIViewController {
                     update: "1분", // TODO: Update 날짜 계산 createdAt
                     title: item.posName,
                     roadImage: item.posImage,
-                    congestion: .crowded, // TODO: 혼잡도 값 기반으로 젤 큰 것 설정
+                    congestion: self?.congestion(from: item) ?? .relaxed,
                     isVoting: !item.voteFlag)
                 
                 cell.configure(voteChatItem)
@@ -196,6 +195,14 @@ final class VoteChatViewController: UIViewController {
             self?.endVoteRelay.accept((voteId, congestionLevel))
         }))
         present(ac, animated: true)
+    }
+    
+    func congestion(from r: VoteItemResponse) -> CongestionLevel? {
+        if r.relaxedCnt == 1 { return .relaxed }
+        if r.commonly == 1 { return .normal }
+        if r.slightlyBusyCnt == 1 { return .busy }
+        if r.crowedCnt == 1 { return .crowded }
+        return nil
     }
 }
 

@@ -52,11 +52,12 @@ final class PollInfoView: UIControl {
         countLabel.text = "\(count)명"
         countLabel.textColor = countColor
         
-//        gauge.fillColor  = color
-//        let p = total > 0 ? CGFloat(count) / CGFloat(total) : 0
-//        gauge.setProgress(p, animated: animated, duration: 0.45, delay: delay)
-        
         gauge.fillColor  = color
-        gauge.setProgress(CGFloat(count) / CGFloat(total), animated: true)
+        
+        if (total == 0 && count == 0) {
+            gauge.setProgress(0, animated: true)
+        } else {
+            gauge.setProgress(CGFloat(count) / CGFloat(total), animated: true)
+        }
     }
 }

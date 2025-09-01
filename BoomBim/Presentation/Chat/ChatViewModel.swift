@@ -61,16 +61,8 @@ final class ChatViewModel {
             }
             .do(onNext: { [loading] _ in loading.accept(false) })
 
-//        input.vote
-//            .flatMapLatest { id -> Driver<Void> in
-//                let id: VoteFinishRequest = .init(voteId: id)
-//                VoteService.shared.finishVote(id)
-//            }
-//            .drive()
-//            .disposed(by: disposeBag)
-
-        let voteList = shared.map { $0.voteResList }
-        let myVoteList = shared.map { $0.myVoteResList }
+        let voteList = shared.map { Array($0.voteResList.reversed()) }
+        let myVoteList = shared.map { Array($0.myVoteResList.reversed()) }
 
         return Output(
             isLoading: loading.asDriver(),

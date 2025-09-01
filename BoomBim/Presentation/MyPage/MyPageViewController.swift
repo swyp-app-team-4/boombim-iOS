@@ -114,7 +114,7 @@ final class MyPageViewController: BaseViewController {
     }
     
     private func setProfile() {
-        profileView.configure(name: "조영현", profile: nil, email: "123", socialProvider: "dfd", vote: 0, question: 0)
+        profileView.configure(name: "닉네임", profile: nil, email: "123", socialProvider: "dfd", vote: 0, question: 0)
     }
     
     // MARK: Action

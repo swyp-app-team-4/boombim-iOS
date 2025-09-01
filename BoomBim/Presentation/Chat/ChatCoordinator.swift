@@ -57,7 +57,7 @@ final class ChatCoordinator: Coordinator {
             self.navigationController.presentedViewController?.dismiss(animated: true) {
                 guard let chat = self.chatRootVC else { return }
                 chat.showPage(1)
-                self.presentRegisterDialog(on: chat, nickname: "조영현")
+                self.presentRegisterDialog(on: chat, nickname: "닉네임")
             }
         }
         

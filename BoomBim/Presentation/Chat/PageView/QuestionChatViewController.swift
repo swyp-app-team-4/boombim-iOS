@@ -16,8 +16,8 @@ final class QuestionChatViewController: UIViewController {
     private let endVoteRelay = PublishRelay<Int>()
     
     private var questions: [QuestionChatItem] = []
-    private var filter: PollFilter = .all
-    private var sort:   PollSort   = .latest
+    private let filterRelay = BehaviorRelay<PollFilter>(value: .all)
+    private let sortRelay   = BehaviorRelay<PollSort>(value: .latest)
     
     var onNeedRefresh: (() -> Void)?
     
@@ -74,28 +74,8 @@ final class QuestionChatViewController: UIViewController {
         
         setupView()
         
-//        // dummy Data
-//        questions = [
-//            .init(profileImage: [nil, nil, nil], people: 18, update: "5", title: "서울역", relaxed: 15, normal: 3, busy: 2, crowded: 3, isVoting: true),
-//            .init(profileImage: [nil, nil], people: 38, update: "30", title: "신촌역", relaxed: 15, normal: 3, busy: 22, crowded: 36, isVoting: false),
-//            .init(profileImage: [nil], people: 8, update: "45", title: "강남역", relaxed: 35, normal: 43, busy: 12, crowded: 3, isVoting: true),
-//            .init(profileImage: [nil, nil, nil], people: 50, update: "55", title: "홍대입구역", relaxed: 15, normal: 3, busy: 52, crowded: 13, isVoting: false),
-//        ]
-        
         bind()
     }
-    
-//    override func viewWillAppear(_ animated: Bool) {
-//        super.viewWillAppear(animated)
-//        
-//        if questions.isEmpty {
-//            emptyStackView.isHidden = false
-//            questionTableView.isHidden = true
-//        } else {
-//            emptyStackView.isHidden = true
-//            questionTableView.isHidden = false
-//        }
-//    }
     
     private func setupView() {
         view.backgroundColor = .tableViewBackground
@@ -140,45 +120,59 @@ final class QuestionChatViewController: UIViewController {
     
     private func bind() {
         let output = viewModel.transform(.init(endVoteTap: endVoteRelay.asSignal()))
-        
-        // 목록 바인딩(예시)
-        output.items
-            .drive(questionTableView.rx.items(cellIdentifier: QuestionChatCell.identifier, cellType: QuestionChatCell.self)) { [weak self] _, item, cell in
-                print("item: \(item)")
-                
+
+        // ① items + filterRelay → filteredItems
+        let filteredItems: Driver<[MyVoteItemResponse]> = Driver
+            .combineLatest(output.items, filterRelay.asDriver())
+        { items, filter in
+            switch filter {
+            case .all:
+                return items
+            case .ongoing:
+                // 요구사항: voteFlag == true 만
+                return items.filter { $0.voteFlag == true }
+            case .closed:
+                // 요구사항: voteFlag == false 만
+                return items.filter { $0.voteFlag == false }
+            }
+        }
+
+        // ② 테이블 바인딩: output.items → filteredItems 로 변경
+        filteredItems
+            .drive(questionTableView.rx.items(
+                cellIdentifier: QuestionChatCell.identifier,
+                cellType: QuestionChatCell.self
+            )) { [weak self] _, item, cell in
+
                 let questionChatItem: QuestionChatItem = .init(
                     profileImage: item.profile,
                     people: item.profile.count,
-                    update: "1",
+                    update: "1", // TODO: createdAt → 'n분 전'
                     title: item.posName,
                     relaxed: item.relaxedCnt,
                     normal: item.commonly,
                     busy: item.slightlyBusyCnt,
                     crowded: item.crowedCnt,
-                    isVoting: !item.voteFlag)
-                
-                cell.configure(questionChatItem)
-                cell.onVote = {  selectedIndex in
-                    
-                    self?.confirmEnd(voteId: item.voteId)
-                    print("selectedIndex : \(selectedIndex)")
-                }
+                    isVoting: item.voteFlag // 현재 로직 유지
+                )
 
+                cell.configure(questionChatItem)
+                cell.onVote = { [weak self] selectedIndex in
+                    self?.confirmEnd(voteId: item.voteId)
+                }
             }
             .disposed(by: disposeBag)
-        
-        // 로딩/토스트
+
+        // ③ 로딩 인디케이터는 그대로
         output.isLoading
             .drive(activityIndicator.rx.isAnimating)
             .disposed(by: disposeBag)
-        
-        let isEmpty = output.items
-            .map { $0.isEmpty }
-            .distinctUntilChanged()
-        
-        Driver.combineLatest(output.isLoading, isEmpty) { isLoading, isEmpty -> (Bool, Bool) in
-            (isLoading, isEmpty)
-        }
+
+        // ④ 빈 상태 처리도 filteredItems 기준으로
+        Driver.combineLatest(
+            output.isLoading,
+            filteredItems.map { $0.isEmpty }.distinctUntilChanged()
+        )
         .drive(onNext: { [weak self] isLoading, isEmpty in
             guard let self = self else { return }
             if isLoading {
@@ -190,12 +184,8 @@ final class QuestionChatViewController: UIViewController {
             }
         })
         .disposed(by: disposeBag)
-        
-//        output.toast
-//            .emit(onNext: { [weak self] msg in self?.showToast(msg) })
-//            .disposed(by: disposeBag)
-        
-        // 종료 성공 → 부모에게 목록 갱신 요청
+
+        // 종료 성공 → 부모에게 목록 갱신 요청(기존 유지)
         output.ended
             .emit(onNext: { [weak self] _ in self?.onNeedRefresh?() })
             .disposed(by: disposeBag)
@@ -228,50 +218,19 @@ extension QuestionChatViewController: UITableViewDelegate/*, UITableViewDataSour
         return UITableView.automaticDimension
     }
     
-//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-//        let index = indexPath.row
-//        let question = questions[index]
-//        let cell = tableView.dequeueReusableCell(withIdentifier: QuestionChatCell.identifier, for: indexPath) as! QuestionChatCell
-//        
-//        cell.configure(question)
-//        cell.onVote = { [weak self, weak cell, weak tableView] in
-//            guard let self, let cell = cell, let tableView = tableView, let currentIndexPath = tableView.indexPath(for: cell)
-//            else { return }
-//            
-//            print("vote Button Tapped : \(currentIndexPath.row)")
-//            let dialog = ConfirmDialogController(
-//                title: "투표를 종료할까요?",
-//                message: "해당 장소 모든 투표가 종료됩니다.",
-//                confirmTitle: "예",
-//                cancelTitle: "아니요",
-//                onConfirm: { [weak self] in
-//                    // self?.viewModel.endPoll() // 실제 종료 호출
-//                    // self.viewModel.sendVote(row: ip.row, optionIndex: option)
-//                }
-//            )
-//            
-//            present(dialog, animated: true)
-//        }
-//        
-//        return cell
-//    }
-    
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: PollListSectionHeader.identifier) as! PollListSectionHeader
         
-        header.configure(filter: filter, sort: sort, onFilter: { [weak self] filter in
-            self?.filter = filter
-            self?.applyFilterAndReload()
-        }, onSort: { [weak self] sort in
-            self?.sort = sort
-            self?.applyFilterAndReload()
-        })
+        header.configure(
+            filter: filterRelay.value,
+            sort: sortRelay.value,
+            onFilter: { [weak self] newFilter in
+                self?.filterRelay.accept(newFilter)     // ✅ Relay 갱신
+            },
+            onSort: { [weak self] newSort in
+                self?.sortRelay.accept(newSort)         // ✅ Relay 갱신
+            }
+        )
         return header
-    }
-    
-    private func applyFilterAndReload() {
-        print("filter : \(filter)")
-        print("sort : \(sort)")
-        questionTableView.reloadData()
     }
 }
