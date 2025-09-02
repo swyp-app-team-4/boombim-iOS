@@ -127,37 +127,12 @@ final class PlaceInfoCell: UITableViewCell {
     // MARK: Public
     func configure(with item: OfficialPlaceItem) {
         titleLabel.text = item.name
-//        metaLabel.text = "\(item.minutesAgo)분 전 · \(item.address)"
         congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
-//        badgeLabel.text = item.congestionLevelName
-//        badgeLabel.backgroundColor = item.congestion.backgroundColor
-//        badgeLabel.textColor = item.congestion.textColor
-
-        // Load up to 3 images
-//        let urls = Array(item..prefix(3))
-//        for i in 0..<imageViews.count {
-//            let iv = imageViews[i]
-//            if i < urls.count {
-//                let url = urls[i]
-//                #if canImport(Nuke)
-////                let options = ImageLoadingOptions(placeholder: placeholderImage(), transition: .fadeIn(duration: 0.2))
-////                let task = Nuke.loadImage(with: url, options: options, into: iv)
-////                imageTasks.append(task)
-//                #else
-//                // Lightweight fallback loader (demo only)
-//                iv.image = placeholderImage()
-//                URLSession.shared.dataTask(with: url) { data, _, _ in
-//                    if let data = data, let img = UIImage(data: data) {
-//                        DispatchQueue.main.async { iv.image = img }
-//                    }
-//                }.resume()
-//                #endif
-//            } else {
-//                iv.image = placeholderImage()
-//            }
-//        }
-
-//        favoriteBadge.isHidden = !item.isBookmarked
+    }
+    
+    func configure(with item: UserPlaceItem) {
+        titleLabel.text = item.name
+        congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
     }
 
     // MARK: Private

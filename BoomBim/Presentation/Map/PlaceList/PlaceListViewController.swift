@@ -17,12 +17,22 @@ extension OfficialPlaceItem: Hashable {
     }
 }
 
+extension UserPlaceItem: Hashable {
+    static func == (lhs: UserPlaceItem, rhs: UserPlaceItem) -> Bool {
+        return lhs.memberPlaceId == rhs.memberPlaceId
+    }
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(memberPlaceId)
+    }
+}
+
 final class PlaceListViewController: UIViewController {
     // MARK: Public
     enum Section { case main }
 
     let tableView = UITableView(frame: .zero, style: .plain)
-    var onSelect: ((OfficialPlaceItem) -> Void)?
+    var onOfficialSelect: ((OfficialPlaceItem) -> Void)?
+    var onUserSelect: ((UserPlaceItem) -> Void)?
 
     // 외부에서 헤더 타이틀 바꾸기
     func updateHeader(title: String) {
@@ -32,35 +42,46 @@ final class PlaceListViewController: UIViewController {
 
     // 외부에서 데이터 적용
     func apply(places: [OfficialPlaceItem], animate: Bool = true) {
-        items = places
+        officialItems = places
         var snapshot = NSDiffableDataSourceSnapshot<Section, OfficialPlaceItem>()
         snapshot.appendSections([.main])
         snapshot.appendItems(places, toSection: .main)
-        dataSource.apply(snapshot, animatingDifferences: animate)
+        officialDataSource.apply(snapshot, animatingDifferences: animate)
+        emptyView.isHidden = !places.isEmpty
+    }
+    
+    func apply(places: [UserPlaceItem], animate: Bool = true) {
+        userItems = places
+        var snapshot = NSDiffableDataSourceSnapshot<Section, UserPlaceItem>()
+        snapshot.appendSections([.main])
+        snapshot.appendItems(places, toSection: .main)
+        userDataSource.apply(snapshot, animatingDifferences: animate)
         emptyView.isHidden = !places.isEmpty
     }
 
     // 선택 항목 강조(목록 상태 유지)
-    func highlight(id: String) {
-        guard let idx = items.firstIndex(where: { String($0.id) == id }) else { return }
-        let ip = IndexPath(row: idx, section: 0)
-        tableView.scrollToRow(at: ip, at: .middle, animated: true)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            if let cell = self.tableView.cellForRow(at: ip) {
-                UIView.animate(withDuration: 0.22, animations: {
-                    cell.contentView.backgroundColor = UIColor.systemYellow.withAlphaComponent(0.14)
-                }) { _ in
-                    UIView.animate(withDuration: 0.35, delay: 0.5) {
-                        cell.contentView.backgroundColor = .clear
-                    }
-                }
-            }
-        }
-    }
+//    func highlight(id: String) {
+//        guard let idx = items.firstIndex(where: { String($0.id) == id }) else { return }
+//        let ip = IndexPath(row: idx, section: 0)
+//        tableView.scrollToRow(at: ip, at: .middle, animated: true)
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+//            if let cell = self.tableView.cellForRow(at: ip) {
+//                UIView.animate(withDuration: 0.22, animations: {
+//                    cell.contentView.backgroundColor = UIColor.systemYellow.withAlphaComponent(0.14)
+//                }) { _ in
+//                    UIView.animate(withDuration: 0.35, delay: 0.5) {
+//                        cell.contentView.backgroundColor = .clear
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     // MARK: Private
-    private var items: [OfficialPlaceItem] = []
-    private lazy var dataSource = makeDataSource()
+    private var officialItems: [OfficialPlaceItem] = []
+    private var userItems: [UserPlaceItem] = []
+    private lazy var officialDataSource = makeOfficialDataSource()
+    private lazy var userDataSource = makeUserDataSource()
 
     // Header
     private let headerContainer = UIView()
@@ -183,8 +204,19 @@ private extension PlaceListViewController {
         tableView.tableHeaderView = headerContainer
     }
 
-    func makeDataSource() -> UITableViewDiffableDataSource<Section, OfficialPlaceItem> {
+    func makeOfficialDataSource() -> UITableViewDiffableDataSource<Section, OfficialPlaceItem> {
         let ds = UITableViewDiffableDataSource<Section, OfficialPlaceItem>(tableView: tableView) { [weak self] tableView, indexPath, item in
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: PlaceInfoCell.reuseID, for: indexPath) as? PlaceInfoCell else {
+                return UITableViewCell(style: .default, reuseIdentifier: "fallback")
+            }
+            cell.configure(with: item)
+            return cell
+        }
+        return ds
+    }
+    
+    func makeUserDataSource() -> UITableViewDiffableDataSource<Section, UserPlaceItem> {
+        let ds = UITableViewDiffableDataSource<Section, UserPlaceItem>(tableView: tableView) { [weak self] tableView, indexPath, item in
             guard let cell = tableView.dequeueReusableCell(withIdentifier: PlaceInfoCell.reuseID, for: indexPath) as? PlaceInfoCell else {
                 return UITableViewCell(style: .default, reuseIdentifier: "fallback")
             }
@@ -198,8 +230,10 @@ private extension PlaceListViewController {
 // MARK: - UITableViewDelegate
 extension PlaceListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if let item = dataSource.itemIdentifier(for: indexPath) {
-            onSelect?(item)
+        if let officialItem = officialDataSource.itemIdentifier(for: indexPath) {
+            onOfficialSelect?(officialItem)
+        } else if let userItem = userDataSource.itemIdentifier(for: indexPath) {
+            onUserSelect?(userItem)
         }
         tableView.deselectRow(at: indexPath, animated: true)
     }

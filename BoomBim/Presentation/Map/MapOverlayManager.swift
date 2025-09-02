@@ -7,6 +7,7 @@
 
 import KakaoMapsSDK
 import UIKit
+import CoreLocation
 
 enum OverlayGroup: String, CaseIterable {
     case official
@@ -39,6 +40,12 @@ final class MapOverlayManager {
     private var shapeLayers: [OverlayGroup: ShapeLayer] = [:]
 
     init(map: KakaoMap) { self.map = map }
+    
+    // VC에서 받도록 콜백 노출
+    var onPoiTapped: ((OverlayGroup, String, CLLocationCoordinate2D) -> Void)?
+    
+    // 탭 핸들러 해제 관리(메모리 누수 방지)
+    private var poiTapDisposers: [String: DisposableEventHandler] = [:]
 
     // ----- ID 생성 규칙 (그룹별로 유니크) -----
     private func poiStyleID(_ g: OverlayGroup) -> String { "poi.style.\(g.rawValue)" }
@@ -100,34 +107,59 @@ final class MapOverlayManager {
     /// items: (고유ID, 위치)
     func setPOIs(for g: OverlayGroup,
                  items: [(id: String, point: MapPoint)],
-                 visual: GroupVisual){
+                 visual: GroupVisual,
+                 onTapID: ((OverlayGroup, String) -> Void)? = nil){
         ensureResources(for: g, visual: visual)
         guard let layer = poiLayers[g] else { return }
 
         layer.clearAllItems() // 기존 것 정리
+        poiTapDisposers.values.forEach { $0.dispose() }
+        poiTapDisposers.removeAll()
+        
         let options: [PoiOptions] = items.map { item in
             var opt = PoiOptions(styleID: poiStyleID(g), poiID: "poi.\(g.rawValue).\(item.id)")
             opt.rank = 0
+            opt.clickable = true
             return opt
         }
         let positions = items.map { $0.point }
 
-        // 생성 완료 콜백에서 show() 호출
-        _ = layer.addPois(options: options, at: positions) { pois in
-            pois?.forEach { $0.show() }  // 각 POI 표출
+//        // 생성 완료 콜백에서 show() 호출
+//        _ = layer.addPois(options: options, at: positions) { pois in
+//            pois?.forEach { $0.show() }  // 각 POI 표출
+//        }
+//        layer.visible = true // 레이어 on (POI show와 둘 다 필요)
+        _ = layer.addPois(options: options, at: positions) { [weak self] pois in
+            guard let self, let pois else { return }
+            for (i, poi) in pois.enumerated() {
+                // 개별 POI 탭 핸들러
+                if let onTapID {
+                    let itemID = items[i].id
+                    let disposer = poi.addPoiTappedEventHandler(target: self) { _ in
+                        return { _ in
+                            onTapID(g, itemID)
+                        }
+                    }
+                    self.poiTapDisposers["\(g.rawValue).\(itemID)"] = disposer
+                }
+                poi.show()
+            }
+            layer.visible = true
         }
-        layer.visible = true // 레이어 on (POI show와 둘 다 필요)
     }
     
     func setPOIs(for g: OverlayGroup,
                  items: [POIItem],
                  visual: GroupVisual,
-                 iconProvider: IconProvider)
+                 iconProvider: IconProvider,
+                 onTapID: ((OverlayGroup, String) -> Void)? = nil)
     {
         ensureResources(for: g, visual: visual)
         guard let layer = poiLayers[g], let map = map else { return }
 
         layer.clearAllItems()
+        poiTapDisposers.values.forEach { $0.dispose() }
+               poiTapDisposers.removeAll()
 
         var options = [PoiOptions]()
         var positions = [MapPoint]()
@@ -141,14 +173,33 @@ final class MapOverlayManager {
             var opt = PoiOptions(styleID: styleID,
                                  poiID: "poi.\(g.rawValue).\(item.id)")
             opt.rank = 0
+            opt.clickable = true
             options.append(opt)
             positions.append(item.point)
         }
 
-        _ = layer.addPois(options: options, at: positions) { pois in
-            pois?.forEach { $0.show() }
+//        _ = layer.addPois(options: options, at: positions) { pois in
+//            pois?.forEach { $0.show() }
+//        }
+//        
+//        layer.visible = true
+        _ = layer.addPois(options: options, at: positions) { [weak self] pois in
+            guard let self, let pois else { return }
+            for (i, poi) in pois.enumerated() {
+                // 개별 POI 탭 핸들러
+                if let onTapID {
+                    let itemID = items[i].id
+                    let disposer = poi.addPoiTappedEventHandler(target: self) { _ in
+                        return { _ in
+                            onTapID(g, itemID)
+                        }
+                    }
+                    self.poiTapDisposers["\(g.rawValue).\(itemID)"] = disposer
+                }
+                poi.show()
+            }
+            layer.visible = true
         }
-        layer.visible = true
     }
 
     // ----- 데이터 바인딩: 폴리곤 -----

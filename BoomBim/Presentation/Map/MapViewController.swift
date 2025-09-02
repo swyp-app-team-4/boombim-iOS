@@ -32,7 +32,9 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private let zoomLevelSubject  = PublishSubject<Int>()
     
     // id ↔︎ Place 매핑(POI 탭 시 detail로 전환하기 위해
-    private var placeIndex = [String: OfficialPlaceItem]()
+    private var placeIndex: [String: UserPlaceItem] = [:]
+    // VC 내 프로퍼티 (공식 장소 인덱스)
+    private var officialIndex: [String: OfficialPlaceItem] = [:]
 
     // MARK: - UI
     private lazy var floatingPanel: FloatingPanelController = {
@@ -353,12 +355,13 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                 guard let self, let map = self.kakaoMap else { return }
                 let visual = self.visual(for: .realtime)
                 
+                self.placeIndex = Dictionary(uniqueKeysWithValues: places.map { (String($0.memberPlaceId), $0) })
+                
                 let items: [POIItem] = places.map {
                     .init(
                         id: String($0.memberPlaceId),
-                        point: MapPoint(longitude: $0.coordinate.longitude,
-                                        latitude:  $0.coordinate.latitude),
-                        styleKey: self.styleKey(for: $0)       // ✅ 메서드 호출
+                        point: MapPoint(longitude: $0.coordinate.longitude,latitude:  $0.coordinate.latitude),
+                        styleKey: self.styleKey(for: $0)
                     )
                 }
                 
@@ -366,13 +369,28 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                     for: .realtime,
                     items: items,
                     visual: visual,
-                    iconProvider: self.iconForStyleKey)
+                    iconProvider: self.iconForStyleKey,
+                    onTapID: { [weak self] group, id in
+                        guard let self else { return }
+                        guard group == .realtime, let model = self.placeIndex[id] else { return }
+                        
+                        // 필요 시 좌표도 모델에서
+                        let coord = CLLocationCoordinate2D(latitude: model.coordinate.latitude, longitude: model.coordinate.longitude)
+                        self.showUserListPanel(with: [model])
+                    })
                 
 //                let items: [(id: String, point: MapPoint)] = places.map {
 //                    (id: String($0.memberPlaceId),
 //                     point: MapPoint(longitude: $0.coordinate.longitude, latitude: $0.coordinate.latitude))
 //                }
 //                self.overlay.setPOIs(for: .realtime, items: items, visual: visual)
+                
+                // 결과가 있으면 목록 패널을 .half로 띄움, 없으면 .tip
+                if places.isEmpty {
+                    self.floatingPanel.move(to: .tip, animated: true)
+                } else {
+                    self.showUserListPanel(with: places) // 아래 함수
+                }
             })
             .disposed(by: disposeBag)
 
@@ -385,20 +403,31 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                 guard let self else { return }
                 let visual = self.visual(for: .official)
 
+                self.officialIndex = Dictionary(uniqueKeysWithValues: official.map { (String($0.id), $0) })
+                
                 let items: [(id: String, point: MapPoint)] = official.map {
                     (id: String($0.id),
                      point: MapPoint(longitude: $0.coordinate.longitude, latitude: $0.coordinate.latitude))
                 }
-                self.overlay.setPOIs(for: .official, items: items, visual: visual)
                 
-                // id ↔︎ Place 보관 (POI 탭 → 상세 전환용)
-                self.placeIndex = Dictionary(uniqueKeysWithValues: official.map { (String($0.id), $0) })
+                self.overlay.setPOIs(
+                    for: .official,
+                    items: items,
+                    visual: visual,
+                    onTapID: { [weak self] group, id in
+                        guard let self else { return }
+                        guard group == .official, let model = self.officialIndex[id] else { return }
+                        
+                        // 필요 시 좌표도 모델에서
+                        let coord = CLLocationCoordinate2D(latitude: model.coordinate.latitude, longitude: model.coordinate.longitude)
+                        self.showOfficialListPanel(with: [model])
+                    })
                 
                 // 결과가 있으면 목록 패널을 .half로 띄움, 없으면 .tip
                 if official.isEmpty {
                     self.floatingPanel.move(to: .tip, animated: true)
                 } else {
-                    self.showListPanel(with: official) // 아래 함수
+                    self.showOfficialListPanel(with: official) // 아래 함수
                 }
             })
             .disposed(by: disposeBag)
@@ -571,7 +600,16 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     }
     
     // MARK: Floating Panel
-    private func showListPanel(with places: [OfficialPlaceItem]) {
+    private func showOfficialListPanel(with places: [OfficialPlaceItem]) {
+        if placeListViewController == nil { placeListViewController = PlaceListViewController() }
+        placeListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
+        if floatingPanel.contentViewController !== placeListViewController {
+            floatingPanel.set(contentViewController: placeListViewController!)
+        }
+        floatingPanel.move(to: .tip, animated: true)
+    }
+    
+    private func showUserListPanel(with places: [UserPlaceItem]) {
         if placeListViewController == nil { placeListViewController = PlaceListViewController() }
         placeListViewController?.updateHeader(title: "내 주변 여유로운 장소에요!")
         placeListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
