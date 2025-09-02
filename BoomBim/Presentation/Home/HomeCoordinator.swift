@@ -66,7 +66,8 @@ final class HomeCoordinator: Coordinator {
     }
     
     func showSearch() {
-        let viewModel = SearchViewModel()
+        let service = KakaoLocalService()
+        let viewModel = SearchViewModel(service: service)
         let viewController = SearchViewController(viewModel: viewModel)
         navigationController.pushViewController(viewController, animated: true)
     }

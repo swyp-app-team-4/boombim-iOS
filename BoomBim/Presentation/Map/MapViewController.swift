@@ -537,7 +537,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     // MARK: - Actions
     private func openSearch() {
         // 코디네이터 라우팅 지점
-        // e.g., coordinator?.showSearch()
+        viewModel.didTapSearch()
     }
 
     private func didTapCurrentLocation() {

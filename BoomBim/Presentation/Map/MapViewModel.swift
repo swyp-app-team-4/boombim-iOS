@@ -10,6 +10,8 @@ import RxCocoa
 import CoreLocation
 
 final class MapViewModel {
+    var goToSearchView: (() -> Void)?
+    
     struct Input {
         let cameraRect: Observable<ViewportRect>
         let zoomLevel: Observable<Int>
@@ -128,5 +130,9 @@ final class MapViewModel {
         return .init(places: userPlaces,
                      officialPlace: officialPlace,
                      myCoordinate: myCoord)
+    }
+    
+    func didTapSearch() {
+        goToSearchView?()
     }
 }

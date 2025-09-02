@@ -185,7 +185,6 @@ final class KakaoLocalService {
     func searchByKeyword(query: String, x: Double, y: Double, limit: Int = 10, radius: Int? = nil
     ) -> Single<[Place]> {
         
-
         let url = NetworkDefine.apiKakao + NetworkDefine.Search.keyword
         let headers: HTTPHeaders = ["Authorization": "KakaoAK \(restApiKey)"]
         
@@ -202,6 +201,50 @@ final class KakaoLocalService {
             let req = AF.request(url, method: .get, parameters: params, headers: headers)
                 .validate()
                 .responseDecodable(of: KakaoKeywordResponse.self) { res in
+                    switch res.result {
+                    case .success(let dto):
+                        let places = dto.documents.map { d in
+                            Place(
+                                id: d.id,
+                                name: d.place_name,
+                                coord: .init(latitude: Double(d.y) ?? 0,
+                                             longitude: Double(d.x) ?? 0),
+                                address: d.road_address_name.isEmpty ? d.address_name : d.road_address_name,
+                                distance: Double(d.distance)
+                            )
+                        }
+                        single(.success(places))
+                    case .failure(let error):
+                        single(.failure(error))
+                    }
+                }
+            return Disposables.create { req.cancel() }
+        }
+    }
+    
+    // 키워드 검색
+    /// 키워드로 검색
+    /// - Parameters:
+    ///   - query: 검색어
+    ///   - limit: 1...15 (Kakao 제한은 최대 15)
+    ///   - radius: 선택. 미터(0~20000). 주면 해당 반경 내로 제한
+    func searchByKeyword(query: String, limit: Int = 10, radius: Int? = nil
+    ) -> Single<[Place]> {
+        
+        let url = NetworkDefine.apiKakao + NetworkDefine.Search.keyword
+        let headers: HTTPHeaders = ["Authorization": "KakaoAK \(restApiKey)"]
+        
+        var params: Parameters = [
+            "query": query,
+            "size": limit
+        ]
+        if let r = radius { params["radius"] = String(r) } // 0~20000
+        
+        return Single.create { single in
+            let req = AF.request(url, method: .get, parameters: params, headers: headers)
+                .validate()
+                .responseDecodable(of: KakaoKeywordResponse.self) { res in
+                    debugPrint(res)
                     switch res.result {
                     case .success(let dto):
                         let places = dto.documents.map { d in
