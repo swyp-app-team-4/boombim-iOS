@@ -23,6 +23,14 @@ final class QuestionChatViewController: UIViewController {
     
     private let activityIndicator = UIActivityIndicatorView(style: .large)
     
+    private lazy var emptyContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.isUserInteractionEnabled = false   // 스크롤/탭 방해 방지
+        
+        return view
+    }()
+    
     private let emptyStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -53,7 +61,7 @@ final class QuestionChatViewController: UIViewController {
     }()
     
     private let questionTableView: UITableView = {
-        let tableView = UITableView(frame: .zero, style: .grouped)
+        let tableView = UITableView(frame: .zero, style: .plain)
         tableView.separatorStyle = .none
         tableView.backgroundColor = .tableViewBackground
         
@@ -91,11 +99,12 @@ final class QuestionChatViewController: UIViewController {
         }
         
         emptyStackView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(emptyStackView)
-        
+        emptyContainerView.addSubview(emptyStackView)
+
         NSLayoutConstraint.activate([
-            emptyStackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 50),
-            emptyStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+//            emptyStackView.topAnchor.constraint(equalTo: emptyContainerView.topAnchor, constant: 50),
+            emptyStackView.centerYAnchor.constraint(equalTo: emptyContainerView.centerYAnchor),
+            emptyStackView.centerXAnchor.constraint(equalTo: emptyContainerView.centerXAnchor)
         ])
     }
     
@@ -129,11 +138,9 @@ final class QuestionChatViewController: UIViewController {
             case .all:
                 return items
             case .ongoing:
-                // 요구사항: voteFlag == true 만
-                return items.filter { $0.voteFlag == true }
+                return items.filter { $0.voteStatus == VoteStatus.PROGRESS }
             case .closed:
-                // 요구사항: voteFlag == false 만
-                return items.filter { $0.voteFlag == false }
+                return items.filter { $0.voteStatus == VoteStatus.END }
             }
         }
 
@@ -153,7 +160,7 @@ final class QuestionChatViewController: UIViewController {
                     normal: item.commonly,
                     busy: item.slightlyBusyCnt,
                     crowded: item.crowedCnt,
-                    isVoting: item.voteFlag // 현재 로직 유지
+                    isVoting: item.voteStatus == VoteStatus.PROGRESS // 현재 로직 유지
                 )
 
                 cell.configure(questionChatItem)
@@ -179,8 +186,13 @@ final class QuestionChatViewController: UIViewController {
                 self.questionTableView.isHidden = true
                 self.emptyStackView.isHidden = true
             } else {
-                self.questionTableView.isHidden = isEmpty
-                self.emptyStackView.isHidden = !isEmpty
+                if isEmpty {
+                    emptyContainerView.frame = questionTableView.bounds
+                    emptyContainerView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                    questionTableView.backgroundView = emptyContainerView
+                } else {
+                    questionTableView.backgroundView = nil
+                }
             }
         })
         .disposed(by: disposeBag)

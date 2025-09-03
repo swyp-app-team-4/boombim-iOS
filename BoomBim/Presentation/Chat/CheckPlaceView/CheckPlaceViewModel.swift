@@ -53,7 +53,8 @@ final class CheckPlaceViewModel {
             posLongitude: place.coord.longitude,
             userLatitude: userLocation.latitude,
             userLongitude: userLocation.longitude,
-            posName: place.name
+            posName: place.name,
+            address: place.address
         )
         
         print("preformCreateVote : \(body)")
@@ -81,6 +82,7 @@ final class CheckPlaceViewModel {
         let body: RegisterPlaceRequest = .init(
             uuid: place.id,
             name: place.name,
+            address: place.address,
             latitude: place.coord.latitude,
             longitude: place.coord.longitude)
         

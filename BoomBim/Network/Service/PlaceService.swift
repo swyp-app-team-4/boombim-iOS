@@ -62,6 +62,7 @@ struct UserPlaceListResponse: Decodable {
 struct RegisterPlaceRequest: Encodable {
     let uuid: String
     let name: String
+    let address: String
     let latitude: Double
     let longitude: Double
 }

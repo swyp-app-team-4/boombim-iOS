@@ -16,6 +16,7 @@ struct CreateVoteRequest: Encodable {
     let userLatitude: Double
     let userLongitude: Double
     let posName: String
+    let address: String
 }
 
 enum VoteStatus: String, Decodable {

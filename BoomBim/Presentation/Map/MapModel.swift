@@ -12,7 +12,7 @@ struct Place: Hashable {
     let id: String
     let name: String
     let coord: CLLocationCoordinate2D
-    let address: String?
+    let address: String
     let distance: Double?
 
     static func == (lhs: Place, rhs: Place) -> Bool {
