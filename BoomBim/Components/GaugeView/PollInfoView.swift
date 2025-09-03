@@ -10,10 +10,8 @@ import UIKit
 final class PollInfoView: UIControl {
     private let titleLabel = UILabel()
     private let countLabel = UILabel()
-    private let gauge: PollGaugeView = {
-        let gauge = PollGaugeView()
-//        gauge.resetToEmpty()
-//        gauge.animationBehavior = .fromZero
+    private let gauge: GaugeView = {
+        let gauge = GaugeView()
         gauge.trackColor = .grayScale3
         
         return gauge

@@ -46,7 +46,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     }()
     
     private var placeListViewController: PlaceListViewController?
-    private var placeDetailViewController: PlaceListViewController?
+    private var officialPlaceDetailViewController: OfficialPlaceDetailViewController?
     
     private let searchTextField: AppSearchTextField = {
         let textField = AppSearchTextField()
@@ -373,7 +373,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                     onTapID: { [weak self] group, id in
                         guard let self else { return }
                         guard group == .realtime, let model = self.placeIndex[id] else { return }
-                        
+                        print("onTap ID : \(id)")
                         // 필요 시 좌표도 모델에서
                         let coord = CLLocationCoordinate2D(latitude: model.coordinate.latitude, longitude: model.coordinate.longitude)
                         self.showUserListPanel(with: [model])
@@ -603,6 +603,15 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private func showOfficialListPanel(with places: [OfficialPlaceItem]) {
         if placeListViewController == nil { placeListViewController = PlaceListViewController() }
         placeListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
+        if floatingPanel.contentViewController !== placeListViewController {
+            floatingPanel.set(contentViewController: placeListViewController!)
+        }
+        floatingPanel.move(to: .tip, animated: true)
+    }
+    
+    private func showOfficialListPanel(with places: OfficialPlaceItem) {
+        if officialPlaceDetailViewController == nil { officialPlaceDetailViewController = OfficialPlaceDetailViewController() }
+        officialPlaceDetailViewController?.apply(places: places)         // 테이블/컬렉션 갱신
         if floatingPanel.contentViewController !== placeListViewController {
             floatingPanel.set(contentViewController: placeListViewController!)
         }

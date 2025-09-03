@@ -551,6 +551,94 @@
         }
       }
     },
+    "place.detail.label.live.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "거주지"
+          }
+        }
+      }
+    },
+    "place.detail.label.man" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "남성"
+          }
+        }
+      }
+    },
+    "place.detail.label.nonreside" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "비상주"
+          }
+        }
+      }
+    },
+    "place.detail.label.people.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "성별"
+          }
+        }
+      }
+    },
+    "place.detail.label.reside" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "상주"
+          }
+        }
+      }
+    },
+    "place.detail.label.title.age" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "연령대"
+          }
+        }
+      }
+    },
+    "place.detail.label.title.people" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "인구 통계"
+          }
+        }
+      }
+    },
+    "place.detail.label.woman" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "여성"
+          }
+        }
+      }
+    },
     "report.button.post" : {
       "extractionState" : "manual",
       "localizations" : {

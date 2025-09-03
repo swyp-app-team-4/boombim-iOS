@@ -1,0 +1,249 @@
+//
+//  OfficialPlaceDetailViewController.swift
+//  BoomBim
+//
+//  Created by 조영현 on 9/1/25.
+//
+
+import UIKit
+
+final class OfficialPlaceDetailViewController: UIViewController {
+    
+    private let textStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.distribution = .fillProportionally
+        
+        return stackView
+    }()
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body02.semiBold.font
+        label.textColor = .grayScale10
+        
+        return label
+    }()
+    
+    private let addressLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Caption.regular.font
+        label.textColor = .grayScale8
+        
+        return label
+    }()
+    
+    private let congestionImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        
+        return imageView
+    }()
+    
+    private lazy var placeImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = .iconEmptyProfile
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.cornerRadius = 12
+        imageView.clipsToBounds = true
+        
+        return imageView
+    }()
+    
+    private let spacingView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .viewDivider
+        
+        return view
+    }()
+    
+    private lazy var peopleContatiner: UIView = {
+        let view = UIView()
+        view.backgroundColor = .grayScale1
+        view.layer.cornerRadius = 12
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.grayScale3.cgColor
+        view.clipsToBounds = true
+        
+        return view
+    }()
+    
+    private let peopleStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.backgroundColor = .clear
+        stackView.alignment = .fill
+        stackView.distribution = .equalSpacing
+        stackView.spacing = 18
+        
+        return stackView
+    }()
+    
+    private let peopleTitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body01.semiBold.font
+        label.textColor = .grayScale9
+        label.text = "place.detail.label.title.people".localized()
+        
+        return label
+    }()
+    
+    private let peopleGaugeView = PeopleGaugeView()
+    private let liveGaugeView = LiveGaugeView()
+    
+    private lazy var ageContatiner: UIView = {
+        let view = UIView()
+        view.backgroundColor = .grayScale1
+        view.layer.cornerRadius = 12
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.grayScale3.cgColor
+        view.clipsToBounds = true
+        
+        return view
+    }()
+    
+    private let ageTitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body01.semiBold.font
+        label.textColor = .grayScale9
+        label.text = "place.detail.label.title.age".localized()
+        
+        return label
+    }()
+    
+    private let ageStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.alignment = .fill
+        stackView.spacing = 10
+        
+        return stackView
+    }()
+    
+    private lazy var firstAgeStackView = makeRow()
+    private lazy var secondAgeStackView = makeRow()
+    
+    private func makeRow() -> UIStackView {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .fill
+        stackView.distribution = .fillEqually
+        stackView.spacing = 8
+        
+        return stackView
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        setupView()
+    }
+    
+    private func setupView() {
+        view.backgroundColor = .background
+        
+        configureText()
+        configurePlaceInfo()
+        
+        configurePeople()
+        configureAge()
+    }
+    
+    private func configurePlaceInfo() {
+        [textStackView, congestionImageView, placeImageView, spacingView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            self.view.addSubview(view)
+        }
+        
+        NSLayoutConstraint.activate([
+            textStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            textStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            
+            congestionImageView.centerYAnchor.constraint(equalTo: textStackView.centerYAnchor),
+            congestionImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            placeImageView.topAnchor.constraint(equalTo: textStackView.bottomAnchor, constant: 14),
+            placeImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            placeImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            placeImageView.heightAnchor.constraint(equalToConstant: 105),
+            
+            spacingView.topAnchor.constraint(equalTo: placeImageView.bottomAnchor, constant: 30),
+            spacingView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            spacingView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            spacingView.heightAnchor.constraint(equalToConstant: 8)
+        ])
+    }
+    
+    private func configureText() {
+        [titleLabel, addressLabel].forEach { label in
+            label.translatesAutoresizingMaskIntoConstraints = false
+            textStackView.addArrangedSubview(label)
+        }
+    }
+    
+    private func configurePeople() {
+        [peopleTitleLabel, peopleGaugeView, liveGaugeView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            peopleStackView.addArrangedSubview(view)
+        }
+        
+        peopleStackView.translatesAutoresizingMaskIntoConstraints = false
+        peopleContatiner.addSubview(peopleStackView)
+        
+        peopleContatiner.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(peopleContatiner)
+        
+        NSLayoutConstraint.activate([
+            peopleContatiner.topAnchor.constraint(equalTo: spacingView.bottomAnchor, constant: 16),
+            peopleContatiner.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            peopleContatiner.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            peopleStackView.topAnchor.constraint(equalTo: peopleContatiner.topAnchor, constant: 18),
+            peopleStackView.bottomAnchor.constraint(equalTo: peopleContatiner.bottomAnchor, constant: -18),
+            peopleStackView.leadingAnchor.constraint(equalTo: peopleContatiner.leadingAnchor, constant: 16),
+            peopleStackView.trailingAnchor.constraint(equalTo: peopleContatiner.trailingAnchor, constant: -16)
+        ])
+    }
+    
+    private func configureAge() {
+        [firstAgeStackView, secondAgeStackView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            ageStackView.addArrangedSubview(view)
+        }
+        
+        [ageTitleLabel, ageStackView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            ageContatiner.addSubview(view)
+        }
+        
+        ageContatiner.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(ageContatiner)
+        
+        NSLayoutConstraint.activate([
+            ageContatiner.topAnchor.constraint(equalTo: peopleContatiner.bottomAnchor, constant: 18),
+            ageContatiner.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            ageContatiner.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            ageTitleLabel.topAnchor.constraint(equalTo: ageContatiner.topAnchor, constant: 18),
+            ageTitleLabel.leadingAnchor.constraint(equalTo: ageContatiner.leadingAnchor, constant: 16),
+            
+            ageStackView.topAnchor.constraint(equalTo: ageTitleLabel.bottomAnchor, constant: 18),
+            ageStackView.bottomAnchor.constraint(equalTo: ageContatiner.bottomAnchor, constant: -18),
+            ageStackView.leadingAnchor.constraint(equalTo: ageContatiner.leadingAnchor, constant: 16),
+            ageStackView.trailingAnchor.constraint(equalTo: ageContatiner.trailingAnchor, constant: -16)
+        ])
+    }
+    
+    private func setAgeStackView() {
+        let titles = ["10대 미만", "10대", "20대", "30대", "40대", "50대", "60대", "70대"]
+        for (i, title) in titles.enumerated() {
+            let tile = AgeTileView()
+            tile.configure(percentText: "5%", title: title)
+            (i < 4 ? firstAgeStackView : secondAgeStackView).addArrangedSubview(tile)
+        }
+    }
+    
+//    private func configure(data: ) {
+//        
+//    }
+}

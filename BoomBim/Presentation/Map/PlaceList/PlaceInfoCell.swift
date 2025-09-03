@@ -8,61 +8,6 @@
 import UIKit
 import Nuke
 
-// MARK: - Model
-
-struct PlaceListItem: Hashable {
-    enum Congestion: String, Hashable {
-        case relaxed    // 여유
-        case normal     // 보통
-        case busy       // 약간 붐빔 (또는 붐빔)
-
-        var title: String {
-            switch self {
-            case .relaxed: return "여유"
-            case .normal:  return "보통"
-            case .busy:    return "약간 붐빔"
-            }
-        }
-
-        var backgroundColor: UIColor {
-            switch self {
-            case .relaxed: return UIColor.systemGreen.withAlphaComponent(0.2)
-            case .normal:  return UIColor.systemBlue.withAlphaComponent(0.2)
-            case .busy:    return UIColor.systemOrange.withAlphaComponent(0.25)
-            }
-        }
-
-        var textColor: UIColor {
-            switch self {
-            case .relaxed: return UIColor.systemGreen
-            case .normal:  return UIColor.systemBlue
-            case .busy:    return UIColor.systemOrange
-            }
-        }
-    }
-
-    let id: String
-    let title: String
-    let minutesAgo: Int
-    let address: String
-    let imageURLs: [URL]
-    let congestion: Congestion
-    let isBookmarked: Bool
-}
-
-// MARK: - PaddingLabel for pill badge
-final class PaddingLabel: UILabel {
-    var insets = UIEdgeInsets(top: 6, left: 10, bottom: 6, right: 10)
-    override func drawText(in rect: CGRect) {
-        super.drawText(in: rect.inset(by: insets))
-    }
-    override var intrinsicContentSize: CGSize {
-        let size = super.intrinsicContentSize
-        return CGSize(width: size.width + insets.left + insets.right,
-                      height: size.height + insets.top + insets.bottom)
-    }
-}
-
 // MARK: - Cell
 final class PlaceInfoCell: UITableViewCell {
     static let reuseID = "PlaceInfoCell"
@@ -70,7 +15,6 @@ final class PlaceInfoCell: UITableViewCell {
     // Container
     private let card = UIView()
 
-    // Top row
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.font = Typography.Body02.semiBold.font
@@ -79,7 +23,6 @@ final class PlaceInfoCell: UITableViewCell {
         return label
     }()
     
-//    private let badgeLabel = UIImageView()
     private let congestionImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
