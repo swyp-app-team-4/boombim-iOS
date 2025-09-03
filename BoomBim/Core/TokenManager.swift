@@ -13,6 +13,7 @@ import RxCocoa
 public enum AuthState: Equatable {
     case loggedOut
     case loggedIn
+    case withdraw
     case refreshing
 }
 
@@ -63,7 +64,7 @@ public final class TokenManager {
         if let p = pair, isRefreshValid(p) {
             stateRelay.accept(.loggedIn)
         } else {
-            clear() // 없거나(refresh 만료) 문제 있으면 정리 → loggedOut
+            clear(type: .loggedOut) // 없거나(refresh 만료) 문제 있으면 정리 → loggedOut
         }
     }
 
@@ -84,12 +85,12 @@ public final class TokenManager {
     }
 
     /// 로그아웃/만료 시 호출: 메모리+Keychain 모두 정리
-    public func clear() {
+    public func clear(type: AuthState) {
         print("TokenManager Clear 실행")
         lock.lock(); defer { lock.unlock() }
         pair = nil
         store.clear()
-        stateRelay.accept(.loggedOut)
+        stateRelay.accept(type)
     }
 
     /// Keychain에 현재 pair를 반영
@@ -130,7 +131,7 @@ public final class TokenManager {
 
         // 2) refresh가 없거나 만료 → 세션 종료 처리
         guard let rt = pair?.refreshToken, isRefreshValid() else {
-            clear()
+            clear(type: .refreshing)
             return .error(AuthError.refreshExpired)
         }
 
@@ -148,7 +149,7 @@ public final class TokenManager {
                 self?.set(pair: newPair)
             }, onError: { [weak self] _ in
                 // 실패(401/만료) 시 세션 종료
-                self?.clear()
+                self?.clear(type: .refreshing)
             }, onDispose: { [weak self] in
                 // 완료/에러 상관없이 inFlightRef를 비워 다음 요청 준비
                 self?.lock.lock(); self?.inFlightRefresh = nil; self?.lock.unlock()

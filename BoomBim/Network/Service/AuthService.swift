@@ -92,7 +92,7 @@ final class AuthService: Service {
 
         // (b) 서버 호출 끝나면 로컬 정리 & (선택) 소셜 SDK 로그아웃
         return serverCall.do(onSuccess: { _ in
-            TokenManager.shared.clear()
+            TokenManager.shared.clear(type: .loggedOut)
         })
     }
     
@@ -108,7 +108,7 @@ final class AuthService: Service {
         }
 
         return serverCall.do(onSuccess: { _ in
-            TokenManager.shared.clear()
+            TokenManager.shared.clear(type: .withdraw)
         })
     }
     

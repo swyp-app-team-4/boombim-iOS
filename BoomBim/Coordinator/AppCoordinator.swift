@@ -18,6 +18,10 @@ final class AppCoordinator: Coordinator {
     private var tabBarCoordinator: MainTabBarCoordinator?
     private var onboardingCoordinator: OnboardingCoordinator?   // ✅ 추가
     
+    private var currentRoot: Root = .splash
+    
+    enum Root { case splash, login, main }
+    
     // 👇 추가
     private let splashVC = SplashViewController()
     // ✅ “스플래시가 최소로 보여질 시간”
@@ -29,66 +33,94 @@ final class AppCoordinator: Coordinator {
         get { UserDefaults.standard.bool(forKey: Keys.hasSeenOnboarding) }
         set { UserDefaults.standard.set(newValue, forKey: Keys.hasSeenOnboarding) }
     }
-
+    
     init(window: UIWindow) {
         self.window = window
         self.navigationController = UINavigationController()
     }
-
+    
     func start() {
         // 1) 시작은 스플래시
-               window.rootViewController = splashVC
-               window.makeKeyAndVisible()
-
-               // 2) 최소 노출 시간 스트림
-               let minDelay = Observable.just(())
-                   .delay(splashMinDuration, scheduler: MainScheduler.instance)
-                   .take(1)
-
-               // 3) 첫 실행이면 → 온보딩 최우선 (토큰 상태와 무관)
-               if hasSeenOnboarding == false {
-                   minDelay
-                       .observe(on: MainScheduler.instance)
-                       .subscribe(onNext: { [weak self] in
-                           self?.showOnboarding()
-                       })
-                       .disposed(by: disposeBag)
-                   return
-               }
-
-               // 4) 첫 실행이 아니면 → 토큰 상태로 로그인/메인 분기
-               let finalAuthState = TokenManager.shared.authState
-                   .distinctUntilChanged()
-                   .filter { $0 != .refreshing } // 확정 상태만
-                   .take(1)
-                   .timeout(.seconds(8), scheduler: MainScheduler.instance)
-                   .catchAndReturn(.loggedOut)
-                   .share()
-
-               // Silent refresh 시도(루트 전환은 여기서 하지 않음)
-               if TokenManager.shared.isAccessValid() {
-                   // 바로 .loggedIn 이 나올 것 → 아래 zip이 처리
-               } else if TokenManager.shared.isRefreshValid() {
-                   _ = TokenManager.shared.ensureValidAccessToken { rt in
-                       AuthService.shared.refresh(rt)
-                   }.subscribe()
-               } else {
-                   TokenManager.shared.clear() // → authState = .loggedOut 방출
-               }
-
-               // 최소 노출 + 확정 상태 동시 충족 시 라우팅
-               Observable.zip(finalAuthState, minDelay)
-                   .observe(on: MainScheduler.instance)
-                   .subscribe(onNext: { [weak self] state, _ in
-                       guard let self else { return }
-                       switch state {
-                       case .loggedIn:
-                           self.showMainTabBar()     // ✅ 5. 이미 로그인 → 메인 탭바
-                       case .loggedOut, .refreshing:
-                           self.showLogin()          // ✅ 4. 두 번째 이후엔 온보딩 없이 로그인
-                       }
-                   })
-                   .disposed(by: disposeBag)
+        window.rootViewController = splashVC
+        window.makeKeyAndVisible()
+        
+        // 2) 최소 노출 시간 스트림
+        let minDelay = Observable.just(())
+            .delay(splashMinDuration, scheduler: MainScheduler.instance)
+            .take(1)
+        
+        // 3) 첫 실행이면 → 온보딩 최우선 (토큰 상태와 무관)
+        if hasSeenOnboarding == false {
+            minDelay
+                .observe(on: MainScheduler.instance)
+                .subscribe(onNext: { [weak self] in
+                    self?.showOnboarding()
+                })
+                .disposed(by: disposeBag)
+            return
+        }
+        
+        // 초기 1회 라우팅 (스플래시 통과용)
+        let initialAuth = TokenManager.shared.authState
+            .distinctUntilChanged()
+            .filter { $0 != .refreshing }
+            .take(1)                            // ← 초기 한 번만
+            .timeout(.seconds(8), scheduler: MainScheduler.instance)
+            .catchAndReturn(.loggedOut)
+            .share(replay: 1)
+        
+        bindAuthStateChanges()
+        
+        // Silent refresh 시도(루트 전환은 여기서 하지 않음)
+        if TokenManager.shared.isAccessValid() {
+            // 바로 .loggedIn 이 나올 것 → 아래 zip이 처리
+        } else if TokenManager.shared.isRefreshValid() {
+            _ = TokenManager.shared.ensureValidAccessToken { rt in
+                AuthService.shared.refresh(rt)
+            }.subscribe()
+        } else {
+            TokenManager.shared.clear(type: .loggedOut) // → authState = .loggedOut 방출
+        }
+        
+        // 최소 노출 + 확정 상태 동시 충족 시 라우팅
+        Observable.zip(initialAuth, minDelay)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] state, _ in
+                guard let self else { return }
+                switch state {
+                case .loggedIn:
+                    self.showMainTabBar()     // ✅ 5. 이미 로그인 → 메인 탭바
+                case .loggedOut, .refreshing, .withdraw:
+                    self.showLogin()          // ✅ 4. 두 번째 이후엔 온보딩 없이 로그인
+                }
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindAuthStateChanges() {
+        TokenManager.shared.authState
+            .distinctUntilChanged()
+            .skip(1) // 초기 라우팅에서 이미 처리한 첫 값은 건너뜀
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] state in
+                self?.route(for: state)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func route(for state: AuthState) {
+        switch state {
+        case .loggedIn:
+            guard currentRoot != .main else { return }
+            currentRoot = .main
+            showMainTabBar()
+        case .loggedOut, .withdraw:
+            guard currentRoot != .login else { return }
+            currentRoot = .login
+            showLogin()
+        case .refreshing:
+            break
+        }
     }
     
     private func resetRoot(_ vc: UIViewController, animated: Bool = true) {
