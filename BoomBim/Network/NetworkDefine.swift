@@ -17,6 +17,22 @@ enum NetworkDefine {
         }
         
         static let login = "api/oauth2/login/"
+        static let refresh = "api/reissue"
+        static let logout = "api/oauth2/logout"
+        static let withdraw = "api/member"
+    }
+    
+    enum Profile {
+        static let nickname = "api/member/name"
+        static let image = "api/member/profile"
+        static let profile = "api/member"
+    }
+    
+    enum Vote {
+        static let create = "api/vote"
+        static let fetch = "api/vote"
+        static let finish = "api/vote"
+        static let answer = "api/vote/answer"
     }
     
     enum Search {
@@ -30,6 +46,9 @@ enum NetworkDefine {
     }
     
     enum Place {
-        static let officialPlace = "official-places"
+        static let officialPlace = "official-place"
+        static let userPlace = "member-place"
+        static let registerPostPlace = "member-place/resolve"
+        static let postPlace = "member-congestion/create"
     }
 }

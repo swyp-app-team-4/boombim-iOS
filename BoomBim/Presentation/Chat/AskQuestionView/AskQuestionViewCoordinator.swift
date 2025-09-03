@@ -36,9 +36,9 @@ final class AskQuestionViewCoordinator: Coordinator {
             self?.onFinish?()
         }
         
-        viewModel.goToCheckPlaceView = { [weak self] place in
+        viewModel.goToCheckPlaceView = { [weak self] place, userLocation in
             print("goToCheckPlaceView")
-            self?.showCheckPlace(place)
+            self?.showCheckPlace(place, userLocation)
         }
         
         navigationController.setViewControllers([viewController], animated: false)
@@ -53,9 +53,9 @@ final class AskQuestionViewCoordinator: Coordinator {
         navigationController.pushViewController(viewController, animated: true)
     }
     
-    func showCheckPlace(_ place: Place) {
+    func showCheckPlace(_ place: Place, _ userLocation: CLLocationCoordinate2D) {
         print("showCheckPlace")
-        let viewModel = CheckPlaceViewModel(place: place, mode: .justComplete)
+        let viewModel = CheckPlaceViewModel(place: place, userLocation: userLocation, mode: .justComplete)
         
         viewModel.onComplete = { [weak self] in
             self?.onComplete?()

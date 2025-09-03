@@ -6,9 +6,17 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
+import CoreLocation
 
 final class ChatViewController: BaseViewController {
     private let viewModel: ChatViewModel
+    private let disposeBag = DisposeBag()
+    
+    private let locationManager = AppLocationManager.shared
+    
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
     
     private let headerView = TwoTitleHeaderView()
     private let pageViewController: UIPageViewController = {
@@ -27,7 +35,16 @@ final class ChatViewController: BaseViewController {
         return button
     }()
     
-    private lazy var pages: [UIViewController] = [VoteChatViewController(), QuestionChatViewController()]
+    private let refreshRelay = PublishRelay<Void>()
+    private let locationRelay = BehaviorRelay<CLLocationCoordinate2D?>(value: nil)
+    
+    private var voteList: Driver<[VoteItemResponse]>!
+    private var myVoteList: Driver<[MyVoteItemResponse]>!
+    
+    private var voteChatViewController: VoteChatViewController!
+    private var questionChatViewController: QuestionChatViewController!
+    
+    private lazy var pages: [UIViewController] = []
     
     private var currentPageIndex: Int = 0
 
@@ -45,9 +62,12 @@ final class ChatViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        bindAndSetupPages()
+        bindHeaderAction()
+        
         setupView()
         
-        bindHeaderAction()
+        setLocation()
     }
     
     private func setupView() {
@@ -57,6 +77,13 @@ final class ChatViewController: BaseViewController {
         configurePageViewController()
         
         setupFloatingButton()
+        
+        view.addSubview(activityIndicator)
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
     }
     
     private func configureHeaderView() {
@@ -74,6 +101,8 @@ final class ChatViewController: BaseViewController {
     }
     
     private func configurePageViewController() {
+        addChild(pageViewController)
+        
         pageViewController.setViewControllers([pages[currentPageIndex]], direction: .forward, animated: false, completion: nil)
         pageViewController.dataSource = self
         pageViewController.delegate = self
@@ -87,6 +116,9 @@ final class ChatViewController: BaseViewController {
             pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             pageViewController.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
+        
+        // ✅ 컨테이너 연결 마무리
+        pageViewController.didMove(toParent: self)
     }
     
     private func setupFloatingButton() {
@@ -99,6 +131,54 @@ final class ChatViewController: BaseViewController {
         ])
         
         floatingButton.addTarget(self, action: #selector(didTapFloatingButton), for: .touchUpInside)
+    }
+    
+    // MARK: - bind
+    private func bindAndSetupPages() {
+        let input = ChatViewModel.Input(
+            appear: rx.methodInvoked(#selector(UIViewController.viewDidAppear(_:)))
+                .map { _ in () }
+                .asSignal(onErrorSignalWith: .empty()),
+            refresh: refreshRelay.asSignal(),
+            location: locationRelay
+                        .compactMap { $0 }                    // nil 제거
+                        .asDriver(onErrorDriveWith: .empty())
+                        .do(onNext: { c in print("VM input.location got:", c) })
+        )
+        
+        // VC: 디버그용 구독 (bindAndSetupPages에서 한 번만 붙이세요)
+        locationRelay
+            .asObservable()
+            .subscribe(onNext: { c in print("VC: locationRelay emits ->", c) })
+            .disposed(by: disposeBag)
+
+        let output = viewModel.transform(input)
+        
+        output.isLoading
+            .drive(activityIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        output.error
+            .emit(onNext: { [weak self] msg in
+                self?.presentAlert(title: "오류", message: msg)
+            })
+            .disposed(by: disposeBag)
+        
+        self.voteList = output.voteList
+        self.myVoteList = output.myVoteList
+        
+        let voteChatViewModel = VoteChatViewModel(items: voteList)
+        let questionChatViewModel = QuestionChatViewModel(items: myVoteList)
+        
+        voteChatViewController = VoteChatViewController(viewModel: voteChatViewModel)
+        voteChatViewController.onNeedRefresh = { [weak self] in
+            print("cell 변화가 있었으니까 화면 초기화해야됩니다")
+            self?.refreshRelay.accept(()) // 부모의 조회 트리거 → 최신 목록 재요청
+        }
+        
+        questionChatViewController = QuestionChatViewController(viewModel: questionChatViewModel)
+        
+        self.pages = [voteChatViewController, questionChatViewController]
     }
     
     // MARK: - bind Action
@@ -150,5 +230,68 @@ extension ChatViewController: UIPageViewControllerDataSource, UIPageViewControll
         
         currentPageIndex = idx
         headerView.updateSelection(index: idx, animated: true)
+    }
+}
+
+// MARK: 현재 위치 권한 설정 및 View Rect 값 확인
+extension ChatViewController {
+    private func setLocation() {
+        if locationManager.authorization.value == .notDetermined { // 권한 설정이 안된 경우 권한 요청
+//            locationManager.requestWhenInUseAuthorization()
+        }
+        
+        // 권한 상태 스트림에서 '최종 상태(허용/거부)'만 대기 → 1회 처리
+        locationManager.authorization
+            .asObservable()
+            .startWith(locationManager.authorization.value) // 현재 상태 먼저 흘려보내기
+            .distinctUntilChanged()
+            .filter { status in
+                switch status {
+                case .authorizedWhenInUse, .authorizedAlways, .denied, .restricted:
+                    return true // 최종 상태만 통과
+                default:
+                    return false // .notDetermined은 대기
+                }
+            }
+            .take(1) // 허용 or 거부 중 첫 결과 한 번만
+            .flatMapLatest { [weak self] status -> Observable<CLLocationCoordinate2D> in
+                guard let self else { return .empty() }
+                switch status {
+                case .authorizedWhenInUse, .authorizedAlways:
+                    return locationManager.requestOneShotLocation(timeout: 5)
+                        .asObservable()
+                        .map {
+                            print("위도 : \($0.coordinate.latitude), 경도 : \($0.coordinate.longitude)")
+                            return $0.coordinate
+                        }
+                case .denied, .restricted:
+                    self.showLocationDeniedAlert()
+                    return .empty()
+                default:
+                    return .empty()
+                }
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] coord in
+                print("coord : \(coord)")
+                self?.locationRelay.accept(coord)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    /** 위치 접근 안내 Alert */
+    private func showLocationDeniedAlert() {
+        let alert = UIAlertController(
+            title: "위치 접근이 꺼져 있어요",
+            message: "현재 위치를 기반으로 검색하려면 설정 > 앱 > 위치에서 허용해 주세요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
+        })
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        present(alert, animated: true)
     }
 }

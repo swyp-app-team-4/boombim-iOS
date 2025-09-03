@@ -41,6 +41,7 @@ final class HomeCoordinator: Coordinator {
     
     func showCongestionReport() {
         let service = KakaoLocalService()
+        let locationRepo = LocationRepository()
         let viewModel = CongestionReportViewModel(service: service)
         let viewController = CongestionReportViewController(viewModel: viewModel)
 //        navigationController.pushViewController(viewController, animated: true)
@@ -50,6 +51,7 @@ final class HomeCoordinator: Coordinator {
         
         let childCoordinator = CongestionReportCoordinator(navigationController: navigationController)
         childCoordinator.service = service
+        childCoordinator.locationRepo = locationRepo
         childCoordinator.onFinish = { [weak self, weak childCoordinator] in
             guard let self, let childCoordinator else { return }
             self.childCoordinators.removeAll { $0 === childCoordinator }
@@ -64,7 +66,8 @@ final class HomeCoordinator: Coordinator {
     }
     
     func showSearch() {
-        let viewModel = SearchViewModel()
+        let service = KakaoLocalService()
+        let viewModel = SearchViewModel(service: service)
         let viewController = SearchViewController(viewModel: viewModel)
         navigationController.pushViewController(viewController, animated: true)
     }

@@ -90,8 +90,9 @@ final class QuestionChatCell: UITableViewCell {
     
     private lazy var pollViews: [PollInfoView] = [relaxedPollView, normalPollView, busyPollView, crowdedPollView]
     
+    private(set) var selectedIndex: Int? = nil
     private var voteUIAction: UIAction?
-    var onVote: (() -> Void)?
+    var onVote: ((Int?) -> Void)?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -101,6 +102,12 @@ final class QuestionChatCell: UITableViewCell {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        onVote = nil                 // 외부 핸들러 초기화
+        selectedIndex = nil          // 필요 시 초기화
     }
     
     private func setupView() {
@@ -176,7 +183,7 @@ final class QuestionChatCell: UITableViewCell {
     private func setButtonActions() {
         voteUIAction = UIAction { [weak self] _ in
             guard let self else { return }
-            self.onVote?()
+            self.onVote?(self.selectedIndex)
         }
         if let action = voteUIAction {
             voteButton.addAction(action, for: .touchUpInside)
@@ -184,7 +191,7 @@ final class QuestionChatCell: UITableViewCell {
     }
     
     func configure(_ item: QuestionChatItem) {
-        profileImageView.configure(with: item.profileImage) // TODO: URL로 이미지 가져오기
+//        profileImageView.configure(with: item.profileImage) // TODO: URL로 이미지 가져오기
         peopleLabel.text = "\(item.people)명이 궁금해하고 있어요" // TODO: Text 효과
         updateLabel.text = "\(item.update)분 전" // TODO: 시간 계산해서 몇분전으로 보여줘야함.
         

@@ -14,20 +14,15 @@ final class SearchPlaceViewController: BaseViewController {
     private let viewModel: SearchPlaceViewModel
     private let disposeBag = DisposeBag()
     
-    private let locationManager = AppLocationManager.shared
+    // 선택된 장소 상태
+    private let selectedPlace = BehaviorRelay<Place?>(value: nil)
     
-    private let currentLocationSubject = PublishSubject<CLLocationCoordinate2D>()
-    
-    private var places: [Place] = []
-    private var selectedPlace: Place?
-    
-    // MARK: - UI Components
+    // MARK: - UI Components (기존 유지)
     private let titleImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = .iconInfo
         imageView.tintColor = .grayScale9
         imageView.contentMode = .scaleAspectFit
-        
         return imageView
     }()
     
@@ -37,7 +32,6 @@ final class SearchPlaceViewController: BaseViewController {
         label.font = Typography.Body03.medium.font
         label.textColor = .main
         label.numberOfLines = 1
-        
         return label
     }()
     
@@ -47,16 +41,14 @@ final class SearchPlaceViewController: BaseViewController {
         let imageView = UIImageView()
         imageView.image = .illustrationAskQuestion
         imageView.contentMode = .scaleAspectFit
-        
         return imageView
     }()
     
     private let tableView: UITableView = {
-        let tableView = UITableView(frame: .zero, style: .grouped)
-        tableView.separatorStyle = .none
-        tableView.backgroundColor = .white
-        
-        return tableView
+        let tv = UITableView(frame: .zero, style: .grouped)
+        tv.separatorStyle = .none
+        tv.backgroundColor = .white
+        return tv
     }()
     
     private let nextButton: UIButton = {
@@ -65,76 +57,56 @@ final class SearchPlaceViewController: BaseViewController {
         button.titleLabel?.font = Typography.Body02.medium.font
         button.setTitleColor(.grayScale7, for: .normal)
         button.backgroundColor = .grayScale4
-//        button.setTitleColor(.grayScale1, for: .normal)
-//        button.backgroundColor = .main
         button.layer.cornerRadius = 10
         button.isEnabled = false
-        
         return button
     }()
     
+    // MARK: - Init
     init(viewModel: SearchPlaceViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        setLocation()
-        
         setupView()
-        
         bindViewModel()
-        
-        bindAction()
         setActions()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        
         searchTextField.becomeFirstResponder()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-    }
-    
-    // MARK: Setup UI
+    // MARK: - Setup UI
     private func setupView() {
         view.backgroundColor = .white
-        
         configureNavigationBar()
         configureView()
     }
     
     private func configureNavigationBar() {
-        self.title = "알리기"
+        title = "알리기"
         
         let backButton = UIButton(type: .system)
         backButton.setImage(.iconLeftArrow, for: .normal)
         backButton.tintColor = .grayScale9
         backButton.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-        
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
     }
     
     private func configureView() {
-        [titleImageView, titleLabel, searchTextField, illustrationImageView, tableView, nextButton].forEach { view in
-            view.translatesAutoresizingMaskIntoConstraints = false
-            self.view.addSubview(view)
+        [titleImageView, titleLabel, searchTextField, illustrationImageView, tableView, nextButton].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
         }
         
-        tableView.delegate = self
-        tableView.dataSource = self
         tableView.register(PlaceTableViewCell.self, forCellReuseIdentifier: PlaceTableViewCell.identifier)
-        tableView.tableHeaderView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: 0.0, height: CGFloat.leastNonzeroMagnitude))
+        tableView.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: CGFloat.leastNonzeroMagnitude))
         
         let middleGuide = UILayoutGuide()
         view.addLayoutGuide(middleGuide)
@@ -176,160 +148,108 @@ final class SearchPlaceViewController: BaseViewController {
         ])
     }
     
-    // MARK: ViewModel binding
+    // MARK: - ViewModel binding (Rx 테이블 바인딩)
     private func bindViewModel() {
-        let textInput = searchTextField.rx.text.orEmpty
+        // 1) 입력 스트림: 검색어
+        let searchText = searchTextField.rx.text.orEmpty
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .debounce(.milliseconds(250), scheduler: MainScheduler.instance)
-            .distinctUntilChanged()
             .share(replay: 1)
-
-        textInput.bind(to: viewModel.query).disposed(by: disposeBag)
-
-        textInput
-            .map { $0.isEmpty }
+        
+        // 2) ViewModel 변환
+        let input = SearchPlaceViewModel.Input(
+            searchText: searchText
+        )
+        let output = viewModel.transform(input: input)
+        
+        // 3) 결과 리스트 → 테이블 바인딩
+        output.results
+            .observe(on: MainScheduler.instance)
+            .bind(to: tableView.rx.items(
+                cellIdentifier: PlaceTableViewCell.identifier,
+                cellType: PlaceTableViewCell.self
+            )) { _, place, cell in
+                cell.configure(title: place.name) // 여러분의 셀 API에 맞게 조정
+            }
+            .disposed(by: disposeBag)
+        
+        // 4) 셀 선택 처리 (선택 상태/버튼 상태)
+        tableView.rx.modelSelected(Place.self)
+            .bind(to: selectedPlace)
+            .disposed(by: disposeBag)
+        
+        tableView.rx.itemSelected
+            .bind(onNext: { [weak self] indexPath in
+                self?.tableView.deselectRow(at: indexPath, animated: true)
+            })
+            .disposed(by: disposeBag)
+        
+        let selection = selectedPlace
+            .map { (enabled: $0 != nil, name: $0?.name) }
+            .share(replay: 1)
+        
+        selection
+            .map(\.name)                     // String?
+            .distinctUntilChanged { $0 == $1 }
+            .observe(on: MainScheduler.instance)
+            .bind(to: searchTextField.rx.text)
+            .disposed(by: disposeBag)
+        
+        selection
+            .map(\.enabled)
             .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak tableView] hidden in
-                guard let tableView = tableView else { return }
-                UIView.transition(with: tableView, duration: 0.2, options: .transitionCrossDissolve) {
-                    tableView.isHidden = hidden
-                }
+            .subscribe(onNext: { [weak self] enabled in
+                guard let self else { return }
+                self.nextButton.isEnabled = enabled
+                self.nextButton.setTitleColor(enabled ? .grayScale1 : .grayScale7, for: .normal)
+                self.nextButton.backgroundColor = enabled ? .main : .grayScale4
             })
             .disposed(by: disposeBag)
         
-        viewModel.results
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] items in
-                self?.places = items
-                self?.tableView.reloadData()
-            })
+        // 5) 빈화면/리스트 표시 토글
+        // - 검색어가 비어있으면 테이블 숨김, 일러스트 표시
+        // - 검색어가 있고 결과가 비어있으면 일러스트 표시, 결과가 있으면 숨김
+        let isQueryEmpty = searchText.map { $0.isEmpty }.distinctUntilChanged()
+        let hasResults   = output.results.map { !$0.isEmpty }.distinctUntilChanged()
+        
+        isQueryEmpty
+            .bind(to: tableView.rx.isHidden)
             .disposed(by: disposeBag)
         
-        // 현재 위치 관련
-        let input = SearchPlaceViewModel.Input(
-            currentLocation: currentLocationSubject.asObservable()
-        )
+        Observable.combineLatest(isQueryEmpty, hasResults)
+            .map { queryEmpty, hasResults in !(queryEmpty || !hasResults) == false ? true : false }
+        // 위 식은 가독성이 떨어지니 아래로 해석하면:
+        // illustrationVisible = queryEmpty || !hasResults
+        // -> isHidden = !illustrationVisible
+            .map { isHidden -> Bool in isHidden } // 그대로 사용
+            .withLatestFrom(Observable.combineLatest(isQueryEmpty, hasResults)) { _, pair in
+                let (queryEmpty, hasResults) = pair
+                let illustrationVisible = queryEmpty || !hasResults
+                return !illustrationVisible
+            }
+            .bind(to: illustrationImageView.rx.isHidden)
+            .disposed(by: disposeBag)
         
-        let output = viewModel.transform(input: input)
-
-        output.places
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] places in
-                guard let firstPlace = places.first else { return }
-                
+        // 6) (옵션) 내 좌표 로그/배지 등
+        output.myCoordinate
+            .compactMap { $0 }
+            .subscribe(onNext: { coord in
+                print("내 좌표:", coord)
             })
             .disposed(by: disposeBag)
     }
     
-    // MARK: Bind Action
-    private func bindAction() {
-        viewModel.bindSearch()
-    }
-    
+    // MARK: - Actions
     private func setActions() {
-        nextButton.addTarget(self, action:  #selector(didTapNextButton), for: .touchUpInside)
+        nextButton.rx.tap
+            .withLatestFrom(selectedPlace.compactMap { $0 })
+            .bind(onNext: { [weak self] place in
+                self?.viewModel.didTapNextButton(place: place)
+            })
+            .disposed(by: disposeBag)
     }
     
     @objc private func didTapBack() {
         navigationController?.popViewController(animated: true)
-    }
-    
-    @objc private func didTapNextButton() {
-        guard let selectedPlace = selectedPlace else { return }
-        print("selected Place : \(selectedPlace)")
-        
-        self.viewModel.didTapNextButton(place: selectedPlace)
-    }
-}
-
-// MARK: 현재 위치 권한 설정 및 View Rect 값 확인
-extension SearchPlaceViewController {
-    private func setLocation() {
-        if locationManager.authorization.value == .notDetermined { // 권한 설정이 안된 경우 권한 요청
-            locationManager.requestWhenInUseAuthorization()
-        }
-        
-        // 권한 상태 스트림에서 '최종 상태(허용/거부)'만 대기 → 1회 처리
-        locationManager.authorization
-            .asObservable()
-            .startWith(locationManager.authorization.value) // 현재 상태 먼저 흘려보내기
-            .distinctUntilChanged()
-            .filter { status in
-                switch status {
-                case .authorizedWhenInUse, .authorizedAlways, .denied, .restricted:
-                    return true // 최종 상태만 통과
-                default:
-                    return false // .notDetermined은 대기
-                }
-            }
-            .take(1) // 허용 or 거부 중 첫 결과 한 번만
-            .flatMapLatest { [weak self] status -> Observable<CLLocationCoordinate2D> in
-                guard let self else { return .empty() }
-                switch status {
-                case .authorizedWhenInUse, .authorizedAlways:
-                    return locationManager.requestOneShotLocation(timeout: 5)
-                        .asObservable()
-                        .map {
-                            print("위도 : \($0.coordinate.latitude), 경도 : \($0.coordinate.longitude)")
-                            return $0.coordinate
-                        }
-                case .denied, .restricted:
-                    self.showLocationDeniedAlert()
-                    return .empty()
-                default:
-                    return .empty()
-                }
-            }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] coord in
-                print("coord : \(coord)")
-                self?.viewModel.setCurrentCoordinate(coord)
-                self?.currentLocationSubject.onNext(coord)
-            })
-            .disposed(by: disposeBag)
-    }
-    
-    /** 위치 접근 안내 Alert */
-    private func showLocationDeniedAlert() {
-        let alert = UIAlertController(
-            title: "위치 접근이 꺼져 있어요",
-            message: "현재 위치를 기반으로 검색하려면 설정 > 앱 > 위치에서 허용해 주세요.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-            if let url = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(url)
-            }
-        })
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        present(alert, animated: true)
-    }
-}
-
-extension SearchPlaceViewController: UITableViewDataSource, UITableViewDelegate {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return places.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let index = indexPath.row
-        let place = places[index].name
-        let cell = tableView.dequeueReusableCell(withIdentifier: PlaceTableViewCell.identifier, for: indexPath) as! PlaceTableViewCell
-        
-        cell.configure(title: place)
-        
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let index = indexPath.row
-        
-        searchTextField.text = places[index].name
-        self.selectedPlace = places[index]
-        
-        nextButton.isEnabled = true
-        nextButton.setTitleColor(.grayScale1, for: .normal)
-        nextButton.backgroundColor = .main
     }
 }

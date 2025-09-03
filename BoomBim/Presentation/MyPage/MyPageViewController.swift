@@ -6,9 +6,13 @@
 //
 
 import UIKit
+import RxSwift
 
 final class MyPageViewController: BaseViewController {
     private let viewModel: MyPageViewModel
+    private let disposeBag = DisposeBag()
+    
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
     
     private let profileView = MyProfileView()
     private let headerView = MyHeaderView()
@@ -40,6 +44,7 @@ final class MyPageViewController: BaseViewController {
         setupNavigationBar()
         setupView()
         
+        bind()
         bindHeaderAction()
         
         // dummy data
@@ -109,7 +114,7 @@ final class MyPageViewController: BaseViewController {
     }
     
     private func setProfile() {
-        profileView.configure(name: "조영현", vote: "5", question: "10")
+        profileView.configure(name: "닉네임", profile: nil, email: "123", socialProvider: "dfd", vote: 0, question: 0)
     }
     
     // MARK: Action
@@ -129,6 +134,44 @@ final class MyPageViewController: BaseViewController {
             self.currentPageIndex = toIndex
             self.headerView.updateSelection(index: toIndex, animated: true)
         }
+    }
+    
+    // MARK: - bind
+    private func bind() {
+        // 1) Input: 화면 등장 시점 (원하면 .take(1)로 최초 1회만)
+        let appear = rx.methodInvoked(#selector(UIViewController.viewDidAppear(_:)))
+            .map { _ in () }
+            .asSignal(onErrorSignalWith: .empty())
+        
+        let input = MyPageViewModel.Input(appear: appear)
+        let output = viewModel.transform(input)
+        
+        // 2) 로딩 인디케이터 + 입력 비활성화
+        output.isLoading
+            .drive(activityIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        // 3) 에러 알림
+        output.error
+            .emit(onNext: { [weak self] msg in
+                self?.presentAlert(title: "오류", message: msg)
+            })
+            .disposed(by: disposeBag)
+        
+        // 4) 프로필 UI 바인딩 (Nuke로 이미지 로딩)
+        output.profile
+            .drive(onNext: { [weak self] p in
+                guard let self else { return }
+                
+                self.profileView.configure(
+                    name: p.name,
+                    profile: p.profile,
+                    email: p.email,
+                    socialProvider: p.socialProvider,
+                    vote: p.voteCnt,
+                    question: p.questionCnt)
+            })
+            .disposed(by: disposeBag)
     }
 }
 

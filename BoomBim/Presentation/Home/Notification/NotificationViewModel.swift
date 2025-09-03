@@ -21,7 +21,7 @@ final class NotificationViewModel {
     
     func setFcmToken() {
         guard let token = TokenManager.shared.fcmToken,
-              let userToken = TokenManager.shared.accessToken else { return }
+              let userToken = TokenManager.shared.currentAccessToken() else { return }
         
         service.registerFcmToken(userToken: userToken, token: token)
         // 성공/실패에 따른 부가 상태 업데이트
@@ -46,7 +46,7 @@ final class NotificationViewModel {
     }
     
     func fetchAlarm() {
-        guard let userToken = TokenManager.shared.accessToken else { return }
+        guard let userToken = TokenManager.shared.currentAccessToken() else { return }
         
         service.fetchAlarm(userToken: userToken)
             .bind(to: alarmResult)

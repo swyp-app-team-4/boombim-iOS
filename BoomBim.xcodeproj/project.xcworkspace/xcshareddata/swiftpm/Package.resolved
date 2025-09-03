@@ -1,5 +1,5 @@
 {
-  "originHash" : "f09920cf26233d17dbf842b97ba8c1901585fe05c04b5efc1c464d16adfaee6b",
+  "originHash" : "641e0d0bb140dd02d9a43ecb7b115b99fca57864e5eb91299a9953a124f065cb",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -161,6 +161,15 @@
       "state" : {
         "revision" : "13bf828da97408d2023cca03920e9f0fa5fcbe60",
         "version" : "5.0.1"
+      }
+    },
+    {
+      "identity" : "nuke",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kean/Nuke.git",
+      "state" : {
+        "revision" : "0ead44350d2737db384908569c012fe67c421e4d",
+        "version" : "12.8.0"
       }
     },
     {

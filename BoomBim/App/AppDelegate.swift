@@ -20,6 +20,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
+        // Keychain Token Manager
+        TokenManager.configure(store: KeychainTokenStore(key: KeychainIDs.backendTokenPair(env: AppEnvironment.current)))
+        
         // Kakao
         if let kakaoNativeAppKey = Bundle.main.object(forInfoDictionaryKey: "KakaoAppKey") as? String {
             print("kakao SDK 설정 완료")
@@ -49,6 +52,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         // FCM 토큰 콜백
         Messaging.messaging().delegate = self
         
+        // Image
+        ImageBootstrap.configure()
+        
         return true
     }
     
@@ -72,6 +78,6 @@ extension AppDelegate: MessagingDelegate {
         guard let token = fcmToken else { return }
         print("FCM token:", token)
         
-        TokenManager.shared.fcmToken = token
+//        TokenManager.shared.fcmToken = token
     }
 }

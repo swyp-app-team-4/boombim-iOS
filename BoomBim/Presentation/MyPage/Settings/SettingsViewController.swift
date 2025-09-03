@@ -6,11 +6,16 @@
 //
 
 import UIKit
+import RxSwift
 
 final class SettingsViewController: BaseViewController {
     private let viewModel: SettingsViewModel
+    private let disposeBag = DisposeBag()
 
     private let rows = SettingsRow.allCases
+    
+    // MARK: - UI
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
     
     private let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
@@ -18,6 +23,8 @@ final class SettingsViewController: BaseViewController {
         
         return tableView
     }()
+    
+    private let tableFooterView = SettingsFooterView()
     
     init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
@@ -33,6 +40,8 @@ final class SettingsViewController: BaseViewController {
         super.viewDidLoad()
 
         setupView()
+        
+        bind()
     }
     
     private func setupView() {
@@ -55,14 +64,15 @@ final class SettingsViewController: BaseViewController {
         tableView.delegate = self
         tableView.sectionHeaderHeight = 0
         tableView.sectionFooterHeight = 0
-        
+        tableView.isScrollEnabled = false
         tableView.separatorStyle = .none
 
         tableView.register(SettingCell.self, forCellReuseIdentifier: SettingCell.identifier)
         
         tableView.tableHeaderView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: 0.0, height: CGFloat.leastNonzeroMagnitude))
         
-        tableView.tableFooterView = makeFooter() // 하단 “로그아웃/회원 탈퇴”
+        tableView.tableFooterView = tableFooterView
+        resizeTableFooterToFit()
         
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -72,13 +82,74 @@ final class SettingsViewController: BaseViewController {
         ])
     }
     
-    @objc private func tapLogout() {
-        print("logout tapped")
+    // 2) footer의 실제 height를 계산해서 tableFooterView에 반영
+    private func resizeTableFooterToFit() {
+        guard let footer = tableView.tableFooterView else { return }
+
+        // footer의 레이아웃을 먼저 계산
+        footer.setNeedsLayout()
+        footer.layoutIfNeeded()
+
+        // 테이블 너비 기준으로 fitting
+        let targetWidth = tableView.bounds.width
+        let size = footer.systemLayoutSizeFitting(
+            CGSize(width: targetWidth, height: 0),
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        )
+
+        // 높이/너비가 바뀌면 frame 갱신 후 "다시 대입"해야 적용됩니다.
+        if footer.frame.width != targetWidth || footer.frame.height != size.height {
+            footer.frame.size = CGSize(width: targetWidth, height: size.height)
+            tableView.tableFooterView = footer
+        }
     }
     
-    @objc private func tapWithdraw() {
-        print("withdraw tapped")
+    private func bind() {
+        // 1) Input
+        let input = SettingsViewModel.Input(
+            logoutTap: tableFooterView.logoutButton.rx.tap.asSignal(),
+            withdrawTap: tableFooterView.withdrawButton.rx.tap.asSignal()
+        )
+        
+        // 2) Transform
+        let output = viewModel.transform(input)
+        
+        // 3) 로딩 인디케이터
+        output.isLoading
+            .drive(activityIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        // 4) 로딩 중 버튼 비활성화 (중복 탭 방지)
+        output.isLoading
+            .map { !$0 }
+            .drive(tableFooterView.logoutButton.rx.isEnabled)
+            .disposed(by: disposeBag)
+        
+        // 5) 에러 토스트/알럿
+        output.error
+            .emit(onNext: { [weak self] msg in
+                self?.presentAlert(title: "오류", message: msg)
+            })
+            .disposed(by: disposeBag)
+        
+        // ✅ 피드백에서 사유가 도착하면 알럿 표시
+        viewModel.reasonSelected
+            .emit(onNext: { [weak self] reason in
+                self?.presentWithdrawConfirm(reason: reason)
+            })
+            .disposed(by: disposeBag)
     }
+    
+    private func presentWithdrawConfirm(reason: String) {
+            let msg = "작성하신 탈퇴 사유:\n\"\(reason)\"\n정말 탈퇴하시겠어요?"
+            let ac = UIAlertController(title: "회원 탈퇴", message: msg, preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "취소", style: .cancel))
+            ac.addAction(UIAlertAction(title: "확인", style: .destructive) { [weak self] _ in
+                self?.viewModel.confirmWithdraw(reason: reason) // ← VM에 실행 요청
+            })
+            present(ac, animated: true)
+        }
 }
 
 extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
@@ -107,40 +178,40 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     // MARK: - Footer
-    private func makeFooter() -> UIView {
-        let container = UIView()
-        let stack = UIStackView()
-        stack.axis = .vertical
-        stack.alignment = .leading
-        stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false
-
-        let logout = UIButton(type: .system)
-        logout.setTitle("settings.button.logout".localized(), for: .normal)
-        logout.setTitleColor(.grayScale7, for: .normal)
-        logout.titleLabel?.font = Typography.Body03.regular.font
-        logout.addTarget(self, action: #selector(tapLogout), for: .touchUpInside)
-
-        let withdraw = UIButton(type: .system)
-        withdraw.setTitle("settings.button.withdraw".localized(), for: .normal)
-        withdraw.titleLabel?.font = Typography.Body03.regular.font
-        withdraw.setTitleColor(.grayScale7, for: .normal)
-        withdraw.addTarget(self, action: #selector(tapWithdraw), for: .touchUpInside)
-
-        stack.addArrangedSubview(logout)
-        stack.addArrangedSubview(withdraw)
-
-        container.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: container.topAnchor, constant: 24),
-            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 18),
-            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -18),
-            stack.heightAnchor.constraint(equalToConstant: 50)
-        ])
-
-        container.frame = CGRect(x: 0, y: 0, width: 0, height: 74)
-        
-        return container
-    }
+//    private func makeFooter() -> UIView {
+//        let container = UIView()
+//        let stack = UIStackView()
+//        stack.axis = .vertical
+//        stack.alignment = .leading
+//        stack.spacing = 8
+//        stack.translatesAutoresizingMaskIntoConstraints = false
+//
+//        let logout = UIButton(type: .system)
+//        logout.setTitle("settings.button.logout".localized(), for: .normal)
+//        logout.setTitleColor(.grayScale7, for: .normal)
+//        logout.titleLabel?.font = Typography.Body03.regular.font
+//        logout.addTarget(self, action: #selector(tapLogout), for: .touchUpInside)
+//
+//        let withdraw = UIButton(type: .system)
+//        withdraw.setTitle("settings.button.withdraw".localized(), for: .normal)
+//        withdraw.titleLabel?.font = Typography.Body03.regular.font
+//        withdraw.setTitleColor(.grayScale7, for: .normal)
+//        withdraw.addTarget(self, action: #selector(tapWithdraw), for: .touchUpInside)
+//
+//        stack.addArrangedSubview(logout)
+//        stack.addArrangedSubview(withdraw)
+//
+//        container.addSubview(stack)
+//        NSLayoutConstraint.activate([
+//            stack.topAnchor.constraint(equalTo: container.topAnchor, constant: 24),
+//            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+//            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 18),
+//            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -18),
+//            stack.heightAnchor.constraint(equalToConstant: 50)
+//        ])
+//
+//        container.frame = CGRect(x: 0, y: 0, width: 0, height: 74)
+//        
+//        return container
+//    }
 }

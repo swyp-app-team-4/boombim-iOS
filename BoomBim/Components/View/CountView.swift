@@ -75,8 +75,10 @@ final class CountView: UIView {
         ])
     }
     
-    func configure(title: String, count: String) {
+    func configure(title: String, count: Int) {
+        print("title : \(title), count : \(count)")
+        
         titleLabel.text = title
-        countLabel.text = count
+        countLabel.text = "\(count)"
     }
 }

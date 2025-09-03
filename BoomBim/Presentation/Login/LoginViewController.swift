@@ -10,11 +10,13 @@ import RxSwift
 import NidThirdPartyLogin
 import AuthenticationServices
 
-final class LoginViewController: UIViewController {
+final class LoginViewController: BaseViewController {
     private let viewModel: LoginViewModel
     private let disposeBag = DisposeBag()
 
     // MARK: - UI
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
+
     private let titleStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -106,6 +108,7 @@ final class LoginViewController: UIViewController {
         
         configureButton()
         configureTitle()
+        configureActivityIndicator()
     }
     
     private func configureTitle() {
@@ -146,7 +149,20 @@ final class LoginViewController: UIViewController {
         ])
     }
     
+    private func configureActivityIndicator() {
+        activityIndicator.hidesWhenStopped = true // stop하면 자동으로 숨김
+        
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(activityIndicator)
+        
+        NSLayoutConstraint.activate([
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
+    
     private func bind() {
+        // 1) Input 구성
         let input = LoginViewModel.Input(
             kakaoTap: kakaoButton.rx.tap.asObservable(),
             naverTap: naverButton.rx.tap.asObservable(),
@@ -154,19 +170,24 @@ final class LoginViewController: UIViewController {
             withoutLoginTap: withLoginButton.rx.tap.asSignal()
         )
         
+        // 2) 변환
         let output = viewModel.transform(input: input)
         
-        output.loginResult
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { result in
-                switch result {
-                case .success(let tokenInfo):
-                    print("로그인 성공: \(tokenInfo)")
-                    // 백엔드에 token 전달
-                    TokenManager.shared.save(tokenInfo: tokenInfo) // UserDefaults 저장
-                case .failure(let error):
-                    print("로그인 실패: \(error.localizedDescription)")
-                }
+        // 3) 로딩 표시
+        output.isLoading
+            .drive(activityIndicator.rx.isAnimating) // UIActivityIndicatorView
+            .disposed(by: disposeBag)
+        
+        // 로딩 중에는 버튼 비활성화 (중복 탭 방지)
+        output.isLoading
+            .map { !$0 }
+            .drive(kakaoButton.rx.isEnabled, naverButton.rx.isEnabled, appleButton.rx.isEnabled, withLoginButton.rx.isEnabled)
+            .disposed(by: disposeBag)
+        
+        // 4) 에러 토스트/알럿
+        output.error
+            .emit(onNext: { [weak self] message in
+                self?.presentAlert(title: "로그인 실패", message: message)
             })
             .disposed(by: disposeBag)
     }

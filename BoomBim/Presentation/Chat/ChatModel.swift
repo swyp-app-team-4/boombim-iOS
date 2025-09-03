@@ -10,18 +10,18 @@ import UIKit
 
 struct VoteChatItem: Hashable {
     let id = UUID()
-    let profileImage: [URL?]
+    let profileImage: [String]
     let people: Int
     let update: String
     let title: String
-    let roadImage: URL?
+    let roadImage: String?
     let congestion: CongestionLevel
     let isVoting: Bool
 }
 
 struct QuestionChatItem: Hashable {
     let id = UUID()
-    let profileImage: [URL?]
+    let profileImage: [String]
     let people: Int
     let update: String
     let title: String

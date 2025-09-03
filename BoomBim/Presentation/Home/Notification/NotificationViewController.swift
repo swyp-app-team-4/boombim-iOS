@@ -97,7 +97,7 @@ final class NotificationViewController: BaseViewController {
                 switch result {
                 case .success(let response):
                     print("viewModel.tokenResult: \(response)")
-                    TokenManager.shared.fcmTokenUploadState = true
+//                    TokenManager.shared.fcmTokenUploadState = true
                     self.viewModel.fetchAlarm()
                 case .failure(let error):
                     print("Error register token: \(error)")
@@ -117,12 +117,12 @@ final class NotificationViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
         
-        guard let fcmTokenUploadState = TokenManager.shared.fcmTokenUploadState else { return }
-        if fcmTokenUploadState {
-            viewModel.fetchAlarm()
-        } else {
-            viewModel.setFcmToken()
-        }
+//        guard let fcmTokenUploadState = TokenManager.shared.fcmTokenUploadState else { return }
+//        if fcmTokenUploadState {
+//            viewModel.fetchAlarm()
+//        } else {
+//            viewModel.setFcmToken()
+//        }
     }
     
     // MARK: - bind Action

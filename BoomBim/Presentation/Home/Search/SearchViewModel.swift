@@ -9,30 +9,39 @@ import RxSwift
 import RxCocoa
 
 final class SearchViewModel {
-    let query = BehaviorRelay<String>(value: "")
-    let results = PublishRelay<[SearchItem]>()
     let disposeBag = DisposeBag()
+    
+    let query = BehaviorRelay<String>(value: "")
+    let results = BehaviorRelay<[Place]>(value: [])
+    
+    struct Input {
+        let searchText: Observable<String>          // 검색어 변경 스트림
+    }
+    struct Output {
+        let results: Observable<[Place]>
+    }
+    
+    private let service: KakaoLocalService
+    
+    init(service: KakaoLocalService) {
+        self.service = service
+    }
 
-    func bindSearch() {
-        query
+    func transform(input: Input) -> Output {
+        let results = input.searchText
             .skip(1)
             .distinctUntilChanged()
             .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] query in
-                self?.search(query: query)
-            })
-            .disposed(by: disposeBag)
-    }
-
-    private func search(query: String) {
-        NaverSearchService.shared.search(query: query) { [weak self] result in
-            switch result {
-            case .success(let items):
-                self?.results.accept(items)
-            case .failure(let error):
-                print("Search error: \(error.localizedDescription)")
+            .flatMapLatest { [service] query -> Observable<[Place]> in
+                guard !query.isEmpty else { return .just([]) }
+                return service.searchByKeyword(query: query)
+                    .asObservable()
+                    .catchAndReturn([])
             }
-        }
+            .do(onNext: { [weak self] in self?.results.accept($0) }) // 기존 BehaviorRelay도 유지하고 싶으면
+            .share(replay: 1, scope: .whileConnected)
+        
+        return Output(results: results)
     }
 }
 

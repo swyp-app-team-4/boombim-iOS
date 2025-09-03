@@ -42,7 +42,7 @@ final class RegisterDialogController: UIViewController {
         titleLabel.numberOfLines = 0
         titleLabel.font = Typography.Body01.medium.font
         titleLabel.textColor = .grayScale7
-        titleLabel.text = "\(nickname)의\n혼잡도 질문이 올라갔어요!"
+        titleLabel.text = "\(nickname)님의\n혼잡도 질문이 올라갔어요!"
 
         imageView.image = .illustrationCongratulation
         imageView.contentMode = .scaleAspectFit

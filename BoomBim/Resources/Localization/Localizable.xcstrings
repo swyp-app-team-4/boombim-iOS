@@ -408,6 +408,28 @@
         }
       }
     },
+    "report.button.post" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공유하기"
+          }
+        }
+      }
+    },
+    "report.button.register" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 위치로 등록"
+          }
+        }
+      }
+    },
     "report.label.placeholder" : {
       "extractionState" : "manual",
       "localizations" : {
