@@ -97,9 +97,39 @@ struct PostPlaceResponse: Decodable {
     let data: ReportData
 }
 
+struct RegionNewsRequest: Encodable {
+    let date: String
+}
+
+struct RegionNewsResponse: Decodable {
+    let regionDate: String
+    let startTime: String
+    let endTime: String
+    let posName: String
+    let area: String
+    let peopleCnt: Int
+}
+
 final class PlaceService: Service {
     static let shared = PlaceService()
     override private init() {}
+    
+    func getRegionNews() -> Single<[RegionNewsResponse]> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.regionNews
+        
+        var headers: HTTPHeaders = ["Accept": "application/json"]
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "ko_KR")
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let dateString = dateFormatter.string(from: Date())
+        
+        return requestGet(url, method: .get, header: headers, body: RegionNewsRequest(date: dateString))
+    }
     
     func fetchOfficialPlace(body: OfficialPlaceRequest) -> Single<OfficialPlaceListResponse> {
         let url = NetworkDefine.apiHost + NetworkDefine.Place.officialPlace

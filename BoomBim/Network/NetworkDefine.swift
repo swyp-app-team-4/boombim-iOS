@@ -46,6 +46,7 @@ enum NetworkDefine {
     }
     
     enum Place {
+        static let regionNews = "api/region"
         static let officialPlace = "official-place"
         static let userPlace = "member-place"
         static let registerPostPlace = "member-place/resolve"

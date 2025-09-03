@@ -6,9 +6,12 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class HomeViewController: BaseViewController {
     private let viewModel: HomeViewModel
+    private let disposeBag = DisposeBag()
     
     private var dataSource: UICollectionViewDiffableDataSource<HomeSection, HomeItem>!
     
@@ -30,6 +33,12 @@ final class HomeViewController: BaseViewController {
         return button
     }()
     
+    private var currentRegions: [RegionItem] = []
+    private var currentRecommend1: [RecommendPlaceItem] = []
+    private var currentRecommend2: [RecommendPlaceItem] = []
+    private var currentFavorites: [FavoritePlaceItem] = []
+    private var currentCongestionRanks: [CongestionRankPlaceItem] = []
+    
     init(viewModel: HomeViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -43,6 +52,65 @@ final class HomeViewController: BaseViewController {
         super.viewDidLoad()
         
         setupView()
+        
+        bind()
+    }
+    
+    // MARK: - Binding
+    private func bind() {
+        let output = viewModel.transform(.init(
+            appear: rx.methodInvoked(#selector(UIViewController.viewDidAppear(_:)))
+                .map { _ in () }//,
+//            pullToRefresh: refreshControl.rx.controlEvent(.valueChanged).asSignal(),
+//            retryTap: retryButton.rx.tap.asSignal()
+        ))
+        
+        output.regionNewsItems
+            .drive(onNext: { [weak self] regions in
+                guard let self else { return }
+                self.currentRegions = regions
+                self.applyInitialSnapshot()
+            })
+            .disposed(by: disposeBag)
+        
+        currentRecommend1 = [
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .normal),
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .busy),
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .crowded)
+        ]
+        currentRecommend2 = [
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .normal),
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .busy),
+            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .crowded)
+        ]
+        currentFavorites = [
+            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .busy),
+            .init(image: .dummy, title: "강남역 2번 출구", update: 5, congestion: .normal),
+            .init(image: .dummy, title: "강남역 2번 출구", update: 8, congestion: .relaxed)
+        ]
+        currentCongestionRanks = [
+            .init(rank: 1, image: .dummy, title: "서울역", address: "서울 강남구", update: 3,  congestion: .crowded),
+            .init(rank: 2, image: .dummy, title: "서울역", address: "서울 강남구", update: 12, congestion: .busy),
+            .init(rank: 3, image: .dummy, title: "서울역", address: "서울 강남구", update: 10, congestion: .busy),
+            .init(rank: 4, image: .dummy, title: "서울역", address: "서울 강남구", update: 6,  congestion: .normal),
+            .init(rank: 5, image: .dummy, title: "서울역", address: "서울 강남구", update: 15, congestion: .relaxed)
+        ]
+        
+        // 초기 한 번 전체 스냅샷 적용(Region은 비어있을 수 있음)
+        applyInitialSnapshot()
+
+        output.isRegionNewsEmpty
+            .drive(onNext: { [weak self] empty in
+                // Region 섹션이 비면 섹션 자체를 빼고 싶으면,
+                // applySnapshot()에서 조건 분기를 넣어 처리하세요.
+            })
+            .disposed(by: disposeBag)
+
+        output.errorMessage
+            .emit(onNext: { [weak self] msg in
+                self?.presentAlert(title: "오류", message: msg)
+            })
+            .disposed(by: disposeBag)
     }
     
     // MARK: Setup UI
@@ -189,45 +257,46 @@ final class HomeViewController: BaseViewController {
     
     private func applyInitialSnapshot() {
         // TODO: Replace with ViewModel outputs
-        let regions: [RegionItem] = [
-            .init(iconImage: .iconTaegeuk, organization: "국토 교통부", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다."),
-            .init(iconImage: .iconTaegeuk, organization: "식약처", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다."),
-            .init(iconImage: .iconTaegeuk, organization: "소방처", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다.")
-        ]
-        
-        let imageTexts1: [RecommendPlaceItem] = [
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.normal),
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.busy),
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.crowded)
-        ]
-        
-        let imageTexts2: [RecommendPlaceItem] = [
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.normal),
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.busy),
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.crowded)
-        ]
-        
-        let favorites: [FavoritePlaceItem] = [
-            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .busy),
-            .init(image: .dummy, title: "강남역 2번 출구", update: 5, congestion: .normal),
-            .init(image: .dummy, title: "강남역 2번 출구", update: 8, congestion: .relaxed)
-        ]
-        
-        let congestionRank: [CongestionRankPlaceItem] = [
-            .init(rank: 1, image: .dummy, title: "서울역", address: "서울 강남구", update: 3, congestion: .crowded),
-            .init(rank: 2, image: .dummy, title: "서울역", address: "서울 강남구", update: 12, congestion: .busy),
-            .init(rank: 3, image: .dummy, title: "서울역", address: "서울 강남구", update: 10, congestion: .busy),
-            .init(rank: 4, image: .dummy, title: "서울역", address: "서울 강남구", update: 6, congestion: .normal),
-            .init(rank: 5, image: .dummy, title: "서울역", address: "서울 강남구", update: 15, congestion: .relaxed),
-        ]
+//        let regions: [RegionItem] = [
+//            .init(iconImage: .iconTaegeuk, organization: "국토 교통부", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다."),
+//            .init(iconImage: .iconTaegeuk, organization: "식약처", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다."),
+//            .init(iconImage: .iconTaegeuk, organization: "소방처", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다.")
+//        ]
+//        
+//        let imageTexts1: [RecommendPlaceItem] = [
+//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.normal),
+//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.busy),
+//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.crowded)
+//        ]
+//        
+//        let imageTexts2: [RecommendPlaceItem] = [
+//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.normal),
+//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.busy),
+//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.crowded)
+//        ]
+//        
+//        let favorites: [FavoritePlaceItem] = [
+//            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .busy),
+//            .init(image: .dummy, title: "강남역 2번 출구", update: 5, congestion: .normal),
+//            .init(image: .dummy, title: "강남역 2번 출구", update: 8, congestion: .relaxed)
+//        ]
+//        
+//        let congestionRank: [CongestionRankPlaceItem] = [
+//            .init(rank: 1, image: .dummy, title: "서울역", address: "서울 강남구", update: 3, congestion: .crowded),
+//            .init(rank: 2, image: .dummy, title: "서울역", address: "서울 강남구", update: 12, congestion: .busy),
+//            .init(rank: 3, image: .dummy, title: "서울역", address: "서울 강남구", update: 10, congestion: .busy),
+//            .init(rank: 4, image: .dummy, title: "서울역", address: "서울 강남구", update: 6, congestion: .normal),
+//            .init(rank: 5, image: .dummy, title: "서울역", address: "서울 강남구", update: 15, congestion: .relaxed),
+//        ]
         
         var snapshot = NSDiffableDataSourceSnapshot<HomeSection, HomeItem>()
         snapshot.appendSections(HomeSection.allCases)
-        snapshot.appendItems([.region(regions)], toSection: .region)
-        snapshot.appendItems(imageTexts1.map { .recommendPlace($0) }, toSection: .recommendPlace1)
-        snapshot.appendItems(imageTexts2.map { .recommendPlace($0) }, toSection: .recommendPlace2)
-        snapshot.appendItems(favorites.map { .favoritePlace($0) }, toSection: .favoritePlace)
-        snapshot.appendItems(congestionRank.map { .congestionRank($0) }, toSection: .congestionRank)
+        snapshot.appendItems([.region(currentRegions)], toSection: .region)
+        snapshot.appendItems(currentRecommend1.map { .recommendPlace($0) }, toSection: .recommendPlace1)
+        snapshot.appendItems(currentRecommend2.map { .recommendPlace($0) }, toSection: .recommendPlace2)
+        snapshot.appendItems(currentFavorites.map { .favoritePlace($0) }, toSection: .favoritePlace)
+        snapshot.appendItems(currentCongestionRanks.map { .congestionRank($0) }, toSection: .congestionRank)
+
         dataSource.apply(snapshot, animatingDifferences: true)
     }
     

@@ -120,13 +120,6 @@ final class MapViewModel {
             }
             .share(replay: 1, scope: .whileConnected)
         
-//        let places = rectWhenZoomOK
-//            .flatMapLatest { [service] rect in
-//                service.searchStarbucks(in: rect).asObservable() // TEST를 위한 스타벅스 조회 API
-//                    .catchAndReturn([])
-//            }
-//            .share(replay: 1, scope: .whileConnected)
-        
         return .init(places: userPlaces,
                      officialPlace: officialPlace,
                      myCoordinate: myCoord)

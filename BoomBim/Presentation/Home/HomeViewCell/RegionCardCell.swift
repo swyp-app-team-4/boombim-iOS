@@ -67,6 +67,22 @@ final class RegionCardCell: UICollectionViewCell {
         return pageControl
     }()
     
+    private let emptyContainer: UIView = {
+        let v = UIView()
+        v.isHidden = true
+        v.backgroundColor = .clear
+        return v
+    }()
+    
+    private let emptyLabel: UILabel = {
+        let l = UILabel()
+        l.text = "오늘 지역 소식이 없습니다."
+        l.textColor = .secondaryLabel
+        l.textAlignment = .center
+        l.numberOfLines = 0
+        return l
+    }()
+    
     private var items: [RegionItem] = []
     private var autoScrollTimer: Timer?
     private let autoScrollInterval: TimeInterval = 5
@@ -146,6 +162,24 @@ final class RegionCardCell: UICollectionViewCell {
             collectionView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             collectionView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
         ])
+        
+        emptyContainer.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(emptyContainer)
+        NSLayoutConstraint.activate([
+            emptyContainer.topAnchor.constraint(equalTo: containerView.topAnchor),
+            emptyContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            emptyContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            emptyContainer.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+        ])
+        
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+        emptyContainer.addSubview(emptyLabel)
+        NSLayoutConstraint.activate([
+            emptyLabel.centerXAnchor.constraint(equalTo: emptyContainer.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: emptyContainer.centerYAnchor),
+            emptyLabel.leadingAnchor.constraint(equalTo: emptyContainer.leadingAnchor, constant: 16),
+            emptyLabel.trailingAnchor.constraint(equalTo: emptyContainer.trailingAnchor, constant: -16),
+        ])
     }
     
     private func configurePageControl() {
@@ -155,13 +189,29 @@ final class RegionCardCell: UICollectionViewCell {
     
     func configure(items: [RegionItem]) {
         self.items = items
-        pageControl.numberOfPages = items.count
+        
+        let isEmpty = items.isEmpty
+        
+        // 페이지컨트롤/오토스크롤 토글
+        pageControl.numberOfPages = isEmpty ? 0 : items.count
+        pageControl.isHidden = isEmpty || items.count <= 1   // 한 장이면 숨김
+        
+        // 뷰 토글
+        emptyContainer.isHidden = !isEmpty
+        collectionView.isHidden = isEmpty
+        
+        // 데이터 반영
         collectionView.reloadData()
         
-        // 셀 크기 변경 대비(레이아웃 확정 후 contentSize 기반 페이징 정확도 확보)
-        DispatchQueue.main.async { [weak self] in
-            self?.invalidateItemSizeForPaging()
-            self?.restartAutoScroll()
+        // 레이아웃/오토스크롤
+        if isEmpty {
+            stopAutoScroll()
+            // 빈 상태에서 페이징 사이즈 계산 불필요
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.invalidateItemSizeForPaging()
+                self?.restartAutoScroll()
+            }
         }
     }
     
