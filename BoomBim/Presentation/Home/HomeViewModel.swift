@@ -99,7 +99,7 @@ final class HomeViewModel {
     }
     
     private static func makeItem(_ r: RegionNewsResponse) -> RegionItem {
-        let title = "\(r.area) · \(r.posName)"
+        let title = "\(r.area) 집회 예정"
         let timeRange: String
         if let s = parse("yyyy-MM-dd'T'HH:mm:ss", r.startTime),
            let e = parse("yyyy-MM-dd'T'HH:mm:ss", r.endTime) {
@@ -112,10 +112,11 @@ final class HomeViewModel {
             timeRange = "\(r.startTime) ~ \(r.endTime)"
         }
         
-        let desc = "\(timeRange) · \(r.peopleCnt)명"
-        return RegionItem(iconImage: .iconTaegeuk,
-                          organization: r.area,
-                          title: r.posName,
+        let desc = "오늘 \(timeRange), \(r.posName)에서 약 \(r.peopleCnt)명 규모 집회 예정되어 있습니다. 해당 시간대 혼잡이 예상되니 이동시 유의하세요."
+        
+        return RegionItem(iconImage: .iconPolice,
+                          organization: "서울경찰청 제공",
+                          title: title,
                           description: desc)
     }
     
