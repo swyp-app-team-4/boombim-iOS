@@ -611,7 +611,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     
     private func showOfficialListPanel(with places: OfficialPlaceItem) {
         if officialPlaceDetailViewController == nil { officialPlaceDetailViewController = OfficialPlaceDetailViewController() }
-        officialPlaceDetailViewController?.apply(places: places)         // 테이블/컬렉션 갱신
+//        officialPlaceDetailViewController?.apply(places: places)         // 테이블/컬렉션 갱신
         if floatingPanel.contentViewController !== placeListViewController {
             floatingPanel.set(contentViewController: placeListViewController!)
         }

@@ -111,6 +111,37 @@ struct RegionNewsResponse: Decodable {
     let peopleCnt: Int
 }
 
+struct PlaceDetailInfo: Decodable {
+    let id: Int
+    let name: String
+    let poiCode: String
+    let observedAt: String
+    let centroidLatitude: Double
+    let centroidLongitude: Double
+    let polygonCoordinates: [[Double]]
+    let demographics: [Demographic]
+    let forecasts: [Forecast]
+}
+
+struct Demographic: Decodable {
+    let category: DemographicCategory
+    let subCategory: String   // 혼합 타입(성별/연령/거주여부)이므로 String으로 받는게 안전
+    let rate: Double
+}
+
+enum DemographicCategory: String, Decodable {
+    case gender = "GENDER"
+    case ageGroup = "AGE_GROUP"
+    case residency = "RESIDENCY"
+}
+
+struct Forecast: Decodable {
+    let forecastTime: Date
+    let congestionLevelName: String
+    let forecastPopulationMin: Int
+    let forecastPopulationMax: Int
+}
+
 final class PlaceService: Service {
     static let shared = PlaceService()
     override private init() {}
