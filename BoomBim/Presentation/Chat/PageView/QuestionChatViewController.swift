@@ -23,6 +23,8 @@ final class QuestionChatViewController: UIViewController {
     
     private let activityIndicator = UIActivityIndicatorView(style: .large)
     
+    private let headerView = PollListHeaderView()
+    
     private lazy var emptyContainerView: UIView = {
         let view = UIView()
         view.backgroundColor = .clear
@@ -85,6 +87,11 @@ final class QuestionChatViewController: UIViewController {
         bind()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateTableHeaderLayout()
+    }
+    
     private func setupView() {
         view.backgroundColor = .tableViewBackground
         
@@ -119,8 +126,27 @@ final class QuestionChatViewController: UIViewController {
         questionTableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(questionTableView)
         
+        // 1) 헤더 이벤트 바인딩
+        headerView.onFilterChange = { [weak self] f in
+            self?.filterRelay.accept(f)
+//            self?.updateTableHeaderLayout()        // ✅ 높이 재계산
+        }
+        headerView.onSortChange = { [weak self] s in
+            self?.sortRelay.accept(s)
+//            self?.updateTableHeaderLayout()        // ✅ 높이 재계산
+        }
+        
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(headerView)
         NSLayoutConstraint.activate([
-            questionTableView.topAnchor.constraint(equalTo: view.topAnchor),
+            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), // ✅ 고정
+            headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            // 높이는 내부 오토레이아웃(root stack top/bottom 앵커)로 자동 결정
+        ])
+        
+        NSLayoutConstraint.activate([
+            questionTableView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
             questionTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             questionTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             questionTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -183,17 +209,25 @@ final class QuestionChatViewController: UIViewController {
         .drive(onNext: { [weak self] isLoading, isEmpty in
             guard let self = self else { return }
             if isLoading {
-                self.questionTableView.isHidden = true
-                self.emptyStackView.isHidden = true
+                questionTableView.isHidden = true
             } else {
-                if isEmpty {
-                    emptyContainerView.frame = questionTableView.bounds
-                    emptyContainerView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-                    questionTableView.backgroundView = emptyContainerView
-                } else {
-                    questionTableView.backgroundView = nil
-                }
+                questionTableView.isHidden = false  // ✅ 복구
+                questionTableView.backgroundView = isEmpty ? emptyContainerView : nil
             }
+
+//            if isLoading {
+//                self.questionTableView.isHidden = true
+//                self.emptyStackView.isHidden = true
+//            } else {
+//                self.questionTableView.isHidden = false
+//                if isEmpty {
+//                    emptyContainerView.frame = questionTableView.bounds
+//                    emptyContainerView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+//                    questionTableView.backgroundView = emptyContainerView
+//                } else {
+//                    questionTableView.backgroundView = nil
+//                }
+//            }
         })
         .disposed(by: disposeBag)
 
@@ -211,38 +245,44 @@ final class QuestionChatViewController: UIViewController {
         }))
         present(ac, animated: true)
     }
+    
+    private func makeHeaderContainer() -> UIView {
+        let container = UIView()
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(headerView)
+        
+        NSLayoutConstraint.activate([
+            headerView.topAnchor.constraint(equalTo: container.topAnchor),
+            headerView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            headerView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+        return container
+    }
+    
+    // 3) 폭/콘텐츠 변동 시 높이 재계산 (필수)
+    private func updateTableHeaderLayout() {
+        guard let container = questionTableView.tableHeaderView else { return }
+        container.setNeedsLayout()
+        container.layoutIfNeeded()
+        let target = CGSize(width: questionTableView.bounds.width, height: 0)
+        let height = container.systemLayoutSizeFitting(target,
+                                                       withHorizontalFittingPriority: .required,
+                                                       verticalFittingPriority: .fittingSizeLevel).height
+        if container.frame.height != height {
+            container.frame.size.height = height
+            questionTableView.tableHeaderView = container // ✅ 재할당해야 반영
+        }
+    }
 }
 
 extension QuestionChatViewController: UITableViewDelegate/*, UITableViewDataSource*/ {
-    func numberOfSections(in tableView: UITableView) -> Int {
-        1
-    }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         questions.count
     }
-
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 16
-    }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return UITableView.automaticDimension
-    }
-    
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: PollListSectionHeader.identifier) as! PollListSectionHeader
-        
-        header.configure(
-            filter: filterRelay.value,
-            sort: sortRelay.value,
-            onFilter: { [weak self] newFilter in
-                self?.filterRelay.accept(newFilter)     // ✅ Relay 갱신
-            },
-            onSort: { [weak self] newSort in
-                self?.sortRelay.accept(newSort)         // ✅ Relay 갱신
-            }
-        )
-        return header
     }
 }
