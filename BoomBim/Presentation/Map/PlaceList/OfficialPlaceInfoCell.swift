@@ -9,7 +9,7 @@ import UIKit
 import Nuke
 
 // MARK: - Cell
-final class PlaceInfoCell: UITableViewCell {
+final class OfficialPlaceInfoCell: UITableViewCell {
     static let reuseID = "PlaceInfoCell"
 
     // Container
@@ -35,10 +35,27 @@ final class PlaceInfoCell: UITableViewCell {
 //    private let metaLabel = UILabel()
 
     // Images
-    private let imagesStack = UIStackView()
-    private var imageViews: [UIImageView] = []
+//    private let imagesStack = UIStackView()
+//    private var imageViews: [UIImageView] = []
+    private lazy var placeImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.cornerRadius = 12
+        imageView.clipsToBounds = true
+        
+        return imageView
+    }()
 
-    private let favoriteBadge = UIImageView()
+//    private let favoriteBadge = UIImageView()
+    
+    private let favoriteButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.buttonUnselectedFavorite, for: .normal)
+        button.setImage(.buttonSelectedFavorite, for: .selected)
+        button.contentMode = .scaleAspectFit
+        
+        return button
+    }()
 
     // Image tasks (for Nuke)
     #if canImport(Nuke)
@@ -63,19 +80,23 @@ final class PlaceInfoCell: UITableViewCell {
         imageTasks.forEach { $0?.cancel() }
         imageTasks.removeAll()
         #endif
-        imageViews.forEach { $0.image = nil }
-        favoriteBadge.isHidden = true
+//        imageViews.forEach { $0.image = nil }
+//        favoriteBadge.isHidden = true
     }
 
     // MARK: Public
     func configure(with item: OfficialPlaceItem) {
         titleLabel.text = item.officialPlaceName
         congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
+        placeImageView.setProfileImage(from: item.imageUrl)
+        favoriteButton.isSelected = item.isFavorite
     }
     
     func configure(with item: UserPlaceItem) {
         titleLabel.text = item.name
         congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
+//        placeImageView.setProfileImage(from: item.imageUrl)
+        favoriteButton.isSelected = item.isFavorite
     }
 
     // MARK: Private
@@ -103,37 +124,37 @@ final class PlaceInfoCell: UITableViewCell {
 //        metaLabel.adjustsFontForContentSizeCategory = true
 
         // Images
-        imagesStack.axis = .horizontal
-        imagesStack.alignment = .fill
-        imagesStack.distribution = .fillEqually
-        imagesStack.spacing = 8
-
-        for _ in 0..<3 {
-            let iv = UIImageView()
-            iv.clipsToBounds = true
-            iv.layer.cornerRadius = 12
-            iv.contentMode = .scaleAspectFill
-            iv.backgroundColor = UIColor.secondarySystemFill
-            imageViews.append(iv)
-            imagesStack.addArrangedSubview(iv)
-        }
+//        imagesStack.axis = .horizontal
+//        imagesStack.alignment = .fill
+//        imagesStack.distribution = .fillEqually
+//        imagesStack.spacing = 8
+//
+//        for _ in 0..<3 {
+//            let iv = UIImageView()
+//            iv.clipsToBounds = true
+//            iv.layer.cornerRadius = 12
+//            iv.contentMode = .scaleAspectFill
+//            iv.backgroundColor = UIColor.secondarySystemFill
+//            imageViews.append(iv)
+//            imagesStack.addArrangedSubview(iv)
+//        }
 
         // Favorite badge on the last image
-        if let last = imageViews.last {
-            favoriteBadge.translatesAutoresizingMaskIntoConstraints = false
-            favoriteBadge.image = starBadgeImage()
-            favoriteBadge.contentMode = .scaleAspectFit
-            last.addSubview(favoriteBadge)
-            NSLayoutConstraint.activate([
-                favoriteBadge.trailingAnchor.constraint(equalTo: last.trailingAnchor, constant: -6),
-                favoriteBadge.bottomAnchor.constraint(equalTo: last.bottomAnchor, constant: -6),
-                favoriteBadge.widthAnchor.constraint(equalToConstant: 28),
-                favoriteBadge.heightAnchor.constraint(equalTo: favoriteBadge.widthAnchor)
-            ])
-        }
+//        if let last = placeImageView.last {
+//            favoriteBadge.translatesAutoresizingMaskIntoConstraints = false
+//            favoriteBadge.image = starBadgeImage()
+//            favoriteBadge.contentMode = .scaleAspectFit
+//            last.addSubview(favoriteBadge)
+//            NSLayoutConstraint.activate([
+//                favoriteBadge.trailingAnchor.constraint(equalTo: last.trailingAnchor, constant: -6),
+//                favoriteBadge.bottomAnchor.constraint(equalTo: last.bottomAnchor, constant: -6),
+//                favoriteBadge.widthAnchor.constraint(equalToConstant: 28),
+//                favoriteBadge.heightAnchor.constraint(equalTo: favoriteBadge.widthAnchor)
+//            ])
+//        }
 
         // Add subviews to card
-        [titleLabel, congestionImageView, imagesStack].forEach { v in
+        [titleLabel, congestionImageView, placeImageView, favoriteButton].forEach { v in
             v.translatesAutoresizingMaskIntoConstraints = false
             card.addSubview(v)
         }
@@ -158,12 +179,23 @@ final class PlaceInfoCell: UITableViewCell {
         ])
 
         // Images row (1:1 aspect)
+        
         NSLayoutConstraint.activate([
-            imagesStack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
-            imagesStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
-            imagesStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
-            imagesStack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -12),
-            imagesStack.heightAnchor.constraint(equalToConstant: 88) // adjust to taste
+            placeImageView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
+            placeImageView.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
+            placeImageView.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
+            placeImageView.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -12),
+            placeImageView.heightAnchor.constraint(equalToConstant: 88),
+            
+            favoriteButton.bottomAnchor.constraint(equalTo: placeImageView.bottomAnchor, constant: -5),
+            favoriteButton.trailingAnchor.constraint(equalTo: placeImageView.trailingAnchor, constant: -5)
+            
+            
+//            imagesStack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
+//            imagesStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
+//            imagesStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
+//            imagesStack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -12),
+//            imagesStack.heightAnchor.constraint(equalToConstant: 88) // adjust to taste
         ])
     }
 

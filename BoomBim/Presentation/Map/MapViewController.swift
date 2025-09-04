@@ -50,7 +50,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         return f
     }()
     
-    private var placeListViewController: PlaceListViewController?
+    private var placeListViewController: OfficialPlaceListViewController?
     private var officialPlaceDetailViewController: OfficialPlaceDetailViewController?
     
     private let searchTextField: AppSearchTextField = {
@@ -637,7 +637,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     
     // MARK: Floating Panel
     private func showOfficialListPanel(with places: [OfficialPlaceItem]) {
-        if placeListViewController == nil { placeListViewController = PlaceListViewController() }
+        if placeListViewController == nil { placeListViewController = OfficialPlaceListViewController() }
         placeListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
         if floatingPanel.contentViewController !== placeListViewController {
             floatingPanel.set(contentViewController: placeListViewController!)
@@ -655,7 +655,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     }
     
     private func showUserListPanel(with places: [UserPlaceItem]) {
-        if placeListViewController == nil { placeListViewController = PlaceListViewController() }
+        if placeListViewController == nil { placeListViewController = OfficialPlaceListViewController() }
         placeListViewController?.updateHeader(title: "내 주변 여유로운 장소에요!")
         placeListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
         if floatingPanel.contentViewController !== placeListViewController {

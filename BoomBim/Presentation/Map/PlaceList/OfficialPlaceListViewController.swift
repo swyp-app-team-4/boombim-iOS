@@ -26,7 +26,7 @@ extension UserPlaceItem: Hashable {
     }
 }
 
-final class PlaceListViewController: UIViewController {
+final class OfficialPlaceListViewController: UIViewController {
     // MARK: Public
     enum Section { case main }
 
@@ -103,7 +103,7 @@ final class PlaceListViewController: UIViewController {
 }
 
 // MARK: - Configure & Layout
-private extension PlaceListViewController {
+private extension OfficialPlaceListViewController {
     func configure() {
         view.backgroundColor = .clear
 
@@ -114,7 +114,7 @@ private extension PlaceListViewController {
         tableView.showsVerticalScrollIndicator = true
         tableView.estimatedRowHeight = 140
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.register(PlaceInfoCell.self, forCellReuseIdentifier: PlaceInfoCell.reuseID)
+        tableView.register(OfficialPlaceInfoCell.self, forCellReuseIdentifier: OfficialPlaceInfoCell.reuseID)
         tableView.delegate = self
 
         // Header (안쪽 카드가 아니라 테이블 상단 고정 헤더)
@@ -130,7 +130,7 @@ private extension PlaceListViewController {
         headerIcon.tintColor = .label
         headerIcon.setContentCompressionResistancePriority(.required, for: .horizontal)
 
-        headerLabel.text = "내 주변 여유로운 장소예요!"
+        headerLabel.text = "주변 혼잡도를 확인해보세요 !"
         headerLabel.font = Typography.Body01.medium.font
         headerLabel.adjustsFontForContentSizeCategory = true
         headerLabel.textColor = .grayScale10
@@ -206,7 +206,7 @@ private extension PlaceListViewController {
 
     func makeOfficialDataSource() -> UITableViewDiffableDataSource<Section, OfficialPlaceItem> {
         let ds = UITableViewDiffableDataSource<Section, OfficialPlaceItem>(tableView: tableView) { [weak self] tableView, indexPath, item in
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: PlaceInfoCell.reuseID, for: indexPath) as? PlaceInfoCell else {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: OfficialPlaceInfoCell.reuseID, for: indexPath) as? OfficialPlaceInfoCell else {
                 return UITableViewCell(style: .default, reuseIdentifier: "fallback")
             }
             cell.configure(with: item)
@@ -217,7 +217,7 @@ private extension PlaceListViewController {
     
     func makeUserDataSource() -> UITableViewDiffableDataSource<Section, UserPlaceItem> {
         let ds = UITableViewDiffableDataSource<Section, UserPlaceItem>(tableView: tableView) { [weak self] tableView, indexPath, item in
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: PlaceInfoCell.reuseID, for: indexPath) as? PlaceInfoCell else {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: OfficialPlaceInfoCell.reuseID, for: indexPath) as? OfficialPlaceInfoCell else {
                 return UITableViewCell(style: .default, reuseIdentifier: "fallback")
             }
             cell.configure(with: item)
@@ -228,7 +228,7 @@ private extension PlaceListViewController {
 }
 
 // MARK: - UITableViewDelegate
-extension PlaceListViewController: UITableViewDelegate {
+extension OfficialPlaceListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if let officialItem = officialDataSource.itemIdentifier(for: indexPath) {
             onOfficialSelect?(officialItem)
