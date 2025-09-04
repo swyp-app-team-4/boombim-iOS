@@ -10,10 +10,10 @@ import UIKit
 // 고유 id로만 동일성/해시를 정의
 extension OfficialPlaceItem: Hashable {
     static func == (lhs: OfficialPlaceItem, rhs: OfficialPlaceItem) -> Bool {
-        return lhs.id == rhs.id
+        return lhs.officialPlaceId == rhs.officialPlaceId
     }
     func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
+        hasher.combine(officialPlaceId)
     }
 }
 

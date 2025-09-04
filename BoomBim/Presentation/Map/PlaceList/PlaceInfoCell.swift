@@ -69,7 +69,7 @@ final class PlaceInfoCell: UITableViewCell {
 
     // MARK: Public
     func configure(with item: OfficialPlaceItem) {
-        titleLabel.text = item.name
+        titleLabel.text = item.officialPlaceName
         congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
     }
     

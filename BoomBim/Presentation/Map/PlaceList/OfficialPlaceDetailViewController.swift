@@ -234,16 +234,48 @@ final class OfficialPlaceDetailViewController: UIViewController {
         ])
     }
     
-    private func setAgeStackView() {
+    private func setAgeStackView(percent: [Double]) {
         let titles = ["10대 미만", "10대", "20대", "30대", "40대", "50대", "60대", "70대"]
         for (i, title) in titles.enumerated() {
             let tile = AgeTileView()
-            tile.configure(percentText: "5%", title: title)
+            tile.configure(percentText: "\(percent[i])%", title: title)
             (i < 4 ? firstAgeStackView : secondAgeStackView).addArrangedSubview(tile)
         }
     }
     
-//    private func configure(data: ) {
-//        
-//    }
+    func configure(data: PlaceDetailInfo) {
+        titleLabel.text = data.officialPlaceName
+        addressLabel.text = data.officialPlaceName
+        congestionImageView.setProfileImage(from: data.imageUrl)
+        
+        let manPercent = data.demographics.filter{ $0.category == DemographicCategory.gender }.filter { $0.subCategory == GenderCategory.MALE.rawValue }.first?.rate ?? 0
+        let womanPercent = data.demographics.filter{ $0.category == DemographicCategory.gender }.filter { $0.subCategory == GenderCategory.FEMALE.rawValue }.first?.rate ?? 0
+        
+        let residePercent = data.demographics.filter{ $0.category == DemographicCategory.residency }.filter { $0.subCategory == ResidencyCategory.RESIDENT.rawValue }.first?.rate ?? 0
+        let nonresidePercent = data.demographics.filter{ $0.category == DemographicCategory.residency }.filter { $0.subCategory == ResidencyCategory.NON_RESIDENT.rawValue }.first?.rate ?? 0
+        
+        let ageRateArray: [Double] = ageRatesArrayOrdered(data: data.demographics)
+        
+        peopleGaugeView.update(manPercent: manPercent, womanPercent: womanPercent)
+        liveGaugeView.update(residePercent: residePercent, nonresidePercent: nonresidePercent)
+        
+        setAgeStackView(percent: ageRateArray)
+    }
+    
+    func ageRatesDict(data: [Demographic]) -> [AgeCategory: Double] {
+        let ages = data.filter { $0.category == DemographicCategory.ageGroup }
+            var map: [AgeCategory: Double] = [:]
+            for a in ages {
+                if let band = AgeCategory(rawValue: a.subCategory) {
+                    map[band] = a.rate
+                }
+            }
+            return map
+        }
+        
+        /// AGE_GROUP을 0s~70s 순서 배열(Double)로. 누락은 0.
+        func ageRatesArrayOrdered(data: [Demographic]) -> [Double] {
+            let map = ageRatesDict(data: data)
+            return AgeCategory.allCases.map { map[$0] ?? 0 }
+        }
 }

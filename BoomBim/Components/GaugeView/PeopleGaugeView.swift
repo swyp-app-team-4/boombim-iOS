@@ -142,7 +142,7 @@ final class PeopleGaugeView: UIControl {
         ])
     }
 
-    func update(manPercent: Int, womanPercent: Int) {
+    func update(manPercent: Double, womanPercent: Double) {
         manPercentLabel.text = "\(manPercent)%"
         womanPercentLabel.text = "\(womanPercent)%"
         

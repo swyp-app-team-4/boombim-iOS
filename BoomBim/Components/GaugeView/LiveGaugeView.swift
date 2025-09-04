@@ -142,7 +142,7 @@ final class LiveGaugeView: UIControl {
         ])
     }
 
-    func update(residePercent: Int, nonresidePercent: Int) {
+    func update(residePercent: Double, nonresidePercent: Double) {
         residePercentLabel.text = "\(residePercent)%"
         nonresidePercentLabel.text = "\(nonresidePercent)%"
         

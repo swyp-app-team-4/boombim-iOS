@@ -16,11 +16,15 @@ final class MapViewModel {
         let cameraRect: Observable<ViewportRect>
         let zoomLevel: Observable<Int>
         let didTapMyLocation: Observable<Void> // 현재 위치 버튼
+        let poiTap: Signal<Int>
     }
     struct Output {
         let places: Observable<[UserPlaceItem]>
         let officialPlace: Observable<[OfficialPlaceItem]>
+        let officialPlaceDetail: Signal<PlaceDetailInfo>
         let myCoordinate: Observable<Coordinate?> // 뷰에서 카메라 이동 등에 활용
+        let isLoading: Driver<Bool>
+        let error: Signal<String>
     }
     
     private(set) var currentCoordinate: CLLocationCoordinate2D?
@@ -28,6 +32,9 @@ final class MapViewModel {
     private let service: KakaoLocalService
     private let locationRepo: LocationRepositoryType
     private let disposeBag = DisposeBag()
+    
+    private let loadingRelay = BehaviorRelay<Bool>(value: false)
+    private let errorRelay = PublishRelay<String>()
     
     init(service: KakaoLocalService,
          locationRepo: LocationRepositoryType) {
@@ -119,10 +126,51 @@ final class MapViewModel {
                     .catchAndReturn([]) // 에러시 빈 배열
             }
             .share(replay: 1, scope: .whileConnected)
+
+        // 탭 폭주 방지 + 이전 요청 취소
+//        let events = input.poiTap
+//            .throttle(.milliseconds(500))
+//            .do(onNext: { [loadingRelay] _ in loadingRelay.accept(true) })
+//            .flatMapLatest { id -> Signal<PlaceDetailInfo> in
+//                
+//                let body = PlaceDetailRequest(officialPlaceId: id)
+//
+//                // return 명시 + 에러를 Signal로 처리
+//                return PlaceService.shared.getPlaceDetail(body: body)
+//                    .map { $0.data }
+//                    .asSignal(onErrorRecover: { [weak self] error in
+//                        self?.loadingRelay.accept(false)
+//                        self?.errorRelay.accept(error.localizedDescription)
+//                        return .empty() // Signal<Void>
+//                    })
+//            }
+//            .emit(onNext: { [weak self] id in
+//                self?.loadingRelay.accept(false)
+//                self?.errorRelay.accept("place 정보")
+//            })
+//            .disposed(by: disposeBag)
         
-        return .init(places: userPlaces,
-                     officialPlace: officialPlace,
-                     myCoordinate: myCoord)
+        let detail: Signal<PlaceDetailInfo> = input.poiTap
+                .throttle(.milliseconds(500))                 // 빠른 중복 탭 방지
+                .do(onNext: { _ in self.loadingRelay.accept(true) }) // 로딩 ON
+                .flatMapLatest { id -> Signal<PlaceDetailInfo> in
+                    return PlaceService.shared.getPlaceDetail(body: .init(officialPlaceId: id))
+                        .map { $0.data }
+                        .asSignal(onErrorRecover: { error in
+                            self.loadingRelay.accept(false)                // 로딩 OFF
+                            self.errorRelay.accept(error.localizedDescription)
+                            return .empty()                           // 실패 시 방출 없음
+                        })
+                }
+                .do(onNext: { _ in self.loadingRelay.accept(false) })
+        
+        return Output(
+            places: userPlaces,
+            officialPlace: officialPlace,
+            officialPlaceDetail: detail,
+            myCoordinate: myCoord,
+            isLoading: loadingRelay.asDriver(),
+            error: errorRelay.asSignal())
     }
     
     func didTapSearch() {

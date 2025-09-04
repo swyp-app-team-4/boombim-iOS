@@ -26,6 +26,8 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     
     private let mapReady = PublishRelay<Void>()
     private let modeRelay = BehaviorRelay<OverlayGroup>(value: .realtime)
+    
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
 
     // MARK: - Rx (카메라 이벤트 파이프)
     private let cameraRectSubject = PublishSubject<ViewportRect>()
@@ -35,6 +37,9 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private var placeIndex: [String: UserPlaceItem] = [:]
     // VC 내 프로퍼티 (공식 장소 인덱스)
     private var officialIndex: [String: OfficialPlaceItem] = [:]
+    
+    // 1) POI 탭 이벤트를 담을 Relay
+    private let poiTapRelay = PublishRelay<Int>()
 
     // MARK: - UI
     private lazy var floatingPanel: FloatingPanelController = {
@@ -139,6 +144,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        configureIndicator()
         setupMapContainer()
         setupBottomSheet()
         
@@ -197,6 +203,15 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
             mapContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             mapContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             mapContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+    
+    private func configureIndicator() {
+        view.addSubview(activityIndicator)
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
 
@@ -342,7 +357,8 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         let input = MapViewModel.Input(
             cameraRect: cameraRectSubject.asObservable(),
             zoomLevel:  zoomLevelSubject.asObservable(),
-            didTapMyLocation: currentLocationButton.rx.tap.asObservable() // 사용하는 경우
+            didTapMyLocation: currentLocationButton.rx.tap.asObservable(), // 사용하는 경우
+            poiTap: poiTapRelay.asSignal()
         )
         let output = viewModel.transform(input: input)
 
@@ -403,10 +419,10 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                 guard let self else { return }
                 let visual = self.visual(for: .official)
 
-                self.officialIndex = Dictionary(uniqueKeysWithValues: official.map { (String($0.id), $0) })
+                self.officialIndex = Dictionary(uniqueKeysWithValues: official.map { (String($0.officialPlaceId), $0) })
                 
                 let items: [(id: String, point: MapPoint)] = official.map {
-                    (id: String($0.id),
+                    (id: String($0.officialPlaceId),
                      point: MapPoint(longitude: $0.coordinate.longitude, latitude: $0.coordinate.latitude))
                 }
                 
@@ -419,8 +435,10 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                         guard group == .official, let model = self.officialIndex[id] else { return }
                         
                         // 필요 시 좌표도 모델에서
-                        let coord = CLLocationCoordinate2D(latitude: model.coordinate.latitude, longitude: model.coordinate.longitude)
-                        self.showOfficialListPanel(with: [model])
+//                        let coord = CLLocationCoordinate2D(latitude: model.coordinate.latitude, longitude: model.coordinate.longitude)
+//                        self.showOfficialListPanel(with: [model])
+                        // 3) 탭된 id emit
+                        self.poiTapRelay.accept(Int(id) ?? 0)
                     })
                 
                 // 결과가 있으면 목록 패널을 .half로 띄움, 없으면 .tip
@@ -457,6 +475,24 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         let coordStream = output.myCoordinate
             .compactMap { $0 }
             .share(replay: 1, scope: .whileConnected)
+        
+        output.isLoading
+            .drive(activityIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        // 3) 상세 도착 → 패널 업데이트
+        output.officialPlaceDetail
+            .emit(onNext: { [weak self] info in
+                self?.showOfficialDetailPanel(with: info)
+            })
+            .disposed(by: disposeBag)
+        
+        output.error
+            .emit(onNext: { [weak self] msg in
+                
+                self?.presentAlert(title: "오류", message: msg)
+            })
+            .disposed(by: disposeBag)
         
         mapReady
             .withLatestFrom(coordStream)
@@ -609,13 +645,13 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         floatingPanel.move(to: .tip, animated: true)
     }
     
-    private func showOfficialListPanel(with places: OfficialPlaceItem) {
+    private func showOfficialDetailPanel(with places: PlaceDetailInfo) {
         if officialPlaceDetailViewController == nil { officialPlaceDetailViewController = OfficialPlaceDetailViewController() }
-//        officialPlaceDetailViewController?.apply(places: places)         // 테이블/컬렉션 갱신
-        if floatingPanel.contentViewController !== placeListViewController {
-            floatingPanel.set(contentViewController: placeListViewController!)
+        officialPlaceDetailViewController?.configure(data: places)
+        if floatingPanel.contentViewController !== officialPlaceDetailViewController {
+            floatingPanel.set(contentViewController: officialPlaceDetailViewController!)
         }
-        floatingPanel.move(to: .tip, animated: true)
+        floatingPanel.move(to: .half, animated: true)
     }
     
     private func showUserListPanel(with places: [UserPlaceItem]) {

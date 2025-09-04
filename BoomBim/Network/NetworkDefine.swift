@@ -46,10 +46,28 @@ enum NetworkDefine {
     }
     
     enum Place {
-        static let regionNews = "api/region"
-        static let officialPlace = "official-place"
-        static let userPlace = "member-place"
-        static let registerPostPlace = "member-place/resolve"
-        static let postPlace = "member-congestion/create"
+        case regionNews
+        case officialPlace
+        case userPlace
+        case registerPostPlace
+        case postPlace
+        case placeDetail(id: Int)
+        
+        var path: String {
+            switch self {
+            case .regionNews:
+                return "api/region"
+            case .officialPlace:
+                return "official-place"
+            case .userPlace:
+                return "member-place"
+            case .registerPostPlace:
+                return "member-place/resolve"
+            case .postPlace:
+                return "member-congestion/create"
+            case .placeDetail(let id):
+                return "official-place/\(id)/overview"
+            }
+        }
     }
 }

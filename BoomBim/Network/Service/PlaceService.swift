@@ -25,12 +25,15 @@ struct OfficialPlaceRequest: Encodable {
 
 // 서버 응답의 단일 공식 장소
 struct OfficialPlaceItem: Decodable {
-    let id: Int
-    let name: String
+    let officialPlaceId: Int
+    let officialPlaceName: String
+    let placeType: String
+    let imageUrl: String
     let coordinate: Coord
     let distance: Double
     let congestionLevelName: String
     let congestionMessage: String
+    let isFavorite: Bool
 }
 
 struct OfficialPlaceListResponse: Decodable {
@@ -111,21 +114,34 @@ struct RegionNewsResponse: Decodable {
     let peopleCnt: Int
 }
 
+struct PlaceDetailRequest: Encodable {
+    let officialPlaceId: Int
+}
+
+struct PlaceDetailResponse: Decodable {
+    let code: Int
+    let status: String
+    let message: String
+    let data: PlaceDetailInfo
+}
+
 struct PlaceDetailInfo: Decodable {
-    let id: Int
-    let name: String
+    let officialPlaceId: Int
+    let officialPlaceName: String
+    let placeType: String
     let poiCode: String
+    let imageUrl: String
     let observedAt: String
     let centroidLatitude: Double
     let centroidLongitude: Double
-    let polygonCoordinates: [[Double]]
+    let polygonCoordinates: String
     let demographics: [Demographic]
     let forecasts: [Forecast]
 }
 
 struct Demographic: Decodable {
     let category: DemographicCategory
-    let subCategory: String   // 혼합 타입(성별/연령/거주여부)이므로 String으로 받는게 안전
+    let subCategory: String
     let rate: Double
 }
 
@@ -135,8 +151,29 @@ enum DemographicCategory: String, Decodable {
     case residency = "RESIDENCY"
 }
 
+enum GenderCategory: String {
+    case MALE = "MALE"
+    case FEMALE = "FEMALE"
+}
+
+enum ResidencyCategory: String {
+    case RESIDENT = "RESIDENT"
+    case NON_RESIDENT = "NON_RESIDENT"
+}
+
+enum AgeCategory: String, CaseIterable {
+    case s0 = "0s"
+    case s10 = "10s"
+    case s20 = "20s"
+    case s30 = "30s"
+    case s40 = "40s"
+    case s50 = "50s"
+    case s60 = "60s"
+    case s70 = "70s"
+}
+
 struct Forecast: Decodable {
-    let forecastTime: Date
+    let forecastTime: String
     let congestionLevelName: String
     let forecastPopulationMin: Int
     let forecastPopulationMax: Int
@@ -147,7 +184,7 @@ final class PlaceService: Service {
     override private init() {}
     
     func getRegionNews() -> Single<[RegionNewsResponse]> {
-        let url = NetworkDefine.apiHost + NetworkDefine.Place.regionNews
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.regionNews.path
         
         var headers: HTTPHeaders = ["Accept": "application/json"]
         if let token = TokenManager.shared.currentAccessToken() {
@@ -164,7 +201,7 @@ final class PlaceService: Service {
     }
     
     func fetchOfficialPlace(body: OfficialPlaceRequest) -> Single<OfficialPlaceListResponse> {
-        let url = NetworkDefine.apiHost + NetworkDefine.Place.officialPlace
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.officialPlace.path
         
         var headers: HTTPHeaders = ["Content-Type": "application/json"]
         headers["Accept"] = "application/json"
@@ -176,7 +213,7 @@ final class PlaceService: Service {
     }
     
     func fetchUserPlace(body: UserPlaceRequest) -> Single<UserPlaceListResponse> {
-        let url = NetworkDefine.apiHost + NetworkDefine.Place.userPlace
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.userPlace.path
         
         var headers: HTTPHeaders = ["Content-Type": "application/json"]
         headers["Accept"] = "application/json"
@@ -188,7 +225,7 @@ final class PlaceService: Service {
     }
     
     func registerReport(body: RegisterPlaceRequest) -> Single<RegisterPlaceResponse> {
-        let url = NetworkDefine.apiHost + NetworkDefine.Place.registerPostPlace
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.registerPostPlace.path
         
         var headers: HTTPHeaders = ["Content-Type": "application/json"]
         headers["Accept"] = "application/json"
@@ -200,7 +237,7 @@ final class PlaceService: Service {
     }
     
     func postReport(body: PostPlaceRequest) -> Single<PostPlaceResponse> {
-        let url = NetworkDefine.apiHost + NetworkDefine.Place.postPlace
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.postPlace.path
         
         var headers: HTTPHeaders = ["Content-Type": "application/json"]
         headers["Accept"] = "application/json"
@@ -209,5 +246,16 @@ final class PlaceService: Service {
         }
         
         return request(url, method: .post, header: headers, body: body)
+    }
+    
+    func getPlaceDetail(body: PlaceDetailRequest) -> Single<PlaceDetailResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.placeDetail(id: body.officialPlaceId).path
+        
+        var headers: HTTPHeaders = ["Accept": "application/json"]
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
     }
 }
