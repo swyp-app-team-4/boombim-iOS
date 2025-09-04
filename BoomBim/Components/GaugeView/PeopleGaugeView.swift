@@ -95,6 +95,9 @@ final class PeopleGaugeView: UIControl {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
+        configureView()
+        setupView()
     }
     required init?(coder: NSCoder) { fatalError() }
     
@@ -134,11 +137,11 @@ final class PeopleGaugeView: UIControl {
         }
         
         NSLayoutConstraint.activate([
-            manTitleLabel.widthAnchor.constraint(equalToConstant: 36),
-            manPercentLabel.widthAnchor.constraint(equalToConstant: 30),
+            manTitleLabel.widthAnchor.constraint(equalToConstant: 40),
+            manPercentLabel.widthAnchor.constraint(equalToConstant: 40),
             
-            womanTitleLabel.widthAnchor.constraint(equalToConstant: 36),
-            womanPercentLabel.widthAnchor.constraint(equalToConstant: 30),
+            womanTitleLabel.widthAnchor.constraint(equalToConstant: 40),
+            womanPercentLabel.widthAnchor.constraint(equalToConstant: 40),
         ])
     }
 

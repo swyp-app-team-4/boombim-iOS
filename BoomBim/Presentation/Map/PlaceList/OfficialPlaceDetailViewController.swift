@@ -9,10 +9,33 @@ import UIKit
 
 final class OfficialPlaceDetailViewController: UIViewController {
     
+    private let scrollView = UIScrollView()
+    private let contentView = UIView()
+    
+    private let viewTitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body02.semiBold.font
+        label.textColor = .grayScale10
+        label.textAlignment = .center
+        label.text = "place.detail.label.title".localized()
+        
+        return label
+    }()
+    
+    private let favoriteButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.iconUnselectedFavorite, for: .normal)
+        button.setImage(.iconSelectedFavorite, for: .selected)
+        button.contentMode = .scaleAspectFit
+        
+        return button
+    }()
+    
     private let textStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.distribution = .fillProportionally
+        stackView.spacing = 4
         
         return stackView
     }()
@@ -73,7 +96,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
         stackView.axis = .vertical
         stackView.backgroundColor = .clear
         stackView.alignment = .fill
-        stackView.distribution = .equalSpacing
+        stackView.distribution = .fill
         stackView.spacing = 18
         
         return stackView
@@ -142,6 +165,8 @@ final class OfficialPlaceDetailViewController: UIViewController {
     private func setupView() {
         view.backgroundColor = .background
         
+        configureScrollView()
+        configureTitle()
         configureText()
         configurePlaceInfo()
         
@@ -149,27 +174,67 @@ final class OfficialPlaceDetailViewController: UIViewController {
         configureAge()
     }
     
-    private func configurePlaceInfo() {
-        [textStackView, congestionImageView, placeImageView, spacingView].forEach { view in
+    private func configureScrollView() {
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            
+            // contentView는 contentLayoutGuide에 4변 고정
+            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            
+            // 가로 폭 고정: 가로 스크롤 방지 & 오토레이아웃 높이 계산 가능
+            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor)
+        ])
+    }
+    
+    private func configureTitle() {
+        [viewTitleLabel, favoriteButton].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
-            self.view.addSubview(view)
+            contentView.addSubview(view)
         }
         
         NSLayoutConstraint.activate([
-            textStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            textStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            viewTitleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            viewTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            viewTitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            viewTitleLabel.heightAnchor.constraint(equalToConstant: 46),
+            
+            favoriteButton.centerYAnchor.constraint(equalTo: viewTitleLabel.centerYAnchor),
+            favoriteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
+        ])
+    }
+    
+    private func configurePlaceInfo() {
+        [textStackView, congestionImageView, placeImageView, spacingView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview(view)
+        }
+        
+        NSLayoutConstraint.activate([
+            textStackView.topAnchor.constraint(equalTo: viewTitleLabel.bottomAnchor, constant: 16),
+            textStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             
             congestionImageView.centerYAnchor.constraint(equalTo: textStackView.centerYAnchor),
-            congestionImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            congestionImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
             placeImageView.topAnchor.constraint(equalTo: textStackView.bottomAnchor, constant: 14),
-            placeImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            placeImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            placeImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            placeImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             placeImageView.heightAnchor.constraint(equalToConstant: 105),
             
             spacingView.topAnchor.constraint(equalTo: placeImageView.bottomAnchor, constant: 30),
-            spacingView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            spacingView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            spacingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            spacingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             spacingView.heightAnchor.constraint(equalToConstant: 8)
         ])
     }
@@ -191,17 +256,20 @@ final class OfficialPlaceDetailViewController: UIViewController {
         peopleContatiner.addSubview(peopleStackView)
         
         peopleContatiner.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(peopleContatiner)
+        contentView.addSubview(peopleContatiner)
         
         NSLayoutConstraint.activate([
             peopleContatiner.topAnchor.constraint(equalTo: spacingView.bottomAnchor, constant: 16),
-            peopleContatiner.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            peopleContatiner.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            peopleContatiner.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            peopleContatiner.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
             peopleStackView.topAnchor.constraint(equalTo: peopleContatiner.topAnchor, constant: 18),
             peopleStackView.bottomAnchor.constraint(equalTo: peopleContatiner.bottomAnchor, constant: -18),
             peopleStackView.leadingAnchor.constraint(equalTo: peopleContatiner.leadingAnchor, constant: 16),
-            peopleStackView.trailingAnchor.constraint(equalTo: peopleContatiner.trailingAnchor, constant: -16)
+            peopleStackView.trailingAnchor.constraint(equalTo: peopleContatiner.trailingAnchor, constant: -16),
+            
+            peopleGaugeView.heightAnchor.constraint(equalToConstant: 80),
+            liveGaugeView.heightAnchor.constraint(equalToConstant: 80)
         ])
     }
     
@@ -217,12 +285,13 @@ final class OfficialPlaceDetailViewController: UIViewController {
         }
         
         ageContatiner.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(ageContatiner)
+        contentView.addSubview(ageContatiner)
         
         NSLayoutConstraint.activate([
             ageContatiner.topAnchor.constraint(equalTo: peopleContatiner.bottomAnchor, constant: 18),
-            ageContatiner.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            ageContatiner.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            ageContatiner.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            ageContatiner.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            ageContatiner.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -18),
             
             ageTitleLabel.topAnchor.constraint(equalTo: ageContatiner.topAnchor, constant: 18),
             ageTitleLabel.leadingAnchor.constraint(equalTo: ageContatiner.leadingAnchor, constant: 16),
@@ -239,14 +308,17 @@ final class OfficialPlaceDetailViewController: UIViewController {
         for (i, title) in titles.enumerated() {
             let tile = AgeTileView()
             tile.configure(percentText: "\(percent[i])%", title: title)
+            print("i:\(i), \(title): \(percent[i])%")
             (i < 4 ? firstAgeStackView : secondAgeStackView).addArrangedSubview(tile)
         }
     }
     
     func configure(data: PlaceDetailInfo) {
+        favoriteButton.isSelected = data.isFavorite
         titleLabel.text = data.officialPlaceName
         addressLabel.text = data.officialPlaceName
-        congestionImageView.setProfileImage(from: data.imageUrl)
+        congestionImageView.image = CongestionLevel(ko: data.forecasts.first?.congestionLevelName ?? "여유")?.badge // TODO: 현재 forecasts 사용하지 않음,
+        placeImageView.setProfileImage(from: data.imageUrl)
         
         let manPercent = data.demographics.filter{ $0.category == DemographicCategory.gender }.filter { $0.subCategory == GenderCategory.MALE.rawValue }.first?.rate ?? 0
         let womanPercent = data.demographics.filter{ $0.category == DemographicCategory.gender }.filter { $0.subCategory == GenderCategory.FEMALE.rawValue }.first?.rate ?? 0
@@ -264,18 +336,18 @@ final class OfficialPlaceDetailViewController: UIViewController {
     
     func ageRatesDict(data: [Demographic]) -> [AgeCategory: Double] {
         let ages = data.filter { $0.category == DemographicCategory.ageGroup }
-            var map: [AgeCategory: Double] = [:]
-            for a in ages {
-                if let band = AgeCategory(rawValue: a.subCategory) {
-                    map[band] = a.rate
-                }
+        var map: [AgeCategory: Double] = [:]
+        for a in ages {
+            if let band = AgeCategory(rawValue: a.subCategory) {
+                map[band] = a.rate
             }
-            return map
         }
-        
-        /// AGE_GROUP을 0s~70s 순서 배열(Double)로. 누락은 0.
-        func ageRatesArrayOrdered(data: [Demographic]) -> [Double] {
-            let map = ageRatesDict(data: data)
-            return AgeCategory.allCases.map { map[$0] ?? 0 }
-        }
+        return map
+    }
+    
+    /// AGE_GROUP을 0s~70s 순서 배열(Double)로. 누락은 0.
+    func ageRatesArrayOrdered(data: [Demographic]) -> [Double] {
+        let map = ageRatesDict(data: data)
+        return AgeCategory.allCases.map { map[$0] ?? 0 }
+    }
 }

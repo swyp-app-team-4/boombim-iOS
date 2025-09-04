@@ -283,7 +283,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         zoomOutButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             zoomStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            zoomStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -170),
+            zoomStackView.bottomAnchor.constraint(equalTo: floatingPanel.surfaceView.topAnchor, constant: -70),
 
             zoomInButton.widthAnchor.constraint(equalToConstant: 40),
             zoomInButton.heightAnchor.constraint(equalToConstant: 40),

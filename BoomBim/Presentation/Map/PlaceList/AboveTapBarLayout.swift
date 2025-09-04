@@ -18,7 +18,7 @@ final class AboveTabBarLayout: FloatingPanelLayout {
     // 각 상태별 앵커(절대/비율 혼용)
     var anchors: [FloatingPanelState : FloatingPanelLayoutAnchoring] {
         [
-            .full: FloatingPanelLayoutAnchor(absoluteInset: 120, edge: .top, referenceGuide: .safeArea),
+            .full: FloatingPanelLayoutAnchor(absoluteInset: 100, edge: .top, referenceGuide: .safeArea),
             .half: FloatingPanelLayoutAnchor(fractionalInset: 0.45, edge: .bottom, referenceGuide: .superview),
             .tip:  FloatingPanelLayoutAnchor(absoluteInset: 35, edge: .bottom, referenceGuide: .safeArea)
         ]

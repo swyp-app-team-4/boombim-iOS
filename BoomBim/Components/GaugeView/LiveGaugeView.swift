@@ -42,7 +42,7 @@ final class LiveGaugeView: UIControl {
     private let resideGauge: GaugeView = {
         let gauge = GaugeView()
         gauge.trackColor = .grayScale3
-        gauge.fillColor = .manGauge
+        gauge.fillColor = .resideGauge
         
         return gauge
     }()
@@ -79,7 +79,7 @@ final class LiveGaugeView: UIControl {
     private let nonresideGauge: GaugeView = {
         let gauge = GaugeView()
         gauge.trackColor = .grayScale3
-        gauge.fillColor = .womanGauge
+        gauge.fillColor = .nonresideGauge
         
         return gauge
     }()
@@ -95,10 +95,13 @@ final class LiveGaugeView: UIControl {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
+        setupView()
     }
     required init?(coder: NSCoder) { fatalError() }
     
     private func setupView() {
+        configureView()
         configureGaugeStackView()
     }
     
@@ -134,11 +137,11 @@ final class LiveGaugeView: UIControl {
         }
         
         NSLayoutConstraint.activate([
-            resideTitleLabel.widthAnchor.constraint(equalToConstant: 36),
-            residePercentLabel.widthAnchor.constraint(equalToConstant: 30),
+            resideTitleLabel.widthAnchor.constraint(equalToConstant: 40),
+            residePercentLabel.widthAnchor.constraint(equalToConstant: 40),
             
-            resideTitleLabel.widthAnchor.constraint(equalToConstant: 36),
-            residePercentLabel.widthAnchor.constraint(equalToConstant: 30),
+            resideTitleLabel.widthAnchor.constraint(equalToConstant: 40),
+            residePercentLabel.widthAnchor.constraint(equalToConstant: 40),
         ])
     }
 

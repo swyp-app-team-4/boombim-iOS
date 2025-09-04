@@ -137,6 +137,7 @@ struct PlaceDetailInfo: Decodable {
     let polygonCoordinates: String
     let demographics: [Demographic]
     let forecasts: [Forecast]
+    let isFavorite: Bool
 }
 
 struct Demographic: Decodable {

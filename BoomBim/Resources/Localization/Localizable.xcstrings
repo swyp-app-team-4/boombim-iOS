@@ -606,6 +606,17 @@
         }
       }
     },
+    "place.detail.label.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오픈 서울"
+          }
+        }
+      }
+    },
     "place.detail.label.title.age" : {
       "extractionState" : "manual",
       "localizations" : {
