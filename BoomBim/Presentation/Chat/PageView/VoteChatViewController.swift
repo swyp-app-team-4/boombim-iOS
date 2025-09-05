@@ -9,7 +9,7 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-final class VoteChatViewController: UIViewController {
+final class VoteChatViewController: BaseViewController {
     private let viewModel: VoteChatViewModel
     private let disposeBag = DisposeBag()
     

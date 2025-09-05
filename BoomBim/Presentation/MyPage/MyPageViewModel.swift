@@ -17,11 +17,17 @@ final class MyPageViewModel {
         let isLoading: Driver<Bool>
         let error: Signal<String>
         let profile: Driver<UserProfile>
+        let favorite: Driver<MyFavorite>
+        let answer: Driver<[MyAnswer]>
+        let question: Driver<[MyQuestion]>
     }
     
     private let loading = BehaviorRelay<Bool>(value: false)
     private let errorRelay = PublishRelay<String>()
     private let profileRelay = BehaviorRelay<UserProfile?>(value: nil)
+    private let favoriteRelay = BehaviorRelay<MyFavorite?>(value: nil)
+    private let answerRelay = BehaviorRelay<[MyAnswer]?>(value: nil)
+    private let questionRelay = BehaviorRelay<[MyQuestion]?>(value: nil)
     private let disposeBag = DisposeBag()
     
     var goToSettingsView: (() -> Void)?
@@ -43,7 +49,10 @@ final class MyPageViewModel {
         return Output(
             isLoading: loading.asDriver(),
             error: errorRelay.asSignal(),
-            profile: profileRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty())
+            profile: profileRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
+            favorite: favoriteRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
+            answer: answerRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
+            question: questionRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty())
         )
     }
     
@@ -54,6 +63,39 @@ final class MyPageViewModel {
             .subscribe(onSuccess: { [weak self] p in
                 self?.loading.accept(false)
                 self?.profileRelay.accept(p)
+            }, onFailure: { [weak self] err in
+                self?.loading.accept(false)
+                self?.errorRelay.accept(err.localizedDescription)
+            })
+            .disposed(by: disposeBag)
+        
+//        AuthService.shared.getMyFavorite()
+//            .observe(on: MainScheduler.instance)
+//            .subscribe(onSuccess: { [weak self] p in
+//                self?.loading.accept(false)
+//                self?.favoriteRelay.accept(p)
+//            }, onFailure: { [weak self] err in
+//                self?.loading.accept(false)
+//                self?.errorRelay.accept(err.localizedDescription)
+//            })
+//            .disposed(by: disposeBag)
+        
+        AuthService.shared.getMyAnswer()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onSuccess: { [weak self] p in
+                self?.loading.accept(false)
+                self?.answerRelay.accept(p)
+            }, onFailure: { [weak self] err in
+                self?.loading.accept(false)
+                self?.errorRelay.accept(err.localizedDescription)
+            })
+            .disposed(by: disposeBag)
+        
+        AuthService.shared.getMyQuestion()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onSuccess: { [weak self] p in
+                self?.loading.accept(false)
+                self?.questionRelay.accept(p)
             }, onFailure: { [weak self] err in
                 self?.loading.accept(false)
                 self?.errorRelay.accept(err.localizedDescription)

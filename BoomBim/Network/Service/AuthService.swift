@@ -35,6 +35,10 @@ struct ProfileImageRequest: Encodable { let image: String } // 서버 스펙에 
 
 typealias ProfileResponse = UserProfile
 
+typealias MyFavoriteResponse = MyFavorite
+typealias MyAnswerResponse = MyAnswer
+typealias MyQuestionResponse = MyQuestion
+
 final class AuthService: Service {
     static let shared = AuthService()
     private override init() {}
@@ -74,7 +78,7 @@ final class AuthService: Service {
         headers["Accept"] = "application/json"
         headers["Authorization"] = "Bearer \(accessToken)"
         
-        return requestVoid(url, method: .delete, header: headers, body: WithdrawRequest(leaveReason: leaveReason))
+        return requestVoid(url, method: .post, header: headers, body: WithdrawRequest(leaveReason: leaveReason))
     }
     
     func logoutAndClear() -> Single<Void> {
@@ -142,6 +146,43 @@ final class AuthService: Service {
     
     func getProfile() -> Single<ProfileResponse> {
         let url = NetworkDefine.apiHost + NetworkDefine.Profile.profile
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
+    }
+    
+    // MARK: - 마이 페이지 정보 (관심 / 나의 투표 / 나의 질문)
+//    func getMyFavorite() -> Single<MyFavoriteResponse> {
+//        let url = NetworkDefine.apiHost + NetworkDefine.Profile.favorite
+//        
+//        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+//        headers["Accept"] = "application/json"
+//        if let token = TokenManager.shared.currentAccessToken() {
+//            headers["Authorization"] = "Bearer \(token)"
+//        }
+//        
+//        return requestGet(url, method: .get, header: headers)
+//    }
+    
+    func getMyAnswer() -> Single<[MyAnswerResponse]> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Profile.answer
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
+    }
+    
+    func getMyQuestion() -> Single<[MyQuestionResponse]> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Profile.question
         
         var headers: HTTPHeaders = ["Content-Type": "application/json"]
         headers["Accept"] = "application/json"

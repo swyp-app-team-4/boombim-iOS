@@ -14,8 +14,7 @@ enum CongestionLevel: Int, CaseIterable {
     case crowded       // 붐빔
     
     init?(ko name: String) {
-        let s = name.replacingOccurrences(of: " ", with: "")
-        switch s {
+        switch name {
         case "여유":   self = .relaxed
         case "보통":   self = .normal
         case "약간 붐빔": self = .busy
@@ -58,5 +57,15 @@ enum CongestionLevel: Int, CaseIterable {
         case .busy:    return .badgeCongestionBusy
         case .crowded: return .badgeCongestionCrowded
         }
+    }
+    
+    static func fromCounts(relaxed: Int, normal: Int, busy: Int, crowded: Int) -> CongestionLevel {
+        let pairs: [(CongestionLevel, Int)] = [
+            (.relaxed, relaxed),
+            (.normal,  normal),
+            (.busy,    busy),
+            (.crowded, crowded)
+        ]
+        return pairs.max(by: { $0.1 < $1.1 })?.0 ?? .normal
     }
 }

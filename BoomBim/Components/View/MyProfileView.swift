@@ -57,7 +57,7 @@ final class MyProfileView: UIView {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.alignment = .leading
-        stackView.distribution = .fillProportionally
+        stackView.distribution = .fill
         stackView.spacing = 8
         
         return stackView

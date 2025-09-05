@@ -26,6 +26,9 @@ enum NetworkDefine {
         static let nickname = "api/member/name"
         static let image = "api/member/profile"
         static let profile = "api/member"
+        static let favorite = "api/member/favorite"
+        static let answer = "api/member/my-answer"
+        static let question = "api/member/my-question"
     }
     
     enum Vote {

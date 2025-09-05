@@ -6,8 +6,17 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
-final class QuestionViewController: UIViewController {
+struct QuestionRow {
+    let day: String
+    let info: QuestionInfo
+}
+
+final class QuestionViewController: BaseViewController {
+    private let viewModel: QuestionViewModel
+    private let disposeBag = DisposeBag()
     
     private var questions: [QuestionItem] = []
     
@@ -48,30 +57,60 @@ final class QuestionViewController: UIViewController {
         return tableView
     }()
     
+    init(viewModel: QuestionViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupView()
         
-        // dummy Data
-//        questions = [
-//            .init(image: .dummy, title: "강남역", congestion: .relaxed, people: 5, isQuesting: true),
-//            .init(image: .dummy, title: "신촌역", congestion: .normal, people: 15, isQuesting: false),
-//            .init(image: .dummy, title: "코엑스", congestion: .busy, people: 30, isQuesting: false),
-//            .init(image: .dummy, title: "서울역", congestion: .crowded, people: 42, isQuesting: false)
-//        ]
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
+        let rows: Driver<[QuestionRow]> = viewModel.output.items
+            .map { arr in
+                arr.flatMap { mq in
+                    mq.res.map {
+                        QuestionRow(day: mq.day, info: $0)
+                    }
+                }
+            }
+        rows.drive(questionTableView.rx.items(
+                cellIdentifier: VoteQuestionCell.identifier,
+                cellType: VoteQuestionCell.self
+            )) { _, row, cell in
+                
+                let info = row.info
+                let congestion = CongestionLevel.fromCounts(
+                    relaxed: info.relaxedCnt,
+                    normal:  info.commonly,
+                    busy:    info.slightlyBusyCnt,
+                    crowded: info.crowedCnt
+                )
+                
+                let questionItem = QuestionItem(
+                    image: .dummy,
+                    title: info.posName,
+                    congestion: congestion,
+                    people: info.voteAllCnt,
+                    isQuesting: info.voteStatus == VoteStatus.PROGRESS
+                )
+                cell.configure(questionItem)
+            }
+            .disposed(by: disposeBag)
         
-        if questions.isEmpty {
-            emptyStackView.isHidden = false
-            questionTableView.isHidden = true
-        } else {
-            emptyStackView.isHidden = true
-            questionTableView.isHidden = false
-        }
+        rows.map { !$0.isEmpty }
+            .distinctUntilChanged()
+            .drive(onNext: { [weak self] hasAny in
+                guard let self else { return }
+                self.emptyStackView.isHidden = hasAny
+                self.questionTableView.isHidden = !hasAny
+            })
+            .disposed(by: disposeBag)
     }
     
     private func setupView() {
@@ -97,13 +136,14 @@ final class QuestionViewController: UIViewController {
     }
     
     private func configureTableView() {
-        questionTableView.delegate = self
-        questionTableView.dataSource = self
         questionTableView.register(VoteQuestionCell.self, forCellReuseIdentifier: VoteQuestionCell.identifier)
         questionTableView.register(VoteQuestionHeaderView.self, forHeaderFooterViewReuseIdentifier: VoteQuestionHeaderView.identifier)
         
         questionTableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(questionTableView)
+        
+        questionTableView.rx.setDelegate(self)
+                .disposed(by: disposeBag)
         
         NSLayoutConstraint.activate([
             questionTableView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -114,32 +154,32 @@ final class QuestionViewController: UIViewController {
     }
 }
 
-extension QuestionViewController: UITableViewDelegate, UITableViewDataSource {
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        questions.count
-    }
+extension QuestionViewController: UITableViewDelegate/*, UITableViewDataSource*/ {
+//    func numberOfSections(in tableView: UITableView) -> Int {
+//        return 1
+//    }
+//    
+//    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+//        questions.count
+//    }
 
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         return 16
     }
     
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let index = indexPath.row
-        let notice = questions[index]
-        let cell = tableView.dequeueReusableCell(withIdentifier: VoteQuestionCell.identifier, for: indexPath) as! VoteQuestionCell
-        
-        cell.configure(notice)
-        
-        return cell
-    }
+//    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+//        return UITableView.automaticDimension
+//    }
+//    
+//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//        let index = indexPath.row
+//        let notice = questions[index]
+//        let cell = tableView.dequeueReusableCell(withIdentifier: VoteQuestionCell.identifier, for: indexPath) as! VoteQuestionCell
+//        
+//        cell.configure(notice)
+//        
+//        return cell
+//    }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: VoteQuestionHeaderView.identifier) as! VoteQuestionHeaderView

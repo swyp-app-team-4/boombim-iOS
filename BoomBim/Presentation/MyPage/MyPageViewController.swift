@@ -23,7 +23,7 @@ final class MyPageViewController: BaseViewController {
         return pageViewController
     }()
     
-    private lazy var pages: [UIViewController] = [FavoriteViewController(), VoteViewController(), QuestionViewController()]
+    private lazy var pages: [UIViewController] = []
     
     private var currentPageIndex: Int = 0
 
@@ -98,7 +98,7 @@ final class MyPageViewController: BaseViewController {
     }
     
     private func configurePageViewController() {
-        pageViewController.setViewControllers([pages[currentPageIndex]], direction: .forward, animated: false, completion: nil)
+//        pageViewController.setViewControllers([pages[currentPageIndex]], direction: .forward, animated: false, completion: nil)
         pageViewController.dataSource = self
         pageViewController.delegate = self
         
@@ -139,7 +139,7 @@ final class MyPageViewController: BaseViewController {
     // MARK: - bind
     private func bind() {
         // 1) Input: 화면 등장 시점 (원하면 .take(1)로 최초 1회만)
-        let appear = rx.methodInvoked(#selector(UIViewController.viewDidAppear(_:)))
+        let appear = rx.methodInvoked(#selector(UIViewController.viewWillAppear(_:)))
             .map { _ in () }
             .asSignal(onErrorSignalWith: .empty())
         
@@ -172,6 +172,21 @@ final class MyPageViewController: BaseViewController {
                     question: p.questionCnt)
             })
             .disposed(by: disposeBag)
+        
+        let voteViewModel = VoteViewModel(items: output.answer)
+        let voteViewController = VoteViewController(viewModel: voteViewModel)
+        
+        let questionViewModel = QuestionViewModel(items: output.question)
+        let questionViewController = QuestionViewController(viewModel: questionViewModel)
+        
+        self.pages = [FavoriteViewController(), voteViewController, questionViewController]
+        
+        // 현재 인덱스가 범위를 벗어나지 않게 보정
+        self.currentPageIndex = min(self.currentPageIndex, max(self.pages.count - 1, 0))
+        
+        self.pageViewController.setViewControllers([self.pages[self.currentPageIndex]], direction: .forward, animated: false, completion: nil)
+        // 헤더도 동기화
+        self.headerView.updateSelection(index: self.currentPageIndex, animated: false)
     }
 }
 

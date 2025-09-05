@@ -64,15 +64,20 @@ final class LoginViewModel {
             .disposed(by: disposeBag)
         
          input.naverTap
-         .flatMapLatest { [unowned self] in self.runLoginFlow { self.naverService.loginAndIssueBackendToken() } }
+            .flatMapLatest { [unowned self] in
+                self.runLoginFlow { self.naverService.loginAndIssueBackendToken() }
+            }
          .subscribe().disposed(by: disposeBag)
          
          input.appleTap
-         .flatMapLatest { [unowned self] in self.runLoginFlow { self.appleService.loginAndIssueBackendToken() } }
+            .flatMapLatest { [unowned self] in
+                self.runLoginFlow { self.appleService.loginAndIssueBackendToken() }
+            }
          .subscribe().disposed(by: disposeBag)
         
         input.withoutLoginTap
-            .emit(onNext: { [routeRelay] in routeRelay.accept(.mainTab) })
+            .emit(onNext: { [routeRelay] in
+                routeRelay.accept(.mainTab) })
             .disposed(by: disposeBag)
         
         return Output(

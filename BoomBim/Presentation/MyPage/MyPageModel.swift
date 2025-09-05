@@ -38,3 +38,49 @@ struct QuestionItem: Hashable {
     let people: Int
     let isQuesting: Bool
 }
+
+struct MyFavorite: Decodable {
+    let profile: String
+    let posName: String
+    let placeId: Int
+    let answerType: String
+    let peopleCnt: String
+}
+
+struct AnswerInfo: Decodable {
+    let voteId: Int
+    let profile: [String]
+    let day: String
+    let posName: String
+    let popularRes: [String]
+    let relaxedCnt: Int
+    let commonly: Int
+    let slightlyBusyCnt: Int
+    let crowedCnt: Int
+    let voteAllCnt: Int
+    let voteStatus: VoteStatus
+}
+
+struct MyAnswer: Decodable {
+    let day: String
+    let res: [AnswerInfo]
+}
+
+struct QuestionInfo: Decodable {
+    let voteId: Int
+    let profile: [String]
+    let day: String
+    let posName: String
+    let popularRes: [String]
+    let relaxedCnt: Int
+    let commonly: Int
+    let slightlyBusyCnt: Int
+    let crowedCnt: Int
+    let voteAllCnt: Int
+    let voteStatus: VoteStatus
+}
+
+struct MyQuestion: Decodable {
+    let day: String
+    let res: [QuestionInfo]
+}
