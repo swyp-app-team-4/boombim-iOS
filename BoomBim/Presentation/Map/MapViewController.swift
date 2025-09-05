@@ -50,8 +50,11 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         return f
     }()
     
-    private var placeListViewController: OfficialPlaceListViewController?
+    private var officialPlaceListViewController: OfficialPlaceListViewController?
     private var officialPlaceDetailViewController: OfficialPlaceDetailViewController?
+    
+    private var userPlaceDetailViewController: OfficialPlaceDetailViewController?
+    private var userPlaceListViewController: UserPlaceListViewController?
     
     private let searchTextField: AppSearchTextField = {
         let textField = AppSearchTextField()
@@ -637,10 +640,10 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     
     // MARK: Floating Panel
     private func showOfficialListPanel(with places: [OfficialPlaceItem]) {
-        if placeListViewController == nil { placeListViewController = OfficialPlaceListViewController() }
-        placeListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
-        if floatingPanel.contentViewController !== placeListViewController {
-            floatingPanel.set(contentViewController: placeListViewController!)
+        if officialPlaceListViewController == nil { officialPlaceListViewController = OfficialPlaceListViewController() }
+        officialPlaceListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
+        if floatingPanel.contentViewController !== officialPlaceListViewController {
+            floatingPanel.set(contentViewController: officialPlaceListViewController!)
         }
         floatingPanel.move(to: .tip, animated: true)
     }
@@ -655,13 +658,22 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     }
     
     private func showUserListPanel(with places: [UserPlaceItem]) {
-        if placeListViewController == nil { placeListViewController = OfficialPlaceListViewController() }
-        placeListViewController?.updateHeader(title: "내 주변 여유로운 장소에요!")
-        placeListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
-        if floatingPanel.contentViewController !== placeListViewController {
-            floatingPanel.set(contentViewController: placeListViewController!)
+        if userPlaceListViewController == nil { userPlaceListViewController = UserPlaceListViewController() }
+        userPlaceListViewController?.updateHeader(title: "내 주변 여유로운 장소에요!")
+        userPlaceListViewController?.apply(places: places)         // 테이블/컬렉션 갱신
+        if floatingPanel.contentViewController !== userPlaceListViewController {
+            floatingPanel.set(contentViewController: userPlaceListViewController!)
         }
         floatingPanel.move(to: .tip, animated: true)
+    }
+    
+    private func showUserDetailPanel(with places: PlaceDetailInfo) {
+        if officialPlaceDetailViewController == nil { officialPlaceDetailViewController = OfficialPlaceDetailViewController() }
+        officialPlaceDetailViewController?.configure(data: places)
+        if floatingPanel.contentViewController !== officialPlaceDetailViewController {
+            floatingPanel.set(contentViewController: officialPlaceDetailViewController!)
+        }
+        floatingPanel.move(to: .half, animated: true)
     }
 }
 
@@ -697,7 +709,7 @@ extension MapViewController: MapControllerDelegate {
         mapReady.accept(())
         
         // 초기 모드(실시간) 선택
-        selectMode(.realtime)
+        selectMode(.official)
     }
     
     private func moveCamera(to coord: CLLocationCoordinate2D, level: Int32) {

@@ -1,23 +1,22 @@
 //
-//  PlaceListViewController.swift
+//  UserPlaceListViewController.swift
 //  BoomBim
 //
-//  Created by 조영현 on 9/1/25.
+//  Created by 조영현 on 9/5/25.
 //
 
 import UIKit
 
-// 고유 id로만 동일성/해시를 정의
-extension OfficialPlaceItem: Hashable {
-    static func == (lhs: OfficialPlaceItem, rhs: OfficialPlaceItem) -> Bool {
-        return lhs.officialPlaceId == rhs.officialPlaceId
+extension UserPlaceItem: Hashable {
+    static func == (lhs: UserPlaceItem, rhs: UserPlaceItem) -> Bool {
+        return lhs.memberPlaceId == rhs.memberPlaceId
     }
     func hash(into hasher: inout Hasher) {
-        hasher.combine(officialPlaceId)
+        hasher.combine(memberPlaceId)
     }
 }
 
-final class OfficialPlaceListViewController: UIViewController {
+final class UserPlaceListViewController: UIViewController {
     // MARK: Public
     enum Section { case main }
 
@@ -30,39 +29,18 @@ final class OfficialPlaceListViewController: UIViewController {
         headerLabel.text = title
         layoutHeader()
     }
-
-    // 외부에서 데이터 적용
-    func apply(places: [OfficialPlaceItem], animate: Bool = true) {
-        officialItems = places
-        var snapshot = NSDiffableDataSourceSnapshot<Section, OfficialPlaceItem>()
+    
+    func apply(places: [UserPlaceItem], animate: Bool = true) {
+        userItems = places
+        var snapshot = NSDiffableDataSourceSnapshot<Section, UserPlaceItem>()
         snapshot.appendSections([.main])
         snapshot.appendItems(places, toSection: .main)
-        officialDataSource.apply(snapshot, animatingDifferences: animate)
+        userDataSource.apply(snapshot, animatingDifferences: animate)
         emptyView.isHidden = !places.isEmpty
     }
 
-    // 선택 항목 강조(목록 상태 유지)
-//    func highlight(id: String) {
-//        guard let idx = items.firstIndex(where: { String($0.id) == id }) else { return }
-//        let ip = IndexPath(row: idx, section: 0)
-//        tableView.scrollToRow(at: ip, at: .middle, animated: true)
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-//            if let cell = self.tableView.cellForRow(at: ip) {
-//                UIView.animate(withDuration: 0.22, animations: {
-//                    cell.contentView.backgroundColor = UIColor.systemYellow.withAlphaComponent(0.14)
-//                }) { _ in
-//                    UIView.animate(withDuration: 0.35, delay: 0.5) {
-//                        cell.contentView.backgroundColor = .clear
-//                    }
-//                }
-//            }
-//        }
-//    }
-
     // MARK: Private
-    private var officialItems: [OfficialPlaceItem] = []
     private var userItems: [UserPlaceItem] = []
-    private lazy var officialDataSource = makeOfficialDataSource()
     private lazy var userDataSource = makeUserDataSource()
 
     // Header
@@ -85,7 +63,7 @@ final class OfficialPlaceListViewController: UIViewController {
 }
 
 // MARK: - Configure & Layout
-private extension OfficialPlaceListViewController {
+private extension UserPlaceListViewController {
     func configure() {
         view.backgroundColor = .clear
 
@@ -96,7 +74,7 @@ private extension OfficialPlaceListViewController {
         tableView.showsVerticalScrollIndicator = true
         tableView.estimatedRowHeight = 140
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.register(OfficialPlaceInfoCell.self, forCellReuseIdentifier: OfficialPlaceInfoCell.reuseID)
+        tableView.register(UserPlaceInfoCell.self, forCellReuseIdentifier: UserPlaceInfoCell.identifier)
         tableView.delegate = self
 
         // Header (안쪽 카드가 아니라 테이블 상단 고정 헤더)
@@ -167,10 +145,7 @@ private extension OfficialPlaceListViewController {
         NSLayoutConstraint.deactivate(headerContainer.constraints + grabber.constraints + headerStack.constraints)
 
         NSLayoutConstraint.activate([
-//            grabber.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: grabberTop),
-//            grabber.centerXAnchor.constraint(equalTo: headerContainer.centerXAnchor),
-//            grabber.widthAnchor.constraint(equalToConstant: 44),
-//            grabber.heightAnchor.constraint(equalToConstant: 5),
+
 
             headerStack.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: 45),
             headerStack.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 16),
@@ -185,21 +160,10 @@ private extension OfficialPlaceListViewController {
         headerContainer.frame = CGRect(x: 0, y: 0, width: width, height: targetHeight)
         tableView.tableHeaderView = headerContainer
     }
-
-    func makeOfficialDataSource() -> UITableViewDiffableDataSource<Section, OfficialPlaceItem> {
-        let ds = UITableViewDiffableDataSource<Section, OfficialPlaceItem>(tableView: tableView) { [weak self] tableView, indexPath, item in
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: OfficialPlaceInfoCell.reuseID, for: indexPath) as? OfficialPlaceInfoCell else {
-                return UITableViewCell(style: .default, reuseIdentifier: "fallback")
-            }
-            cell.configure(with: item)
-            return cell
-        }
-        return ds
-    }
     
     func makeUserDataSource() -> UITableViewDiffableDataSource<Section, UserPlaceItem> {
         let ds = UITableViewDiffableDataSource<Section, UserPlaceItem>(tableView: tableView) { [weak self] tableView, indexPath, item in
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: OfficialPlaceInfoCell.reuseID, for: indexPath) as? OfficialPlaceInfoCell else {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: UserPlaceInfoCell.identifier, for: indexPath) as? UserPlaceInfoCell else {
                 return UITableViewCell(style: .default, reuseIdentifier: "fallback")
             }
             cell.configure(with: item)
@@ -210,11 +174,9 @@ private extension OfficialPlaceListViewController {
 }
 
 // MARK: - UITableViewDelegate
-extension OfficialPlaceListViewController: UITableViewDelegate {
+extension UserPlaceListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if let officialItem = officialDataSource.itemIdentifier(for: indexPath) {
-            onOfficialSelect?(officialItem)
-        } else if let userItem = userDataSource.itemIdentifier(for: indexPath) {
+        if let userItem = userDataSource.itemIdentifier(for: indexPath) {
             onUserSelect?(userItem)
         }
         tableView.deselectRow(at: indexPath, animated: true)
