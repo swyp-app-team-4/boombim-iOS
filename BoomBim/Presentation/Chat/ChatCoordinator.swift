@@ -13,26 +13,29 @@ final class ChatCoordinator: Coordinator {
     let chatTabIndex = 2
     
     var childCoordinators: [Coordinator] = []
+    
+//    var locationRepo: LocationRepository?
 
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
 
     func start() {
-        let viewModel = ChatViewModel()
+        let locationRepo = LocationRepository()
+        let viewModel = ChatViewModel(locationRepo: locationRepo)
         let viewController = ChatViewController(viewModel: viewModel)
         
         viewModel.goToQuestionView = { [weak self] in
-            self?.showQuestionReport()
+            self?.showQuestionReport(locationRepo: locationRepo)
         }
         
         self.chatRootVC = viewController
         navigationController.setViewControllers([viewController], animated: false)
     }
     
-    func showQuestionReport() {
+    func showQuestionReport(locationRepo: LocationRepository) {
         let service = KakaoLocalService()
-        let viewModel = AskQuestionViewModel(service: service)
+        let viewModel = AskQuestionViewModel(service: service, locationRepo: locationRepo)
         let viewController = AskQuestionViewController(viewModel: viewModel)
 //        navigationController.pushViewController(viewController, animated: true)
         
@@ -41,6 +44,7 @@ final class ChatCoordinator: Coordinator {
         
         let childCoordinator = AskQuestionViewCoordinator(navigationController: navigationController)
         childCoordinator.service = service
+        childCoordinator.locationRepo = locationRepo
         
         childCoordinator.onFinish = { [weak self, weak childCoordinator] in
             guard let self, let childCoordinator else { return }

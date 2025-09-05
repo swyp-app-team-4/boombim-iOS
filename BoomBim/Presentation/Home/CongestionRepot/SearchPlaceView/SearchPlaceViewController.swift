@@ -206,9 +206,6 @@ final class SearchPlaceViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
         
-        // 5) 빈화면/리스트 표시 토글
-        // - 검색어가 비어있으면 테이블 숨김, 일러스트 표시
-        // - 검색어가 있고 결과가 비어있으면 일러스트 표시, 결과가 있으면 숨김
         let isQueryEmpty = searchText.map { $0.isEmpty }.distinctUntilChanged()
         let hasResults   = output.results.map { !$0.isEmpty }.distinctUntilChanged()
         
@@ -218,9 +215,6 @@ final class SearchPlaceViewController: BaseViewController {
         
         Observable.combineLatest(isQueryEmpty, hasResults)
             .map { queryEmpty, hasResults in !(queryEmpty || !hasResults) == false ? true : false }
-        // 위 식은 가독성이 떨어지니 아래로 해석하면:
-        // illustrationVisible = queryEmpty || !hasResults
-        // -> isHidden = !illustrationVisible
             .map { isHidden -> Bool in isHidden } // 그대로 사용
             .withLatestFrom(Observable.combineLatest(isQueryEmpty, hasResults)) { _, pair in
                 let (queryEmpty, hasResults) = pair
@@ -233,6 +227,7 @@ final class SearchPlaceViewController: BaseViewController {
         // 6) (옵션) 내 좌표 로그/배지 등
         output.myCoordinate
             .compactMap { $0 }
+            .observe(on: MainScheduler.instance)
             .subscribe(onNext: { coord in
                 print("내 좌표:", coord)
             })

@@ -15,6 +15,7 @@ final class AskQuestionViewCoordinator: Coordinator {
     var onFinish: (() -> Void)?
     
     var service: KakaoLocalService?
+    var locationRepo: LocationRepository?
     
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -22,8 +23,9 @@ final class AskQuestionViewCoordinator: Coordinator {
     
     func start() {
         print("AskQuestionViewCoordinator start")
-        guard let service = self.service else { return }
-        let viewModel = AskQuestionViewModel(service: service)
+        guard let service = self.service,
+              let locationRepo = self.locationRepo else { return }
+        let viewModel = AskQuestionViewModel(service: service, locationRepo: locationRepo)
         let viewController = AskQuestionViewController(viewModel: viewModel)
         
         viewModel.goToMapPickerView = { [weak self] location in

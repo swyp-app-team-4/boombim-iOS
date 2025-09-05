@@ -41,7 +41,33 @@ final class SearchPlaceViewModel {
         // 1) 권한 요청(미결정이면)
         locationRepo.requestAuthorizationIfNeeded()
         // 초기 프리워밍(필요 시)
-        locationRepo.getCoordinate(ttl: 180).subscribe().disposed(by: disposeBag)
+        let authD: Driver<CLAuthorizationStatus> = locationRepo.authorization
+            .asDriver(onErrorDriveWith: .empty())
+        
+        let isAuthorizedD: Driver<Bool> = authD
+            .map { status in
+                switch status {
+                case .authorizedAlways, .authorizedWhenInUse: return true
+                default: return false
+                }
+            }
+            .distinctUntilChanged()
+        
+        // 2) 권한이 허용된 "뒤에만" 프리워밍(캐시/메모리/원샷)
+        isAuthorizedD
+            .filter { $0 }
+            .asObservable()
+            .take(1)
+            .asObservable()
+            .flatMapLatest { [locationRepo] _ in
+                locationRepo.getCoordinate(ttl: 180)
+                    .asObservable()
+                    .materialize() // 오류를 삼키며 로그용으로만
+            }
+            .subscribe(onNext: { event in
+                if case .error(let e) = event { print("⚠️ prewarm error:", e) }
+            })
+            .disposed(by: disposeBag)
         
         let myCoord = Observable
             .merge(locationRepo.coordinate)

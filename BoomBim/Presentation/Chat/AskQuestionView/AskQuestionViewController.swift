@@ -16,10 +16,11 @@ final class AskQuestionViewController: BaseViewController {
     
     private let locationManager = AppLocationManager.shared
     
-    private let currentLocationSubject = PublishSubject<CLLocationCoordinate2D>()
+//    private let currentLocationSubject = PublishSubject<CLLocationCoordinate2D>()
     
     private var places: [Place] = []
-    private var selectedPlace: Place?
+    private let selectedPlace = BehaviorRelay<Place?>(value: nil)
+    private let userLocation = BehaviorRelay<CLLocationCoordinate2D?>(value: nil)
     
     // MARK: - UI Components
     private let titleLabel: UILabel = {
@@ -75,8 +76,6 @@ final class AskQuestionViewController: BaseViewController {
         button.titleLabel?.font = Typography.Body02.medium.font
         button.setTitleColor(.grayScale7, for: .normal)
         button.backgroundColor = .grayScale4
-//        button.setTitleColor(.grayScale1, for: .normal)
-//        button.backgroundColor = .main
         button.layer.cornerRadius = 10
         button.isEnabled = false
         
@@ -95,13 +94,13 @@ final class AskQuestionViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setLocation()
+//        setLocation()
         
         setupView()
         
         bindViewModel()
         
-        bindAction()
+//        bindAction()
         setActions()
     }
     
@@ -141,8 +140,8 @@ final class AskQuestionViewController: BaseViewController {
             self.view.addSubview(view)
         }
         
-        tableView.delegate = self
-        tableView.dataSource = self
+//        tableView.delegate = self
+//        tableView.dataSource = self
         tableView.register(PlaceTableViewCell.self, forCellReuseIdentifier: PlaceTableViewCell.identifier)
         tableView.tableHeaderView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: 0.0, height: CGFloat.leastNonzeroMagnitude))
         
@@ -188,170 +187,120 @@ final class AskQuestionViewController: BaseViewController {
     
     // MARK: ViewModel binding
     private func bindViewModel() {
-        // 검색 입력
-//        searchTextField.rx.text.orEmpty
-//            .bind(to: viewModel.query)
-//            .disposed(by: disposeBag)
-        let textInput = searchTextField.rx.text.orEmpty
+        let searchText = searchTextField.rx.text.orEmpty
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .debounce(.milliseconds(250), scheduler: MainScheduler.instance)
-            .distinctUntilChanged()
             .share(replay: 1)
-
-        textInput.bind(to: viewModel.query).disposed(by: disposeBag)
-
-        textInput
-            .map { $0.isEmpty }
-            .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak tableView] hidden in
-                guard let tableView = tableView else { return }
-                UIView.transition(with: tableView, duration: 0.2, options: .transitionCrossDissolve) {
-                    tableView.isHidden = hidden
-                }
-            })
-            .disposed(by: disposeBag)
         
-        viewModel.results
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] items in
-                self?.places = items
-                self?.tableView.reloadData()
-            })
-            .disposed(by: disposeBag)
-        
-        // 현재 위치 관련
+        // 2) ViewModel 변환
         let input = AskQuestionViewModel.Input(
-            currentLocation: currentLocationSubject.asObservable()
+            searchText: searchText
         )
         
         let output = viewModel.transform(input: input)
+        
+        // 3) 결과 리스트 → 테이블 바인딩
+        output.results
+            .observe(on: MainScheduler.instance)
+            .bind(to: tableView.rx.items(
+                cellIdentifier: PlaceTableViewCell.identifier,
+                cellType: PlaceTableViewCell.self
+            )) { _, place, cell in
+                cell.configure(title: place.name) // 여러분의 셀 API에 맞게 조정
+            }
+            .disposed(by: disposeBag)
+        
+        // 4) 셀 선택 처리 (선택 상태/버튼 상태)
+        tableView.rx.modelSelected(Place.self)
+            .bind(to: selectedPlace)
+            .disposed(by: disposeBag)
+        
+        tableView.rx.itemSelected
+            .bind(onNext: { [weak self] indexPath in
+                self?.tableView.deselectRow(at: indexPath, animated: true)
+            })
+            .disposed(by: disposeBag)
+        
+        let selection = selectedPlace
+            .map { (enabled: $0 != nil, name: $0?.name) }
+            .share(replay: 1)
+        
+        selection
+            .map(\.name)                     // String?
+            .distinctUntilChanged { $0 == $1 }
+            .observe(on: MainScheduler.instance)
+            .bind(to: searchTextField.rx.text)
+            .disposed(by: disposeBag)
+        
+        selection
+            .map(\.enabled)
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] enabled in
+                guard let self else { return }
+                self.nextButton.isEnabled = enabled
+                self.nextButton.setTitleColor(enabled ? .grayScale1 : .grayScale7, for: .normal)
+                self.nextButton.backgroundColor = enabled ? .main : .grayScale4
+            })
+            .disposed(by: disposeBag)
+        
+        let isQueryEmpty = searchText.map { $0.isEmpty }.distinctUntilChanged()
+        let hasResults   = output.results.map { !$0.isEmpty }.distinctUntilChanged()
+        
+        isQueryEmpty
+            .bind(to: tableView.rx.isHidden)
+            .disposed(by: disposeBag)
+        
+        Observable.combineLatest(isQueryEmpty, hasResults)
+            .map { queryEmpty, hasResults in !(queryEmpty || !hasResults) == false ? true : false }
+            .map { isHidden -> Bool in isHidden } // 그대로 사용
+            .withLatestFrom(Observable.combineLatest(isQueryEmpty, hasResults)) { _, pair in
+                let (queryEmpty, hasResults) = pair
+                let illustrationVisible = queryEmpty || !hasResults
+                return !illustrationVisible
+            }
+            .bind(to: illustrationImageView.rx.isHidden)
+            .disposed(by: disposeBag)
+        
+        // 6) (옵션) 내 좌표 로그/배지 등
+        output.myCoordinate
+            .compactMap { $0 }
+            .subscribe(onNext: { coord in
+                print("내 좌표:", coord)
+                self.userLocation.accept(coord)
+            })
+            .disposed(by: disposeBag)
 
         output.places
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] places in
                 guard let firstPlace = places.first else { return }
-                
-                // TODO: Location 버튼 눌렀을 때만 동작하게
-//                self?.selectedPlace = firstPlace
-//                self?.searchTextField.text = firstPlace.name
             })
             .disposed(by: disposeBag)
-    }
-    
-    // MARK: Bind Action
-    private func bindAction() {
-        viewModel.bindSearch()
     }
     
     private func setActions() {
         locationButton.addTarget(self, action: #selector(didTapLocation), for: .touchUpInside)
-        nextButton.addTarget(self, action:  #selector(didTapNextButton), for: .touchUpInside)
-    }
-    
-    @objc private func didTapLocation() {
-        self.setLocation()
-    }
-    
-    @objc private func didTapClose() {
-        dismiss(animated: true)
-    }
-    
-    @objc private func didTapNextButton() {
-        guard let selectedPlace = selectedPlace else { return }
-        print("selected Place : \(selectedPlace)")
+//        nextButton.addTarget(self, action:  #selector(didTapNextButton), for: .touchUpInside)
         
-        self.viewModel.didTapNextButton(place: selectedPlace)
-    }
-}
-
-// MARK: 현재 위치 권한 설정 및 View Rect 값 확인
-extension AskQuestionViewController {
-    private func setLocation() {
-        if locationManager.authorization.value == .notDetermined { // 권한 설정이 안된 경우 권한 요청
-//            locationManager.requestWhenInUseAuthorization()
-        }
+        let placeAndLocation = Observable.combineLatest(
+            selectedPlace.compactMap { $0 },                 // Place
+            userLocation.compactMap { $0 }                   // CLLocationCoordinate2D
+        )
         
-        // 권한 상태 스트림에서 '최종 상태(허용/거부)'만 대기 → 1회 처리
-        locationManager.authorization
-            .asObservable()
-            .startWith(locationManager.authorization.value) // 현재 상태 먼저 흘려보내기
-            .distinctUntilChanged()
-            .filter { status in
-                switch status {
-                case .authorizedWhenInUse, .authorizedAlways, .denied, .restricted:
-                    return true // 최종 상태만 통과
-                default:
-                    return false // .notDetermined은 대기
-                }
-            }
-            .take(1) // 허용 or 거부 중 첫 결과 한 번만
-            .flatMapLatest { [weak self] status -> Observable<CLLocationCoordinate2D> in
-                guard let self else { return .empty() }
-                switch status {
-                case .authorizedWhenInUse, .authorizedAlways:
-                    return locationManager.requestOneShotLocation(timeout: 5)
-                        .asObservable()
-                        .map {
-                            print("위도 : \($0.coordinate.latitude), 경도 : \($0.coordinate.longitude)")
-                            return $0.coordinate
-                        }
-                case .denied, .restricted:
-                    self.showLocationDeniedAlert()
-                    return .empty()
-                default:
-                    return .empty()
-                }
-            }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] coord in
-                print("coord : \(coord)")
-                self?.viewModel.setCurrentCoordinate(coord)
-                self?.currentLocationSubject.onNext(coord)
+        nextButton.rx.tap
+            .withLatestFrom(placeAndLocation)
+            .bind(onNext: { [weak self] place, userLocation in
+                self?.viewModel.didTapNextButton(place: place, userLocation: userLocation)
             })
             .disposed(by: disposeBag)
     }
     
-    /** 위치 접근 안내 Alert */
-    private func showLocationDeniedAlert() {
-        let alert = UIAlertController(
-            title: "위치 접근이 꺼져 있어요",
-            message: "현재 위치를 기반으로 검색하려면 설정 > 앱 > 위치에서 허용해 주세요.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-            if let url = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(url)
-            }
-        })
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        present(alert, animated: true)
-    }
-}
-
-extension AskQuestionViewController: UITableViewDataSource, UITableViewDelegate {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return places.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let index = indexPath.row
-        let place = places[index].name
-        let cell = tableView.dequeueReusableCell(withIdentifier: PlaceTableViewCell.identifier, for: indexPath) as! PlaceTableViewCell
-        
-        cell.configure(title: place)
-        
-        return cell
+    @objc private func didTapLocation() {
+//        self.setLocation()
+        print("didTapLocation")
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let index = indexPath.row
-        
-        searchTextField.text = places[index].name
-        self.selectedPlace = places[index]
-        
-        nextButton.isEnabled = true
-        nextButton.setTitleColor(.grayScale1, for: .normal)
-        nextButton.backgroundColor = .main
+    @objc private func didTapClose() {
+        dismiss(animated: true)
     }
 }
