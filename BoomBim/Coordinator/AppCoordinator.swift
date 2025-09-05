@@ -103,6 +103,12 @@ final class AppCoordinator: Coordinator {
             .skip(1) // 초기 라우팅에서 이미 처리한 첫 값은 건너뜀
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] state in
+                // 🔴 로그인/닉네임 플로우 진행 중이면, 전역 라우팅을 건너뜁니다.
+                if self?.loginCoordinator != nil {
+                     print("authState \(state) ignored while login flow is active")
+                    return
+                }
+                
                 self?.route(for: state)
             })
             .disposed(by: disposeBag)
@@ -111,13 +117,17 @@ final class AppCoordinator: Coordinator {
     private func route(for state: AuthState) {
         switch state {
         case .loggedIn:
+            // 로그인 플로우(닉네임 포함)가 아직 끝나지 않았으면 건너뜀
+            guard loginCoordinator == nil else { return }
             guard currentRoot != .main else { return }
             currentRoot = .main
             showMainTabBar()
+            
         case .loggedOut, .withdraw:
             guard currentRoot != .login else { return }
             currentRoot = .login
             showLogin()
+            
         case .refreshing:
             break
         }
