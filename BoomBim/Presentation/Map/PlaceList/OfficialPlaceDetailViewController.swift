@@ -204,7 +204,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
         }
         
         NSLayoutConstraint.activate([
-            viewTitleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            viewTitleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             viewTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             viewTitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             viewTitleLabel.heightAnchor.constraint(equalToConstant: 46),
@@ -303,7 +303,18 @@ final class OfficialPlaceDetailViewController: UIViewController {
         ])
     }
     
+    private func clearAgeStacks() {
+        [firstAgeStackView, secondAgeStackView].forEach { stack in
+            stack.arrangedSubviews.forEach { v in
+                stack.removeArrangedSubview(v) // 스택 관계 제거
+                v.removeFromSuperview()        // 실제 뷰 계층에서 제거
+            }
+        }
+    }
+    
     private func setAgeStackView(percent: [Double]) {
+        clearAgeStacks()
+        
         let titles = ["10대 미만", "10대", "20대", "30대", "40대", "50대", "60대", "70대"]
         for (i, title) in titles.enumerated() {
             let tile = AgeTileView()

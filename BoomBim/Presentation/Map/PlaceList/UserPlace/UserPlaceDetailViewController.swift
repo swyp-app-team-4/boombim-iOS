@@ -105,7 +105,7 @@ final class UserPlaceDetailViewController: UIViewController {
         }
         
         NSLayoutConstraint.activate([
-            viewTitleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            viewTitleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             viewTitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             viewTitleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             viewTitleLabel.heightAnchor.constraint(equalToConstant: 46),

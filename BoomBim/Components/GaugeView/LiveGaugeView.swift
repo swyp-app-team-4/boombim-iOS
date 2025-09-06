@@ -138,10 +138,10 @@ final class LiveGaugeView: UIControl {
         
         NSLayoutConstraint.activate([
             resideTitleLabel.widthAnchor.constraint(equalToConstant: 40),
-            residePercentLabel.widthAnchor.constraint(equalToConstant: 40),
+            residePercentLabel.widthAnchor.constraint(equalToConstant: 50),
             
             resideTitleLabel.widthAnchor.constraint(equalToConstant: 40),
-            residePercentLabel.widthAnchor.constraint(equalToConstant: 40),
+            residePercentLabel.widthAnchor.constraint(equalToConstant: 50),
         ])
     }
 

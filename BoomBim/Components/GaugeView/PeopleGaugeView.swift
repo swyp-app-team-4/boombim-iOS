@@ -138,10 +138,10 @@ final class PeopleGaugeView: UIControl {
         
         NSLayoutConstraint.activate([
             manTitleLabel.widthAnchor.constraint(equalToConstant: 40),
-            manPercentLabel.widthAnchor.constraint(equalToConstant: 40),
+            manPercentLabel.widthAnchor.constraint(equalToConstant: 50),
             
             womanTitleLabel.widthAnchor.constraint(equalToConstant: 40),
-            womanPercentLabel.widthAnchor.constraint(equalToConstant: 40),
+            womanPercentLabel.widthAnchor.constraint(equalToConstant: 50),
         ])
     }
 

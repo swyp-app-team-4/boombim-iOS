@@ -46,7 +46,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private lazy var floatingPanel: FloatingPanelController = {
         let f = FloatingPanelController()
         f.surfaceView.grabberHandle.isHidden = false
-        f.isRemovalInteractionEnabled = true
+        f.isRemovalInteractionEnabled = false
         f.delegate = self
         return f
     }()
