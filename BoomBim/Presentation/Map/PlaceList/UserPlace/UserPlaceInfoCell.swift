@@ -26,7 +26,7 @@ final class UserPlaceInfoCell: UITableViewCell {
 //        let label = UILabel()
 //        label.font = Typography.Caption.regular.font
 //        label.textColor = .grayScale8
-//        
+//
 //        return label
 //    }()
     
@@ -42,7 +42,7 @@ final class UserPlaceInfoCell: UITableViewCell {
 //        imageView.contentMode = .scaleAspectFill
 //        imageView.layer.cornerRadius = 12
 //        imageView.clipsToBounds = true
-//        
+//
 //        return imageView
 //    }()
 
@@ -200,3 +200,4 @@ final class UserPlaceInfoCell: UITableViewCell {
         }
     }
 }
+

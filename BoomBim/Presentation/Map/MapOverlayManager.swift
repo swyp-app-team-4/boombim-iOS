@@ -123,12 +123,12 @@ final class MapOverlayManager {
             return opt
         }
         let positions = items.map { $0.point }
-
-//        // 생성 완료 콜백에서 show() 호출
-//        _ = layer.addPois(options: options, at: positions) { pois in
-//            pois?.forEach { $0.show() }  // 각 POI 표출
-//        }
-//        layer.visible = true // 레이어 on (POI show와 둘 다 필요)
+        
+        //        // 생성 완료 콜백에서 show() 호출
+        //        _ = layer.addPois(options: options, at: positions) { pois in
+        //            pois?.forEach { $0.show() }  // 각 POI 표출
+        //        }
+        //        layer.visible = true // 레이어 on (POI show와 둘 다 필요)
         _ = layer.addPois(options: options, at: positions) { [weak self] pois in
             guard let self, let pois else { return }
             for (i, poi) in pois.enumerated() {
@@ -156,11 +156,11 @@ final class MapOverlayManager {
     {
         ensureResources(for: g, visual: visual)
         guard let layer = poiLayers[g], let map = map else { return }
-
+        
         layer.clearAllItems()
         poiTapDisposers.values.forEach { $0.dispose() }
-               poiTapDisposers.removeAll()
-
+        poiTapDisposers.removeAll()
+        
         var options = [PoiOptions]()
         var positions = [MapPoint]()
         options.reserveCapacity(items.count)

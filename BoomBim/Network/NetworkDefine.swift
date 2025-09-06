@@ -54,7 +54,8 @@ enum NetworkDefine {
         case userPlace
         case registerPostPlace
         case postPlace
-        case placeDetail(id: Int)
+        case officialPlaceDetail(id: Int)
+        case userPlaceDetail(id: Int)
         
         var path: String {
             switch self {
@@ -68,8 +69,10 @@ enum NetworkDefine {
                 return "member-place/resolve"
             case .postPlace:
                 return "member-congestion/create"
-            case .placeDetail(let id):
+            case .officialPlaceDetail(let id):
                 return "official-place/\(id)/overview"
+            case .userPlaceDetail(let id):
+                return "member-place/\(id)"
             }
         }
     }

@@ -639,6 +639,17 @@
         }
       }
     },
+    "place.detail.label.title.user" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현장 피드"
+          }
+        }
+      }
+    },
     "place.detail.label.woman" : {
       "extractionState" : "manual",
       "localizations" : {

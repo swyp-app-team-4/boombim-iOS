@@ -115,18 +115,55 @@ struct RegionNewsResponse: Decodable {
     let peopleCnt: Int
 }
 
-struct PlaceDetailRequest: Encodable {
-    let officialPlaceId: Int
+struct UserPlaceDetailRequest: Encodable {
+    let memberPlaceId: Int
 }
 
-struct PlaceDetailResponse: Decodable {
+struct UserPlaceDetailResponse: Decodable {
     let code: Int
     let status: String
     let message: String
-    let data: PlaceDetailInfo
+    let data: UserPlaceDetailInfo
 }
 
-struct PlaceDetailInfo: Decodable {
+struct UserPlaceDetailInfo: Decodable {
+    let memberPlaceSummary: MemberPlaceSummary
+    let memberCongestionItems: [MemberCongestionItem]
+    let hasNext: Bool
+    let nextCursor: Int
+    let size: Int
+}
+
+struct MemberPlaceSummary: Decodable {
+    let memberPlaceId: Int
+    let name: String
+    let placeType: String
+    let address: String
+    let latitude: Double
+    let longitude: Double
+    let imageUrl: String?
+    let isFavorite: Bool
+}
+
+struct MemberCongestionItem: Decodable {
+    let memberCongestionId: Int
+    let congestionLevelName: String
+    let congestionLevelMessage: String
+    let createdAt: String
+}
+
+struct OfficialPlaceDetailRequest: Encodable {
+    let officialPlaceId: Int
+}
+
+struct OfficialPlaceDetailResponse: Decodable {
+    let code: Int
+    let status: String
+    let message: String
+    let data: OfficialPlaceDetailInfo
+}
+
+struct OfficialPlaceDetailInfo: Decodable {
     let officialPlaceId: Int
     let officialPlaceName: String
     let placeType: String
@@ -250,8 +287,19 @@ final class PlaceService: Service {
         return request(url, method: .post, header: headers, body: body)
     }
     
-    func getPlaceDetail(body: PlaceDetailRequest) -> Single<PlaceDetailResponse> {
-        let url = NetworkDefine.apiHost + NetworkDefine.Place.placeDetail(id: body.officialPlaceId).path
+    func getOfficialPlaceDetail(body: OfficialPlaceDetailRequest) -> Single<OfficialPlaceDetailResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.officialPlaceDetail(id: body.officialPlaceId).path
+        
+        var headers: HTTPHeaders = ["Accept": "application/json"]
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
+    }
+    
+    func getUserPlaceDetail(body: UserPlaceDetailRequest) -> Single<UserPlaceDetailResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.userPlaceDetail(id: body.memberPlaceId).path
         
         var headers: HTTPHeaders = ["Accept": "application/json"]
         if let token = TokenManager.shared.currentAccessToken() {

@@ -313,7 +313,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
         }
     }
     
-    func configure(data: PlaceDetailInfo) {
+    func configure(data: OfficialPlaceDetailInfo) {
         favoriteButton.isSelected = data.isFavorite
         titleLabel.text = data.officialPlaceName
         addressLabel.text = data.officialPlaceName

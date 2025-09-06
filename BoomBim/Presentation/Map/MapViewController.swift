@@ -39,7 +39,8 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private var officialIndex: [String: OfficialPlaceItem] = [:]
     
     // 1) POI 탭 이벤트를 담을 Relay
-    private let poiTapRelay = PublishRelay<Int>()
+    private let userPoiTapRelay = PublishRelay<Int>()
+    private let officialPoiTapRelay = PublishRelay<Int>()
 
     // MARK: - UI
     private lazy var floatingPanel: FloatingPanelController = {
@@ -53,7 +54,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private var officialPlaceListViewController: OfficialPlaceListViewController?
     private var officialPlaceDetailViewController: OfficialPlaceDetailViewController?
     
-    private var userPlaceDetailViewController: OfficialPlaceDetailViewController?
+    private var userPlaceDetailViewController: UserPlaceDetailViewController?
     private var userPlaceListViewController: UserPlaceListViewController?
     
     private let searchTextField: AppSearchTextField = {
@@ -361,7 +362,8 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
             cameraRect: cameraRectSubject.asObservable(),
             zoomLevel:  zoomLevelSubject.asObservable(),
             didTapMyLocation: currentLocationButton.rx.tap.asObservable(), // 사용하는 경우
-            poiTap: poiTapRelay.asSignal()
+            officialPoiTap: officialPoiTapRelay.asSignal(),
+            userPoiTap: userPoiTapRelay.asSignal()
         )
         let output = viewModel.transform(input: input)
 
@@ -393,16 +395,9 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                         guard let self else { return }
                         guard group == .realtime, let model = self.placeIndex[id] else { return }
                         print("onTap ID : \(id)")
-                        // 필요 시 좌표도 모델에서
-                        let coord = CLLocationCoordinate2D(latitude: model.coordinate.latitude, longitude: model.coordinate.longitude)
-                        self.showUserListPanel(with: [model])
+                        
+                        self.userPoiTapRelay.accept(Int(id) ?? 0)
                     })
-                
-//                let items: [(id: String, point: MapPoint)] = places.map {
-//                    (id: String($0.memberPlaceId),
-//                     point: MapPoint(longitude: $0.coordinate.longitude, latitude: $0.coordinate.latitude))
-//                }
-//                self.overlay.setPOIs(for: .realtime, items: items, visual: visual)
                 
                 // 결과가 있으면 목록 패널을 .half로 띄움, 없으면 .tip
                 if places.isEmpty {
@@ -437,11 +432,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                         guard let self else { return }
                         guard group == .official, let model = self.officialIndex[id] else { return }
                         
-                        // 필요 시 좌표도 모델에서
-//                        let coord = CLLocationCoordinate2D(latitude: model.coordinate.latitude, longitude: model.coordinate.longitude)
-//                        self.showOfficialListPanel(with: [model])
-                        // 3) 탭된 id emit
-                        self.poiTapRelay.accept(Int(id) ?? 0)
+                        self.officialPoiTapRelay.accept(Int(id) ?? 0)
                     })
                 
                 // 결과가 있으면 목록 패널을 .half로 띄움, 없으면 .tip
@@ -487,6 +478,12 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         output.officialPlaceDetail
             .emit(onNext: { [weak self] info in
                 self?.showOfficialDetailPanel(with: info)
+            })
+            .disposed(by: disposeBag)
+        
+        output.userPlaceDetail
+            .emit(onNext: { [weak self] info in
+                self?.showUserDetailPanel(with: info)
             })
             .disposed(by: disposeBag)
         
@@ -648,7 +645,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         floatingPanel.move(to: .tip, animated: true)
     }
     
-    private func showOfficialDetailPanel(with places: PlaceDetailInfo) {
+    private func showOfficialDetailPanel(with places: OfficialPlaceDetailInfo) {
         if officialPlaceDetailViewController == nil { officialPlaceDetailViewController = OfficialPlaceDetailViewController() }
         officialPlaceDetailViewController?.configure(data: places)
         if floatingPanel.contentViewController !== officialPlaceDetailViewController {
@@ -667,11 +664,11 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         floatingPanel.move(to: .tip, animated: true)
     }
     
-    private func showUserDetailPanel(with places: PlaceDetailInfo) {
-        if officialPlaceDetailViewController == nil { officialPlaceDetailViewController = OfficialPlaceDetailViewController() }
-        officialPlaceDetailViewController?.configure(data: places)
-        if floatingPanel.contentViewController !== officialPlaceDetailViewController {
-            floatingPanel.set(contentViewController: officialPlaceDetailViewController!)
+    private func showUserDetailPanel(with places: UserPlaceDetailInfo) {
+        if userPlaceDetailViewController == nil { userPlaceDetailViewController = UserPlaceDetailViewController() }
+        userPlaceDetailViewController?.configure(data: places)
+        if floatingPanel.contentViewController !== userPlaceDetailViewController {
+            floatingPanel.set(contentViewController: userPlaceDetailViewController!)
         }
         floatingPanel.move(to: .half, animated: true)
     }

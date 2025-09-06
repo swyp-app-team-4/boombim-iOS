@@ -16,12 +16,14 @@ final class MapViewModel {
         let cameraRect: Observable<ViewportRect>
         let zoomLevel: Observable<Int>
         let didTapMyLocation: Observable<Void> // 현재 위치 버튼
-        let poiTap: Signal<Int>
+        let officialPoiTap: Signal<Int>
+        let userPoiTap: Signal<Int>
     }
     struct Output {
         let places: Observable<[UserPlaceItem]>
+        let userPlaceDetail: Signal<UserPlaceDetailInfo>
         let officialPlace: Observable<[OfficialPlaceItem]>
-        let officialPlaceDetail: Signal<PlaceDetailInfo>
+        let officialPlaceDetail: Signal<OfficialPlaceDetailInfo>
         let myCoordinate: Observable<Coordinate?> // 뷰에서 카메라 이동 등에 활용
         let isLoading: Driver<Bool>
         let error: Signal<String>
@@ -150,11 +152,25 @@ final class MapViewModel {
 //            })
 //            .disposed(by: disposeBag)
         
-        let detail: Signal<PlaceDetailInfo> = input.poiTap
+        let officialDetail: Signal<OfficialPlaceDetailInfo> = input.officialPoiTap
                 .throttle(.milliseconds(500))                 // 빠른 중복 탭 방지
                 .do(onNext: { _ in self.loadingRelay.accept(true) }) // 로딩 ON
-                .flatMapLatest { id -> Signal<PlaceDetailInfo> in
-                    return PlaceService.shared.getPlaceDetail(body: .init(officialPlaceId: id))
+                .flatMapLatest { id -> Signal<OfficialPlaceDetailInfo> in
+                    return PlaceService.shared.getOfficialPlaceDetail(body: .init(officialPlaceId: id))
+                        .map { $0.data }
+                        .asSignal(onErrorRecover: { error in
+                            self.loadingRelay.accept(false)                // 로딩 OFF
+                            self.errorRelay.accept(error.localizedDescription)
+                            return .empty()                           // 실패 시 방출 없음
+                        })
+                }
+                .do(onNext: { _ in self.loadingRelay.accept(false) })
+        
+        let userDetail: Signal<UserPlaceDetailInfo> = input.userPoiTap
+                .throttle(.milliseconds(500))                 // 빠른 중복 탭 방지
+                .do(onNext: { _ in self.loadingRelay.accept(true) }) // 로딩 ON
+                .flatMapLatest { id -> Signal<UserPlaceDetailInfo> in
+                    return PlaceService.shared.getUserPlaceDetail(body: .init(memberPlaceId: id))
                         .map { $0.data }
                         .asSignal(onErrorRecover: { error in
                             self.loadingRelay.accept(false)                // 로딩 OFF
@@ -166,8 +182,9 @@ final class MapViewModel {
         
         return Output(
             places: userPlaces,
+            userPlaceDetail: userDetail,
             officialPlace: officialPlace,
-            officialPlaceDetail: detail,
+            officialPlaceDetail: officialDetail,
             myCoordinate: myCoord,
             isLoading: loadingRelay.asDriver(),
             error: errorRelay.asSignal())
