@@ -29,7 +29,7 @@ struct FavoritePlaceItem: Hashable {
     let image: String
     let title: String
     let update: Int
-    let congestion: CongestionLevel
+    let congestion: CongestionLevel?
 }
 
 struct CongestionRankPlaceItem: Hashable {
@@ -89,5 +89,6 @@ enum HomeItem: Hashable {
     case region([RegionItem])
     case recommendPlace(RecommendPlaceItem)
     case favoritePlace(FavoritePlaceItem)
+    case favoriteEmpty
     case congestionRank(CongestionRankPlaceItem)
 }

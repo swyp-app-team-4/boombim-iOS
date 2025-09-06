@@ -15,7 +15,7 @@ public enum RemoteImage {
 
 extension UIImageView {
 
-    func setProfileImage(from urlString: String?, placeholder: UIImage? = RemoteImage.profilePlaceholder, resizeToViewBounds: Bool = true
+    func setImage(from urlString: String?, placeholder: UIImage? = RemoteImage.profilePlaceholder, resizeToViewBounds: Bool = true
     ) {
         self.image = placeholder
 

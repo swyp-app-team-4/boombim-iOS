@@ -52,6 +52,7 @@ enum NetworkDefine {
         case regionNews
         case nearByOfficialPlace
         case rankByOfficialPlace
+        case favoritePlace
         case officialPlace
         case userPlace
         case registerPostPlace
@@ -67,6 +68,8 @@ enum NetworkDefine {
                 return "official-place/nearby-non-congested"
             case .rankByOfficialPlace:
                 return "official-place/top-congested"
+            case .favoritePlace:
+                return "favorite"
             case .officialPlace:
                 return "official-place"
             case .userPlace:

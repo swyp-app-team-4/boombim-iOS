@@ -41,6 +41,7 @@ final class HomeViewModel {
         let myCoordinate: Observable<Coordinate?>
         let regionNewsItems: Driver<[RegionItem]>
         let nearbyOfficialPlace: Driver<[RecommendPlaceItem]>
+        let favoritePlace: Driver<[FavoritePlaceItem]>
         let rankOfficialPlace: Driver<[CongestionRankPlaceItem]>
         let isLoading: Driver<Bool>
         let isRegionNewsEmpty: Driver<Bool>
@@ -138,6 +139,19 @@ final class HomeViewModel {
             }
             .asDriver(onErrorJustReturn: [RecommendPlaceItem]())
         
+        let favoritePlace: Driver<[FavoritePlaceItem]> = trigger
+            .flatMapLatest {  _ in
+                PlaceService.shared.getFavoritePlace()
+                    .map { $0.data.map(Self.makeItem(_:)) }
+                    .asObservable()
+                    .do(onSubscribe: { loading.accept(true) })
+                    .materialize()
+            }
+            .do(onNext: { _ in loading.accept(false) },
+                onError: { _ in loading.accept(false) })
+            .compactMap { $0.element }
+            .asDriver(onErrorJustReturn: [])
+        
         let rankOfficialPlace: Driver<[CongestionRankPlaceItem]> = trigger
             .flatMapLatest {  _ in
                 PlaceService.shared.getRankOfficialPlace()
@@ -157,6 +171,7 @@ final class HomeViewModel {
             myCoordinate: myCoord,
             regionNewsItems: regionNewsItems,
             nearbyOfficialPlace: nearbyOfficialPlace,
+            favoritePlace: favoritePlace,
             rankOfficialPlace: rankOfficialPlace,
             isLoading: loading.asDriver(),
             isRegionNewsEmpty: isRegionNewsEmpty,
@@ -194,6 +209,23 @@ final class HomeViewModel {
             title: r.officialPlaceName,
             address: r.legalDong,
             congestion: CongestionLevel.init(ko: r.congestionLevelName) ?? .relaxed)
+    }
+    
+    private static func makeItem(_ r: FavoritePlaceInfo) -> FavoritePlaceItem {
+        
+        if let congestion = r.congestionLevelName {
+            return FavoritePlaceItem(
+                image: r.imageUrl ?? "",
+                title: r.name,
+                update: r.todayUpdateCount,
+                congestion: CongestionLevel.init(ko: congestion))
+        } else {
+            return FavoritePlaceItem(
+                image: r.imageUrl ?? "",
+                title: r.name,
+                update: r.todayUpdateCount,
+                congestion: nil)
+        }
     }
     
     private static func makeItem(_ r: RankOfficialPlaceInfo, rank: Int) -> CongestionRankPlaceItem {

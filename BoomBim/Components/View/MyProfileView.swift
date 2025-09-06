@@ -129,7 +129,7 @@ final class MyProfileView: UIView {
         
         nameLabel.text = name
         
-        profieImageView.setProfileImage(from: profile)
+        profieImageView.setImage(from: profile)
         
         voteView.configure(title: "my.label.vote".localized(), count: vote)
         questionView.configure(title: "my.label.question".localized(), count: question)

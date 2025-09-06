@@ -61,7 +61,7 @@ final class ProfileImageView: UIView {
             iv.image = .iconEmptyProfile
             
             if let u = urls[i] {
-                iv.setProfileImage(from: u)
+                iv.setImage(from: u)
             } else {
                 // ✅ URL이 없으면 기본 이미지 유지
                 iv.image = .iconEmptyProfile

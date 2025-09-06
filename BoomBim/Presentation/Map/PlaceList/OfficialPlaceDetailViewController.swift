@@ -329,7 +329,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
         titleLabel.text = data.officialPlaceName
         addressLabel.text = data.officialPlaceName
         congestionImageView.image = CongestionLevel(ko: data.forecasts.first?.congestionLevelName ?? "여유")?.badge // TODO: 현재 forecasts 사용하지 않음,
-        placeImageView.setProfileImage(from: data.imageUrl)
+        placeImageView.setImage(from: data.imageUrl)
         
         let manPercent = data.demographics.filter{ $0.category == DemographicCategory.gender }.filter { $0.subCategory == GenderCategory.MALE.rawValue }.first?.rate ?? 0
         let womanPercent = data.demographics.filter{ $0.category == DemographicCategory.gender }.filter { $0.subCategory == GenderCategory.FEMALE.rawValue }.first?.rate ?? 0

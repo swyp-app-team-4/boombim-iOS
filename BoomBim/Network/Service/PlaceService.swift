@@ -240,6 +240,24 @@ struct NearbyOfficialPlaceInfo: Decodable {
     let distanceMeters: Double
 }
 
+struct FavoritePlaceResponse: Decodable {
+    let code: Int
+    let status: String
+    let message: String
+    let data: [FavoritePlaceInfo]
+}
+
+struct FavoritePlaceInfo: Decodable {
+    let favoriteId: Int
+    let placeId: Int
+    let placeType: String
+    let name: String
+    let imageUrl: String?
+    let congestionLevelName: String?
+    let observedAt: String?
+    let todayUpdateCount: Int
+}
+
 struct RankOfficialPlaceResponse: Decodable {
     let code: Int
     let status: String
@@ -301,6 +319,18 @@ final class PlaceService: Service {
         return requestGet(url, method: .get, header: headers)
     }
     
+    func getFavoritePlace() -> Single<FavoritePlaceResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.favoritePlace.path
+        
+        var headers: HTTPHeaders = ["Accept": "application/json"]
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
+    }
+    
+    // MARK: - 지도 페이지
     func fetchOfficialPlace(body: OfficialPlaceRequest) -> Single<OfficialPlaceListResponse> {
         let url = NetworkDefine.apiHost + NetworkDefine.Place.officialPlace.path
         

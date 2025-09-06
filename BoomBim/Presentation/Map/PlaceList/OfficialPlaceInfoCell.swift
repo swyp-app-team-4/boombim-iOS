@@ -88,7 +88,7 @@ final class OfficialPlaceInfoCell: UITableViewCell {
     func configure(with item: OfficialPlaceItem) {
         titleLabel.text = item.officialPlaceName
         congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
-        placeImageView.setProfileImage(from: item.imageUrl)
+        placeImageView.setImage(from: item.imageUrl)
         favoriteButton.isSelected = item.isFavorite
     }
     

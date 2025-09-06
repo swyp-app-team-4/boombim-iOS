@@ -183,7 +183,7 @@ final class CongestionRankCell: UICollectionViewCell {
     }
 
     func configure(_ item: CongestionRankPlaceItem) {
-        imageView.setProfileImage(from: item.image, placeholder: .dummy)
+        imageView.setImage(from: item.image, placeholder: .dummy)
         rankLabel.text = "\(item.rank)"
         
         if item.rank < 4 {

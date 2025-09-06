@@ -80,11 +80,13 @@ final class HomeViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
         
-        currentFavorites = [
-            .init(image: "", title: "강남역 2번 출구", update: 15, congestion: .busy),
-            .init(image: "", title: "강남역 2번 출구", update: 5, congestion: .normal),
-            .init(image: "", title: "강남역 2번 출구", update: 8, congestion: .relaxed)
-        ]
+        output.favoritePlace
+            .drive(onNext: { [weak self] place in
+                guard let self else { return }
+                self.currentFavorites = place
+                self.applyInitialSnapshot()
+            })
+            .disposed(by: disposeBag)
         
         output.rankOfficialPlace
             .drive(onNext: { [weak self] officialPlace in
@@ -195,6 +197,8 @@ final class HomeViewController: BaseViewController {
             cell.configure(item)
         }
         
+        let favoriteEmptyRegistration = UICollectionView.CellRegistration<FavoriteEmptyCell, String> { cell, _, _ in }
+        
         let congestionRankRegistration = UICollectionView.CellRegistration<CongestionRankCell, CongestionRankPlaceItem> { cell, _, item in
             cell.configure(item)
         }
@@ -225,6 +229,8 @@ final class HomeViewController: BaseViewController {
                 return collectionView.dequeueConfiguredReusableCell(using: recommendRegistration, for: indexPath, item: m)
             case .favoritePlace(let m):
                 return collectionView.dequeueConfiguredReusableCell(using: favoriteRegistration, for: indexPath, item: m)
+            case .favoriteEmpty:
+                return collectionView.dequeueConfiguredReusableCell(using: favoriteEmptyRegistration, for: indexPath, item: "empty")
             case .congestionRank(let m):
                 return collectionView.dequeueConfiguredReusableCell(using: congestionRankRegistration, for: indexPath, item: m)
             }
@@ -258,10 +264,20 @@ final class HomeViewController: BaseViewController {
         snapshot.appendSections(HomeSection.allCases)
         snapshot.appendItems([.region(currentRegions)], toSection: .region)
         snapshot.appendItems(currentRecommend.map { .recommendPlace($0) }, toSection: .recommendPlace)
-        snapshot.appendItems(currentFavorites.map { .favoritePlace($0) }, toSection: .favoritePlace)
+        
+//        snapshot.appendItems(currentFavorites.map { .favoritePlace($0) }, toSection: .favoritePlace)
+        if currentFavorites.isEmpty {
+            snapshot.appendItems([.favoriteEmpty], toSection: .favoritePlace)   // ← 여기
+        } else {
+            snapshot.appendItems(currentFavorites.map { .favoritePlace($0) }, toSection: .favoritePlace)
+        }
+        
         snapshot.appendItems(currentCongestionRanks.map { .congestionRank($0) }, toSection: .congestionRank)
 
         dataSource.apply(snapshot, animatingDifferences: true)
+        
+        // 즐겨찾기 섹션 레이아웃도 모드에 따라 바뀌게
+        collectionView.setCollectionViewLayout(createLayout(), animated: false)
     }
     
     // MARK: Layout
@@ -274,7 +290,7 @@ final class HomeViewController: BaseViewController {
             case .recommendPlace:
                 return Self.makeRecommendPlaceSection(env: env, inset: true)
             case .favoritePlace:
-                return Self.makeFavoritePlaceSection(env: env)
+                return Self.makeFavoritePlaceSection(env: env, isEmpty: self?.currentFavorites.isEmpty ?? true)
             case .congestionRank:
                 return Self.makeCongestionRankSection(env: env)
             }
@@ -345,22 +361,54 @@ final class HomeViewController: BaseViewController {
         return section
     }
     
-    private static func makeFavoritePlaceSection(env: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        
-        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(180), heightDimension: .estimated(230))
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-        
-        let section = NSCollectionLayoutSection(group: group)
-        section.orthogonalScrollingBehavior = .continuous
-        
-        section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
-        section.interGroupSpacing = 12
-        
-        section.boundarySupplementaryItems = [self.sectionHeader()]
-        
-        return section
+//    private static func makeFavoritePlaceSection(env: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+//        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
+//        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+//        
+//        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(180), heightDimension: .estimated(230))
+//        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+//        
+//        let section = NSCollectionLayoutSection(group: group)
+//        section.orthogonalScrollingBehavior = .continuous
+//        
+//        section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
+//        section.interGroupSpacing = 12
+//        
+//        section.boundarySupplementaryItems = [self.sectionHeader()]
+//        
+//        return section
+//    }
+    private static func makeFavoritePlaceSection(env: NSCollectionLayoutEnvironment, isEmpty: Bool) -> NSCollectionLayoutSection {
+        if isEmpty {
+            // 플레이스홀더: 한 장, 가로 전체
+            let item = NSCollectionLayoutItem(
+                layoutSize: .init(widthDimension: .fractionalWidth(1.0),
+                                  heightDimension: .estimated(92))
+            )
+            let group = NSCollectionLayoutGroup.horizontal(
+                layoutSize: .init(widthDimension: .fractionalWidth(1.0),
+                                  heightDimension: .estimated(92)),
+                subitems: [item]
+            )
+            let section = NSCollectionLayoutSection(group: group)
+            section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
+            section.boundarySupplementaryItems = [self.sectionHeader()]
+            return section
+        } else {
+            // 기존 가로 스크롤 카드들
+            let item = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .fractionalWidth(1.0),
+                                                                heightDimension: .fractionalHeight(1.0)))
+            let group = NSCollectionLayoutGroup.horizontal(
+                layoutSize: .init(widthDimension: .absolute(180), heightDimension: .estimated(230)),
+                subitems: [item]
+            )
+            let section = NSCollectionLayoutSection(group: group)
+            section.orthogonalScrollingBehavior = .continuous
+            section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
+            section.interGroupSpacing = 12
+            section.boundarySupplementaryItems = [self.sectionHeader()]
+            return section
+        }
     }
     
     private static func makeCongestionRankSection(env: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
