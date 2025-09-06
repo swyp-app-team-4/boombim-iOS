@@ -218,10 +218,33 @@ struct Forecast: Decodable {
     let forecastPopulationMax: Int
 }
 
+struct NearbyOfficialPlaceRequest: Encodable {
+    let latitude: Double
+    let longitude: Double
+}
+
+struct NearbyOfficialPlaceResponse: Decodable {
+    let code: Int
+    let status: String
+    let message: String
+    let data: [NearbyOfficialPlaceInfo]
+}
+
+struct NearbyOfficialPlaceInfo: Decodable {
+    let officialPlaceId: Int
+    let officialPlaceName: String
+    let legalDong: String
+    let imageUrl: String
+    let congestionLevelName: String
+    let observedAt: String
+    let distanceMeters: Double
+}
+
 final class PlaceService: Service {
     static let shared = PlaceService()
     override private init() {}
     
+    // MARK: - 홈화면 정보
     func getRegionNews() -> Single<[RegionNewsResponse]> {
         let url = NetworkDefine.apiHost + NetworkDefine.Place.regionNews.path
         
@@ -237,6 +260,18 @@ final class PlaceService: Service {
         let dateString = dateFormatter.string(from: Date())
         
         return requestGet(url, method: .get, header: headers, body: RegionNewsRequest(date: dateString))
+    }
+    
+    func getNearbyOfficialPlace(body: NearbyOfficialPlaceRequest) -> Single<NearbyOfficialPlaceResponse> {
+//        let url = NetworkDefine.apiHost + NetworkDefine.Place.nearByOfficialPlace(latitude: body.latitude, longitude: body.longitude).path
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.nearByOfficialPlace.path
+        
+        var headers: HTTPHeaders = ["Accept": "application/json"]
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers, body: body)
     }
     
     func fetchOfficialPlace(body: OfficialPlaceRequest) -> Single<OfficialPlaceListResponse> {

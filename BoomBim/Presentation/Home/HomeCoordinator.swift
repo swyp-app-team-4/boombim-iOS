@@ -17,7 +17,8 @@ final class HomeCoordinator: Coordinator {
     }
 
     func start() {
-        let viewModel = HomeViewModel()
+        let locationRepo = LocationRepository()
+        let viewModel = HomeViewModel(locationRepo: locationRepo)
         let viewController = HomeViewController(viewModel: viewModel)
         
         viewModel.goToCongestionReportView = { [weak self] in

@@ -50,6 +50,8 @@ enum NetworkDefine {
     
     enum Place {
         case regionNews
+        case nearByOfficialPlace
+//        case nearByOfficialPlace(latitude: Double, longitude: Double)
         case officialPlace
         case userPlace
         case registerPostPlace
@@ -61,6 +63,10 @@ enum NetworkDefine {
             switch self {
             case .regionNews:
                 return "api/region"
+//            case .nearByOfficialPlace(let latitude, let longitude):
+//                return "/official-place/nearby-non-congested?latitude=\(latitude)&longitude=\(longitude)"
+            case .nearByOfficialPlace:
+                return "official-place/nearby-non-congested"
             case .officialPlace:
                 return "official-place"
             case .userPlace:

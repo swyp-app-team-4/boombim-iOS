@@ -34,8 +34,7 @@ final class HomeViewController: BaseViewController {
     }()
     
     private var currentRegions: [RegionItem] = []
-    private var currentRecommend1: [RecommendPlaceItem] = []
-    private var currentRecommend2: [RecommendPlaceItem] = []
+    private var currentRecommend: [RecommendPlaceItem] = []
     private var currentFavorites: [FavoritePlaceItem] = []
     private var currentCongestionRanks: [CongestionRankPlaceItem] = []
     
@@ -59,7 +58,7 @@ final class HomeViewController: BaseViewController {
     // MARK: - Binding
     private func bind() {
         let output = viewModel.transform(.init(
-            appear: rx.methodInvoked(#selector(UIViewController.viewDidAppear(_:)))
+            appear: rx.methodInvoked(#selector(UIViewController.viewWillAppear(_:)))
                 .map { _ in () }//,
 //            pullToRefresh: refreshControl.rx.controlEvent(.valueChanged).asSignal(),
 //            retryTap: retryButton.rx.tap.asSignal()
@@ -73,27 +72,25 @@ final class HomeViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
         
-        currentRecommend1 = [
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .normal),
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .busy),
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .crowded)
-        ]
-        currentRecommend2 = [
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .normal),
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .busy),
-            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: .crowded)
-        ]
+        output.nearbyOfficialPlace
+            .drive(onNext: { [weak self] officialPlace in
+                guard let self else { return }
+                self.currentRecommend = officialPlace
+                self.applyInitialSnapshot()
+            })
+            .disposed(by: disposeBag)
+        
         currentFavorites = [
-            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .busy),
-            .init(image: .dummy, title: "강남역 2번 출구", update: 5, congestion: .normal),
-            .init(image: .dummy, title: "강남역 2번 출구", update: 8, congestion: .relaxed)
+            .init(image: "", title: "강남역 2번 출구", update: 15, congestion: .busy),
+            .init(image: "", title: "강남역 2번 출구", update: 5, congestion: .normal),
+            .init(image: "", title: "강남역 2번 출구", update: 8, congestion: .relaxed)
         ]
         currentCongestionRanks = [
-            .init(rank: 1, image: .dummy, title: "서울역", address: "서울 강남구", update: 3,  congestion: .crowded),
-            .init(rank: 2, image: .dummy, title: "서울역", address: "서울 강남구", update: 12, congestion: .busy),
-            .init(rank: 3, image: .dummy, title: "서울역", address: "서울 강남구", update: 10, congestion: .busy),
-            .init(rank: 4, image: .dummy, title: "서울역", address: "서울 강남구", update: 6,  congestion: .normal),
-            .init(rank: 5, image: .dummy, title: "서울역", address: "서울 강남구", update: 15, congestion: .relaxed)
+            .init(rank: 1, image: "", title: "서울역", address: "서울 강남구", update: 3,  congestion: .crowded),
+            .init(rank: 2, image: "", title: "서울역", address: "서울 강남구", update: 12, congestion: .busy),
+            .init(rank: 3, image: "", title: "서울역", address: "서울 강남구", update: 10, congestion: .busy),
+            .init(rank: 4, image: "", title: "서울역", address: "서울 강남구", update: 6,  congestion: .normal),
+            .init(rank: 5, image: "", title: "서울역", address: "서울 강남구", update: 15, congestion: .relaxed)
         ]
         
         // 초기 한 번 전체 스냅샷 적용(Region은 비어있을 수 있음)
@@ -256,44 +253,10 @@ final class HomeViewController: BaseViewController {
     }
     
     private func applyInitialSnapshot() {
-        // TODO: Replace with ViewModel outputs
-//        let regions: [RegionItem] = [
-//            .init(iconImage: .iconTaegeuk, organization: "국토 교통부", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다."),
-//            .init(iconImage: .iconTaegeuk, organization: "식약처", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다."),
-//            .init(iconImage: .iconTaegeuk, organization: "소방처", title: "강남역 집회 예정", description: "2025.10.01일 오후 2시부터 4시까지 강남역 일대 교통 혼잡이 예상됩니다.")
-//        ]
-//        
-//        let imageTexts1: [RecommendPlaceItem] = [
-//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.normal),
-//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.busy),
-//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.crowded)
-//        ]
-//        
-//        let imageTexts2: [RecommendPlaceItem] = [
-//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.normal),
-//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.busy),
-//            .init(image: .dummy, title: "노들섬", address: "서울 강남구", congestion: CongestionLevel.crowded)
-//        ]
-//        
-//        let favorites: [FavoritePlaceItem] = [
-//            .init(image: .dummy, title: "강남역 2번 출구", update: 15, congestion: .busy),
-//            .init(image: .dummy, title: "강남역 2번 출구", update: 5, congestion: .normal),
-//            .init(image: .dummy, title: "강남역 2번 출구", update: 8, congestion: .relaxed)
-//        ]
-//        
-//        let congestionRank: [CongestionRankPlaceItem] = [
-//            .init(rank: 1, image: .dummy, title: "서울역", address: "서울 강남구", update: 3, congestion: .crowded),
-//            .init(rank: 2, image: .dummy, title: "서울역", address: "서울 강남구", update: 12, congestion: .busy),
-//            .init(rank: 3, image: .dummy, title: "서울역", address: "서울 강남구", update: 10, congestion: .busy),
-//            .init(rank: 4, image: .dummy, title: "서울역", address: "서울 강남구", update: 6, congestion: .normal),
-//            .init(rank: 5, image: .dummy, title: "서울역", address: "서울 강남구", update: 15, congestion: .relaxed),
-//        ]
-        
         var snapshot = NSDiffableDataSourceSnapshot<HomeSection, HomeItem>()
         snapshot.appendSections(HomeSection.allCases)
         snapshot.appendItems([.region(currentRegions)], toSection: .region)
-        snapshot.appendItems(currentRecommend1.map { .recommendPlace($0) }, toSection: .recommendPlace1)
-        snapshot.appendItems(currentRecommend2.map { .recommendPlace($0) }, toSection: .recommendPlace2)
+        snapshot.appendItems(currentRecommend.map { .recommendPlace($0) }, toSection: .recommendPlace)
         snapshot.appendItems(currentFavorites.map { .favoritePlace($0) }, toSection: .favoritePlace)
         snapshot.appendItems(currentCongestionRanks.map { .congestionRank($0) }, toSection: .congestionRank)
 
@@ -307,10 +270,8 @@ final class HomeViewController: BaseViewController {
             switch sectionKind {
             case .region:
                 return Self.makeRegionSection(env: env)
-            case .recommendPlace1:
+            case .recommendPlace:
                 return Self.makeRecommendPlaceSection(env: env, inset: true)
-            case .recommendPlace2:
-                return Self.makeRecommendPlaceSection(env: env, inset: false)
             case .favoritePlace:
                 return Self.makeFavoritePlaceSection(env: env)
             case .congestionRank:
@@ -339,23 +300,45 @@ final class HomeViewController: BaseViewController {
         return section
     }
     
-    private static func makeRecommendPlaceSection(env: NSCollectionLayoutEnvironment, inset: Bool) -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+    private static func makeRecommendPlaceSection(env: NSCollectionLayoutEnvironment, inset: Bool = true) -> NSCollectionLayoutSection {
         
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.8), heightDimension: .absolute(230))
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+        // 1) 카드(셀) 한 장 = 열(column) 안에서의 "행" 하나
+        //    열 그룹 높이의 1/2씩 차지하도록 설정 (총 2행)
+        let item = NSCollectionLayoutItem(
+            layoutSize: .init(widthDimension: .fractionalWidth(1.0),
+                              heightDimension: .fractionalHeight(0.5))
+        )
+        // 행 간 간격을 주고 싶다면 item에 인셋을 주세요.
+        item.contentInsets = .init(top: 6, leading: 0, bottom: 6, trailing: 0)
         
-        let section = NSCollectionLayoutSection(group: group)
-        section.orthogonalScrollingBehavior = .continuous
+        // 2) "열(column) 그룹)" = 세로로 2개 아이템을 쌓음
+        let groupHeight: CGFloat = 400        // 전체 높이 (디자인에 맞게 조정)
+        let columnWidthRatio: CGFloat = 0.8   // 화면 폭 대비 열 하나의 너비 비율 (0.45 ~ 0.9 사이로 조절하면 보이는 칼럼 수가 달라짐)
+        
+        let columnGroup = NSCollectionLayoutGroup.vertical(
+            layoutSize: .init(
+                widthDimension: .absolute(env.container.effectiveContentSize.width * columnWidthRatio),
+                heightDimension: .absolute(groupHeight)
+            ),
+            subitem: item,
+            count: 2
+        )
+        columnGroup.interItemSpacing = .fixed(16) // 두 행 사이 간격
+        
+        // 3) 섹션: 열 그룹을 "가로로" 나열 (orthogonalScrolling)
+        let section = NSCollectionLayoutSection(group: columnGroup)
+        section.orthogonalScrollingBehavior = .continuous // .continuousGroupLeadingBoundary / .groupPaging 등 취향대로
+        
         if inset {
             section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
         } else {
             section.contentInsets = .init(top: 0, leading: 16, bottom: 0, trailing: 16)
         }
         
+        // 열(=그룹) 사이 가로 간격
         section.interGroupSpacing = 14
         
+        // 헤더가 있다면 그대로 유지
         section.boundarySupplementaryItems = [self.sectionHeader()]
         
         return section

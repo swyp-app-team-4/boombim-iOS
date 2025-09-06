@@ -89,12 +89,12 @@ final class FavoriteViewController: UIViewController {
     
     private func applySnapshot() {
         let favoriteItems: [FavoritePlaceItem] = [
-            .init(image: .dummy, title: "롯데타워", update: 10, congestion: .busy),
-            .init(image: .dummy, title: "롯데타워", update: 10, congestion: .crowded),
-            .init(image: .dummy, title: "롯데타워", update: 10, congestion: .busy),
-            .init(image: .dummy, title: "롯데타워", update: 10, congestion: .normal),
-            .init(image: .dummy, title: "롯데타워", update: 10, congestion: .relaxed),
-            .init(image: .dummy, title: "롯데타워", update: 10, congestion: .crowded),
+            .init(image: "", title: "롯데타워", update: 10, congestion: .busy),
+            .init(image: "", title: "롯데타워", update: 10, congestion: .crowded),
+            .init(image: "", title: "롯데타워", update: 10, congestion: .busy),
+            .init(image: "", title: "롯데타워", update: 10, congestion: .normal),
+            .init(image: "", title: "롯데타워", update: 10, congestion: .relaxed),
+            .init(image: "", title: "롯데타워", update: 10, congestion: .crowded),
         ]
         
         var snapshot = NSDiffableDataSourceSnapshot<FavoriteSection, FavoritePlaceItem>()

@@ -40,8 +40,8 @@ final class RecommendPlaceCell: UICollectionViewCell {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.alignment = .fill
-        stackView.distribution = .fillProportionally
-        stackView.spacing = 6
+        stackView.distribution = .fill
+        stackView.spacing = 2
         
         return stackView
     }()
@@ -90,7 +90,9 @@ final class RecommendPlaceCell: UICollectionViewCell {
             stackView.topAnchor.constraint(equalTo: contentView.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            
+            imageView.heightAnchor.constraint(equalToConstant: 130)
         ])
     }
     
@@ -114,7 +116,7 @@ final class RecommendPlaceCell: UICollectionViewCell {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func configure(_ item: RecommendPlaceItem) {
-        imageView.image = item.image
+        imageView.setProfileImage(from: item.image, placeholder: .dummy)
         congestionImageView.image = item.congestion.badge
         title.text = item.title
         address.text = item.address

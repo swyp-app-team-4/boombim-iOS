@@ -8,6 +8,7 @@
 import Foundation
 import RxSwift
 import RxCocoa
+import CoreLocation
 
 final class HomeViewModel {
     var goToCongestionReportView: (() -> Void)?
@@ -34,32 +35,67 @@ final class HomeViewModel {
     
     struct Input {
         let appear: Observable<Void>        // 최초 1회
-//        let pullToRefresh: Signal<Void>     // 당겨서 새로고침
-//        let retryTap: Signal<Void>          // 에러 후 재시도 버튼
     }
     
     struct Output {
+        let myCoordinate: Observable<Coordinate?>
         let regionNewsItems: Driver<[RegionItem]>
+        let nearbyOfficialPlace: Driver<[RecommendPlaceItem]>
         let isLoading: Driver<Bool>
         let isRegionNewsEmpty: Driver<Bool>
         let isEmpty: Driver<Bool>
         let errorMessage: Signal<String>
     }
     
+    private let locationRepo: LocationRepositoryType
+    
+    init(locationRepo: LocationRepositoryType) {
+        self.locationRepo = locationRepo
+    }
+    
     func transform(_ input: Input) -> Output {
-        // 1) 트리거: 첫 진입 1회 + 당겨서새로고침 + 재시도
+        // 1) 권한 요청(미결정이면)
+        locationRepo.requestAuthorizationIfNeeded()
+        // 초기 프리워밍(필요 시)
+        let authD: Driver<CLAuthorizationStatus> = locationRepo.authorization
+            .asDriver(onErrorDriveWith: .empty())
+        
+        let isAuthorizedD: Driver<Bool> = authD
+            .map { status in
+                switch status {
+                case .authorizedAlways, .authorizedWhenInUse: return true
+                default: return false
+                }
+            }
+            .distinctUntilChanged()
+        
+        // 2) 권한이 허용된 "뒤에만" 프리워밍(캐시/메모리/원샷)
+        isAuthorizedD
+            .filter { $0 }
+            .asObservable()
+            .take(1)
+            .asObservable()
+            .flatMapLatest { [locationRepo] _ in
+                locationRepo.getCoordinate(ttl: 180)
+                    .asObservable()
+                    .materialize() // 오류를 삼키며 로그용으로만
+            }
+            .subscribe(onNext: { event in
+                if case .error(let e) = event { print("⚠️ prewarm error:", e) }
+            })
+            .disposed(by: disposeBag)
+        
+        let myCoord = Observable
+            .merge(locationRepo.coordinate)
+            .share(replay: 1, scope: .whileConnected)
+        
         let trigger = Observable.merge(
-            input.appear.take(1)//,
-//            input.pullToRefresh.asObservable(),
-//            input.retryTap.asObservable()
-        )
+            input.appear.take(1))
             .share()
         
-        // 2) 로딩/에러 상태
         let loading = BehaviorRelay<Bool>(value: false)
         let errorRelay = PublishRelay<String>()
         
-        // 3) 데이터 요청
         let response = trigger
             .flatMapLatest {  _ -> Observable<Event<[RegionNewsResponse]>> in
                 PlaceService.shared.getRegionNews()
@@ -71,7 +107,6 @@ final class HomeViewModel {
                 onError: { _ in loading.accept(false) })
             .share()
         
-        // 4) 성공/실패 분기
         let values = response.compactMap { $0.element }
         let errors = response.compactMap { $0.error }
         
@@ -89,8 +124,23 @@ final class HomeViewModel {
         
         let isRegionNewsEmpty = regionNewsItems.map { $0.isEmpty }
         
+        let nearbyOfficialPlace: Driver<[RecommendPlaceItem]> = myCoord
+            .compactMap { $0 }
+            .take(1)
+            .flatMapLatest { coord in
+                let requestBody: NearbyOfficialPlaceRequest = .init(latitude: coord.latitude, longitude: coord.longitude)
+                
+                return PlaceService.shared.getNearbyOfficialPlace(body: requestBody)
+                    .map { $0.data.map(Self.makeItem(_:)) }
+                    .asObservable()
+                    .catchAndReturn([])
+            }
+            .asDriver(onErrorJustReturn: [RecommendPlaceItem]())
+        
         return Output(
+            myCoordinate: myCoord,
             regionNewsItems: regionNewsItems,
+            nearbyOfficialPlace: nearbyOfficialPlace,
             isLoading: loading.asDriver(),
             isRegionNewsEmpty: isRegionNewsEmpty,
             isEmpty: isRegionNewsEmpty,
@@ -118,6 +168,15 @@ final class HomeViewModel {
                           organization: "서울경찰청 제공",
                           title: title,
                           description: desc)
+    }
+    
+    private static func makeItem(_ r: NearbyOfficialPlaceInfo) -> RecommendPlaceItem {
+        
+        return RecommendPlaceItem(
+            image: r.imageUrl,
+            title: r.officialPlaceName,
+            address: r.legalDong,
+            congestion: CongestionLevel.init(ko: r.congestionLevelName) ?? .relaxed)
     }
     
     private static func parse(_ format: String, _ str: String) -> Date? {

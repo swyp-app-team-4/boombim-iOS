@@ -25,7 +25,7 @@ final class SearchPlaceViewModel {
     }
     struct Output {
         let places: Observable<[Place]>
-        let myCoordinate: Observable<Coordinate?> // 뷰에서 카메라 이동 등에 활용
+        let myCoordinate: Observable<Coordinate?>
         let results: Observable<[Place]>
     }
     

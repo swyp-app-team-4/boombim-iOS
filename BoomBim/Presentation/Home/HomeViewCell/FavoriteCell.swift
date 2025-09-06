@@ -116,7 +116,7 @@ final class FavoriteCell: UICollectionViewCell {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func configure(_ item: FavoritePlaceItem) {
-        imageView.image = item.image
+        imageView.setProfileImage(from: item.image, placeholder: .dummy)
         congestionImageView.image = item.congestion.badge
         title.text = item.title
         update.text = "오늘 \(item.update)명 업데이트"
