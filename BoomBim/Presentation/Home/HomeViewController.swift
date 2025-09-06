@@ -85,13 +85,14 @@ final class HomeViewController: BaseViewController {
             .init(image: "", title: "강남역 2번 출구", update: 5, congestion: .normal),
             .init(image: "", title: "강남역 2번 출구", update: 8, congestion: .relaxed)
         ]
-        currentCongestionRanks = [
-            .init(rank: 1, image: "", title: "서울역", address: "서울 강남구", update: 3,  congestion: .crowded),
-            .init(rank: 2, image: "", title: "서울역", address: "서울 강남구", update: 12, congestion: .busy),
-            .init(rank: 3, image: "", title: "서울역", address: "서울 강남구", update: 10, congestion: .busy),
-            .init(rank: 4, image: "", title: "서울역", address: "서울 강남구", update: 6,  congestion: .normal),
-            .init(rank: 5, image: "", title: "서울역", address: "서울 강남구", update: 15, congestion: .relaxed)
-        ]
+        
+        output.rankOfficialPlace
+            .drive(onNext: { [weak self] officialPlace in
+                guard let self else { return }
+                self.currentCongestionRanks = officialPlace
+                self.applyInitialSnapshot()
+            })
+            .disposed(by: disposeBag)
         
         // 초기 한 번 전체 스냅샷 적용(Region은 비어있을 수 있음)
         applyInitialSnapshot()

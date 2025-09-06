@@ -41,6 +41,7 @@ final class HomeViewModel {
         let myCoordinate: Observable<Coordinate?>
         let regionNewsItems: Driver<[RegionItem]>
         let nearbyOfficialPlace: Driver<[RecommendPlaceItem]>
+        let rankOfficialPlace: Driver<[CongestionRankPlaceItem]>
         let isLoading: Driver<Bool>
         let isRegionNewsEmpty: Driver<Bool>
         let isEmpty: Driver<Bool>
@@ -137,10 +138,26 @@ final class HomeViewModel {
             }
             .asDriver(onErrorJustReturn: [RecommendPlaceItem]())
         
+        let rankOfficialPlace: Driver<[CongestionRankPlaceItem]> = trigger
+            .flatMapLatest {  _ in
+                PlaceService.shared.getRankOfficialPlace()
+                    .map { $0.data.enumerated().map { index, place in
+                        Self.makeItem(place, rank: index)
+                    } }
+                    .asObservable()
+                    .do(onSubscribe: { loading.accept(true) })
+                    .materialize()
+            }
+            .do(onNext: { _ in loading.accept(false) },
+                onError: { _ in loading.accept(false) })
+            .compactMap { $0.element }
+            .asDriver(onErrorJustReturn: [])
+        
         return Output(
             myCoordinate: myCoord,
             regionNewsItems: regionNewsItems,
             nearbyOfficialPlace: nearbyOfficialPlace,
+            rankOfficialPlace: rankOfficialPlace,
             isLoading: loading.asDriver(),
             isRegionNewsEmpty: isRegionNewsEmpty,
             isEmpty: isRegionNewsEmpty,
@@ -176,6 +193,17 @@ final class HomeViewModel {
             image: r.imageUrl,
             title: r.officialPlaceName,
             address: r.legalDong,
+            congestion: CongestionLevel.init(ko: r.congestionLevelName) ?? .relaxed)
+    }
+    
+    private static func makeItem(_ r: RankOfficialPlaceInfo, rank: Int) -> CongestionRankPlaceItem {
+        
+        return CongestionRankPlaceItem(
+            rank: rank + 1,
+            image: r.imageUrl,
+            title: r.officialPlaceName,
+            address: r.legalDong,
+            update: 0,
             congestion: CongestionLevel.init(ko: r.congestionLevelName) ?? .relaxed)
     }
     

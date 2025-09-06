@@ -96,6 +96,8 @@ final class CongestionRankCell: UICollectionViewCell {
         return imageView
     }()
     
+    private let spacer = UIView()
+    
     private let update: UILabel = {
         let label = UILabel()
         label.font = Typography.Caption.regular.font
@@ -164,10 +166,20 @@ final class CongestionRankCell: UICollectionViewCell {
             textStackView.addArrangedSubview(view)
         }
         
-        [congestionImageView, update].forEach { view in
+        [congestionImageView, spacer, update].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             congestionStackView.addArrangedSubview(view)
         }
+        
+        // 스페이서가 남는 공간을 다 먹도록
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        spacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        
+        // 아이콘/라벨은 위치 고정(늘지/줄지 않게)
+        congestionImageView.setContentHuggingPriority(.required, for: .horizontal)
+        congestionImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
+        update.setContentHuggingPriority(.required, for: .horizontal)
+        update.setContentCompressionResistancePriority(.required, for: .horizontal)
     }
 
     func configure(_ item: CongestionRankPlaceItem) {

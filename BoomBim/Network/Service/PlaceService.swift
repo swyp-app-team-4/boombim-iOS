@@ -240,6 +240,23 @@ struct NearbyOfficialPlaceInfo: Decodable {
     let distanceMeters: Double
 }
 
+struct RankOfficialPlaceResponse: Decodable {
+    let code: Int
+    let status: String
+    let message: String
+    let data: [RankOfficialPlaceInfo]
+}
+
+struct RankOfficialPlaceInfo: Decodable {
+    let officialPlaceId: Int
+    let officialPlaceName: String
+    let legalDong: String
+    let imageUrl: String
+    let congestionLevelName: String
+    let densityPerM2: Double
+    let observedAt: String
+}
+
 final class PlaceService: Service {
     static let shared = PlaceService()
     override private init() {}
@@ -263,7 +280,6 @@ final class PlaceService: Service {
     }
     
     func getNearbyOfficialPlace(body: NearbyOfficialPlaceRequest) -> Single<NearbyOfficialPlaceResponse> {
-//        let url = NetworkDefine.apiHost + NetworkDefine.Place.nearByOfficialPlace(latitude: body.latitude, longitude: body.longitude).path
         let url = NetworkDefine.apiHost + NetworkDefine.Place.nearByOfficialPlace.path
         
         var headers: HTTPHeaders = ["Accept": "application/json"]
@@ -272,6 +288,17 @@ final class PlaceService: Service {
         }
         
         return requestGet(url, method: .get, header: headers, body: body)
+    }
+    
+    func getRankOfficialPlace() -> Single<RankOfficialPlaceResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.rankByOfficialPlace.path
+        
+        var headers: HTTPHeaders = ["Accept": "application/json"]
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
     }
     
     func fetchOfficialPlace(body: OfficialPlaceRequest) -> Single<OfficialPlaceListResponse> {
