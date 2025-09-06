@@ -39,13 +39,7 @@ struct QuestionItem: Hashable {
     let isQuesting: Bool
 }
 
-struct MyFavorite: Decodable {
-    let profile: String
-    let posName: String
-    let placeId: Int
-    let answerType: String
-    let peopleCnt: String
-}
+typealias MyFavorite = FavoritePlaceInfo
 
 struct AnswerInfo: Decodable {
     let voteId: Int

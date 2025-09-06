@@ -217,13 +217,13 @@ final class HomeViewModel {
             return FavoritePlaceItem(
                 image: r.imageUrl ?? "",
                 title: r.name,
-                update: r.todayUpdateCount,
+                update: 0,
                 congestion: CongestionLevel.init(ko: congestion))
         } else {
             return FavoritePlaceItem(
                 image: r.imageUrl ?? "",
                 title: r.name,
-                update: r.todayUpdateCount,
+                update: 0,
                 congestion: nil)
         }
     }

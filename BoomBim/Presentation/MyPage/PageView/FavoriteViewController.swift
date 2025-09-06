@@ -6,8 +6,41 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class FavoriteViewController: UIViewController {
+    private let viewModel: FavoriteViewModel
+    private let disposeBag = DisposeBag()
+    
+    private let emptyStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.distribution = .fill
+        stackView.alignment = .center
+        stackView.spacing = 16
+        
+        return stackView
+    }()
+    
+    private let emptyIllustrationImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = .illustrationNotification
+        imageView.contentMode = .scaleAspectFit
+        
+        return imageView
+    }()
+    
+    private let emptyTitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body02.medium.font
+        label.textColor = .grayScale10
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.text = "질문이 없습니다"
+        
+        return label
+    }()
     
     private var dataSource: UICollectionViewDiffableDataSource<FavoriteSection, FavoritePlaceItem>!
     private lazy var collectionView: UICollectionView = {
@@ -19,10 +52,60 @@ final class FavoriteViewController: UIViewController {
         return collectionView
     }()
     
+    init(viewModel: FavoriteViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupView()
+        bind()
+    }
+    
+    private func bind() {
+        viewModel.output.items
+                .map { $0.isEmpty }
+                .drive(onNext: { [weak self] isEmpty in
+                    guard let self else { return }
+                    self.emptyStackView.isHidden = !isEmpty
+                    self.collectionView.isHidden = isEmpty
+                })
+                .disposed(by: disposeBag)
+        
+        viewModel.output.items
+            .map { $0.map(Self.makeItem(_:)) }
+            .drive(onNext: { [weak self] items in
+                self?.applySnapshot(items)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private static func makeItem(_ f: MyFavorite) -> FavoritePlaceItem {
+        if let congestion = f.congestionLevelName {
+            return FavoritePlaceItem(
+                image: f.imageUrl ?? "",
+                title: f.name,
+                update: minutesAgo(from: f.observedAt),
+                congestion: CongestionLevel.init(ko: congestion))
+        } else {
+            return FavoritePlaceItem(
+                image: f.imageUrl ?? "",
+                title: f.name,
+                update: minutesAgo(from: f.observedAt),
+                congestion: nil)
+        }
+    }
+
+    // updatedAt(ISO8601 등) → 'N분 전' 숫자 구하기 (필요 시)
+    private static func minutesAgo(from iso: String?) -> Int {
+        guard let iso, let date = ISO8601DateFormatter().date(from: iso) else { return 0 }
+        return max(0, Int(Date().timeIntervalSince(date) / 60))
     }
     
     private func setupView() {
@@ -30,8 +113,24 @@ final class FavoriteViewController: UIViewController {
         
         configureCollectionView()
         configureDataSource()
+        configureEmptyStackView()
         
-        applySnapshot()
+//        applySnapshot()
+    }
+    
+    private func configureEmptyStackView() {
+        [emptyIllustrationImageView, emptyTitleLabel].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            emptyStackView.addArrangedSubview(view)
+        }
+        
+        emptyStackView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(emptyStackView)
+        
+        NSLayoutConstraint.activate([
+            emptyStackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 50),
+            emptyStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
     }
     
     private func configureCollectionView() {
@@ -60,6 +159,7 @@ final class FavoriteViewController: UIViewController {
             return cell
         }
     }
+    
     private func createLayout() -> UICollectionViewLayout {
         let columns = 2
         let aspect: CGFloat = 1.3
@@ -87,19 +187,26 @@ final class FavoriteViewController: UIViewController {
         return UICollectionViewCompositionalLayout(section: section)
     }
     
-    private func applySnapshot() {
-        let favoriteItems: [FavoritePlaceItem] = [
-            .init(image: "", title: "롯데타워", update: 10, congestion: .busy),
-            .init(image: "", title: "롯데타워", update: 10, congestion: .crowded),
-            .init(image: "", title: "롯데타워", update: 10, congestion: .busy),
-            .init(image: "", title: "롯데타워", update: 10, congestion: .normal),
-            .init(image: "", title: "롯데타워", update: 10, congestion: .relaxed),
-            .init(image: "", title: "롯데타워", update: 10, congestion: .crowded),
-        ]
-        
+//    private func applySnapshot() {
+//        let favoriteItems: [FavoritePlaceItem] = [
+//            .init(image: "", title: "롯데타워", update: 10, congestion: .busy),
+//            .init(image: "", title: "롯데타워", update: 10, congestion: .crowded),
+//            .init(image: "", title: "롯데타워", update: 10, congestion: .busy),
+//            .init(image: "", title: "롯데타워", update: 10, congestion: .normal),
+//            .init(image: "", title: "롯데타워", update: 10, congestion: .relaxed),
+//            .init(image: "", title: "롯데타워", update: 10, congestion: .crowded),
+//        ]
+//        
+//        var snapshot = NSDiffableDataSourceSnapshot<FavoriteSection, FavoritePlaceItem>()
+//        snapshot.appendSections([.main])
+//        snapshot.appendItems(favoriteItems, toSection: .main)
+//        dataSource.apply(snapshot, animatingDifferences: true)
+//    }
+    
+    private func applySnapshot(_ items: [FavoritePlaceItem]) {
         var snapshot = NSDiffableDataSourceSnapshot<FavoriteSection, FavoritePlaceItem>()
         snapshot.appendSections([.main])
-        snapshot.appendItems(favoriteItems, toSection: .main)
+        snapshot.appendItems(items, toSection: .main)
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 }

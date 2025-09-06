@@ -215,6 +215,11 @@ final class HomeViewController: BaseViewController {
             })
         }
         
+        let sectionSpacerRegistration = UICollectionView.SupplementaryRegistration<SectionSpacerView>(
+            elementKind: SectionSpacerView.elementKind) { view, _, indexPath in
+            view.isHidden = (indexPath.section == HomeSection.allCases.count - 1) // 마지막 섹션은 숨김
+        }
+        
         let separatorRegistration = UICollectionView.SupplementaryRegistration<SeparatorView>(elementKind: SeparatorView.elementKind) { separator, _, indexPath in
             guard let section = HomeSection(rawValue: indexPath.section) else { return }
             
@@ -242,6 +247,9 @@ final class HomeViewController: BaseViewController {
             switch kind {
             case TitleHeaderView.elementKind:
                 return collectionView.dequeueConfiguredReusableSupplementary(using: headerRegistration, for: indexPath)
+                
+            case SectionSpacerView.elementKind:
+                        return collectionView.dequeueConfiguredReusableSupplementary(using: sectionSpacerRegistration, for: indexPath)
                 
             case SeparatorView.elementKind:
                 guard let section = HomeSection(rawValue: indexPath.section) else { return nil}
@@ -310,9 +318,9 @@ final class HomeViewController: BaseViewController {
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
+        section.contentInsets = .init(top: 14, leading: 16, bottom: 24, trailing: 16)
         
-        section.boundarySupplementaryItems = [self.sectionHeader()]
+        section.boundarySupplementaryItems = [self.sectionHeader(), self.sectionSpacerFooter()]
         
         return section
     }
@@ -347,7 +355,7 @@ final class HomeViewController: BaseViewController {
         section.orthogonalScrollingBehavior = .continuous // .continuousGroupLeadingBoundary / .groupPaging 등 취향대로
         
         if inset {
-            section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
+            section.contentInsets = .init(top: 14, leading: 16, bottom: 24, trailing: 16)
         } else {
             section.contentInsets = .init(top: 0, leading: 16, bottom: 0, trailing: 16)
         }
@@ -356,28 +364,11 @@ final class HomeViewController: BaseViewController {
         section.interGroupSpacing = 14
         
         // 헤더가 있다면 그대로 유지
-        section.boundarySupplementaryItems = [self.sectionHeader()]
+        section.boundarySupplementaryItems = [self.sectionHeader(), self.sectionSpacerFooter()]
         
         return section
     }
     
-//    private static func makeFavoritePlaceSection(env: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
-//        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
-//        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-//        
-//        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(180), heightDimension: .estimated(230))
-//        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-//        
-//        let section = NSCollectionLayoutSection(group: group)
-//        section.orthogonalScrollingBehavior = .continuous
-//        
-//        section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
-//        section.interGroupSpacing = 12
-//        
-//        section.boundarySupplementaryItems = [self.sectionHeader()]
-//        
-//        return section
-//    }
     private static func makeFavoritePlaceSection(env: NSCollectionLayoutEnvironment, isEmpty: Bool) -> NSCollectionLayoutSection {
         if isEmpty {
             // 플레이스홀더: 한 장, 가로 전체
@@ -391,8 +382,8 @@ final class HomeViewController: BaseViewController {
                 subitems: [item]
             )
             let section = NSCollectionLayoutSection(group: group)
-            section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
-            section.boundarySupplementaryItems = [self.sectionHeader()]
+            section.contentInsets = .init(top: 14, leading: 16, bottom: 24, trailing: 16)
+            section.boundarySupplementaryItems = [self.sectionHeader(), self.sectionSpacerFooter()]
             return section
         } else {
             // 기존 가로 스크롤 카드들
@@ -404,9 +395,10 @@ final class HomeViewController: BaseViewController {
             )
             let section = NSCollectionLayoutSection(group: group)
             section.orthogonalScrollingBehavior = .continuous
-            section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
+            section.contentInsets = .init(top: 14, leading: 16, bottom: 24, trailing: 16)
             section.interGroupSpacing = 12
-            section.boundarySupplementaryItems = [self.sectionHeader()]
+            
+            section.boundarySupplementaryItems = [self.sectionHeader(), self.sectionSpacerFooter()]
             return section
         }
     }
@@ -444,6 +436,23 @@ final class HomeViewController: BaseViewController {
         header.pinToVisibleBounds = false
         header.contentInsets = .init(top: 8, leading: 0, bottom: 8, trailing: 0)
         return header
+    }
+    
+    private static func sectionSpacerFooter(height: CGFloat = 8) -> NSCollectionLayoutBoundarySupplementaryItem {
+        let size = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(height)
+        )
+        let footer = NSCollectionLayoutBoundarySupplementaryItem(
+            layoutSize: size,
+            elementKind: SectionSpacerView.elementKind,
+            alignment: .bottom
+        )
+        footer.extendsBoundary = true   // 섹션 좌우 contentInsets 무시하고 꽉 채우기
+        footer.contentInsets = .init(top: 0, leading: -16, bottom: 0, trailing: -16)
+        footer.pinToVisibleBounds = false
+        
+        return footer
     }
     
     // MARK: Action

@@ -173,13 +173,16 @@ final class MyPageViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
         
+        let favoriteViewModel = FavoriteViewModel(items: output.favorite)
+        let favoriteViewController = FavoriteViewController(viewModel: favoriteViewModel)
+        
         let voteViewModel = VoteViewModel(items: output.answer)
         let voteViewController = VoteViewController(viewModel: voteViewModel)
         
         let questionViewModel = QuestionViewModel(items: output.question)
         let questionViewController = QuestionViewController(viewModel: questionViewModel)
         
-        self.pages = [FavoriteViewController(), voteViewController, questionViewController]
+        self.pages = [favoriteViewController, voteViewController, questionViewController]
         
         // 현재 인덱스가 범위를 벗어나지 않게 보정
         self.currentPageIndex = min(self.currentPageIndex, max(self.pages.count - 1, 0))

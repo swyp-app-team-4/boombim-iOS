@@ -17,7 +17,7 @@ final class MyPageViewModel {
         let isLoading: Driver<Bool>
         let error: Signal<String>
         let profile: Driver<UserProfile>
-        let favorite: Driver<MyFavorite>
+        let favorite: Driver<[MyFavorite]>
         let answer: Driver<[MyAnswer]>
         let question: Driver<[MyQuestion]>
     }
@@ -25,7 +25,7 @@ final class MyPageViewModel {
     private let loading = BehaviorRelay<Bool>(value: false)
     private let errorRelay = PublishRelay<String>()
     private let profileRelay = BehaviorRelay<UserProfile?>(value: nil)
-    private let favoriteRelay = BehaviorRelay<MyFavorite?>(value: nil)
+    private let favoriteRelay = BehaviorRelay<[MyFavorite]?>(value: nil)
     private let answerRelay = BehaviorRelay<[MyAnswer]?>(value: nil)
     private let questionRelay = BehaviorRelay<[MyQuestion]?>(value: nil)
     private let disposeBag = DisposeBag()
@@ -69,16 +69,16 @@ final class MyPageViewModel {
             })
             .disposed(by: disposeBag)
         
-//        AuthService.shared.getMyFavorite()
-//            .observe(on: MainScheduler.instance)
-//            .subscribe(onSuccess: { [weak self] p in
-//                self?.loading.accept(false)
-//                self?.favoriteRelay.accept(p)
-//            }, onFailure: { [weak self] err in
-//                self?.loading.accept(false)
-//                self?.errorRelay.accept(err.localizedDescription)
-//            })
-//            .disposed(by: disposeBag)
+        PlaceService.shared.getFavoritePlace()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onSuccess: { [weak self] p in
+                self?.loading.accept(false)
+                self?.favoriteRelay.accept(p.data)
+            }, onFailure: { [weak self] err in
+                self?.loading.accept(false)
+                self?.errorRelay.accept(err.localizedDescription)
+            })
+            .disposed(by: disposeBag)
         
         AuthService.shared.getMyAnswer()
             .observe(on: MainScheduler.instance)

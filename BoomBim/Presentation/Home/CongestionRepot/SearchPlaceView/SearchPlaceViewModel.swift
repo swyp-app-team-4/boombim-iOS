@@ -91,7 +91,7 @@ final class SearchPlaceViewModel {
             .flatMapLatest { [service] pair -> Observable<[Place]> in
                 let (query, coord) = (pair.query, pair.coord)
                 guard !query.isEmpty else { return .just([]) }
-                return service.searchByKeyword(query: query, x: coord.longitude, y: coord.latitude)
+                return service.searchByKeyword(query: query, x: coord.longitude, y: coord.latitude, radius: 300)
                     .asObservable()
                     .catchAndReturn([])
             }
