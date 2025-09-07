@@ -32,6 +32,9 @@ final class CongestionReportViewController: BaseViewController {
     private var isViewVisible = false
     
     // MARK: - UI Components
+    private let scrollView = UIScrollView()
+    private let contentView = UIStackView() // vertical
+    
     private let activityIndicator = UIActivityIndicatorView(style: .large)
     
     private let timeContainerView: UIView = {
@@ -101,6 +104,7 @@ final class CongestionReportViewController: BaseViewController {
     private let locationTextField: AppSearchTextField = {
         let textField = AppSearchTextField()
         textField.tapOnly = true
+        textField.placeholder = "장소를 입력해주세요"
         
         return textField
     }()
@@ -246,13 +250,80 @@ final class CongestionReportViewController: BaseViewController {
             isEngineActive = true
         }
     }
+    
+    private var kbWillChange: NSObjectProtocol?
+    private var kbWillHide: NSObjectProtocol?
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        let nc = NotificationCenter.default
+        kbWillChange = nc.addObserver(
+            forName: UIResponder.keyboardWillChangeFrameNotification,
+            object: nil, queue: .main
+        ) { [weak self] note in
+            self?.handleKB(note)
+        }
+        kbWillHide = nc.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil, queue: .main
+        ) { [weak self] note in
+            self?.handleKB(note) // 0으로 정리
+        }
+    }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        
         isViewVisible = false
         if isEngineActive {
             mapController.pauseEngine()
             isEngineActive = false
+        }
+        
+        if let t = kbWillChange { NotificationCenter.default.removeObserver(t) }
+        if let t = kbWillHide   { NotificationCenter.default.removeObserver(t) }
+        kbWillChange = nil
+        kbWillHide   = nil
+
+        // 화면 떠날 때 인셋 원복(선택)
+        descriptionTextView.contentInset.bottom = 0
+        descriptionTextView.scrollIndicatorInsets.bottom = 0
+    }
+    
+    @objc private func handleKB(_ note: Notification) {
+        guard
+            let endFrame = (note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue,
+            let duration = (note.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue,
+            let curveRaw = (note.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? NSNumber)?.uintValue
+        else { return }
+
+        // 키보드가 차지하는 높이(현재 뷰 좌표계 기준)
+        let endY = view.convert(endFrame, from: nil).origin.y
+        let kbHeight = max(0, view.bounds.height - endY)
+        let safeBottom = view.safeAreaInsets.bottom
+        let extra = max(0, kbHeight - safeBottom)
+
+        // 버튼(44) + 여백(10) + 약간의 추가여유(12)
+        let baseBottom: CGFloat = 44 + 10 + 12
+        let inset = baseBottom + extra
+
+        let options = UIView.AnimationOptions(rawValue: curveRaw << 16)
+        UIView.animate(withDuration: duration, delay: 0, options: options, animations: {
+            self.scrollView.contentInset.bottom = inset
+            self.scrollView.scrollIndicatorInsets.bottom = inset
+            self.view.layoutIfNeeded()
+        }, completion: nil)
+
+        // 커서 또는 descriptionContainerView가 보이도록 스크롤 (둘 중 편한 걸 사용)
+        if descriptionTextView.isFirstResponder,
+           let range = descriptionTextView.selectedTextRange {
+            let caret = descriptionTextView.caretRect(for: range.end)
+            let caretInScroll = descriptionTextView.convert(caret, to: scrollView)
+            scrollView.scrollRectToVisible(caretInScroll.insetBy(dx: 0, dy: -12), animated: true)
+        } else {
+            let rect = descriptionContainerView.convert(descriptionContainerView.bounds, to: scrollView)
+            scrollView.scrollRectToVisible(rect.insetBy(dx: 0, dy: -12), animated: true)
         }
     }
     
@@ -359,93 +430,13 @@ final class CongestionReportViewController: BaseViewController {
             .disposed(by: disposeBag)
     }
     
-//    private func bind() {
-//        // 각 버튼 탭 → 인덱스(0~3)로 매핑
-//            let relaxedTap = relaxedButton.rx.tap.map { 0 }
-//            let normalTap  = normalButton.rx.tap.map { 1 }
-//            let busyTap    = busyButton.rx.tap.map { 2 }
-//            let crowdedTap = crowdedButton.rx.tap.map { 3 }
-//
-//            Observable.merge(relaxedTap, normalTap, busyTap, crowdedTap)
-//                .subscribe(onNext: { [weak self] idx in
-//                    guard let self else { return }
-//                    // 1) UI 상태: 단일 선택
-//                    for (i, b) in self.buttons.enumerated() {
-//                        b.isSelected = (i == idx)
-//                    }
-//                    // 2) 선택 레벨 저장(필요하면 서버의 levelId로 매핑)
-//                    self.selectedLevelRelay.accept(idx)
-//                    // 3) 접근성 힌트(optional)
-//                    UIAccessibility.post(notification: .announcement, argument: "혼잡도 \(idx) 선택")
-//                })
-//                .disposed(by: disposeBag)
-//        
-//        viewModel.selectedPlace
-//            .drive(onNext: { [weak self] place in
-//                guard let self = self else { return }
-//                
-//                // UI 바인딩
-//                self.locationTextField.text = place?.name
-//                let enabled = (place != nil)
-//                self.postButton.isEnabled = enabled
-//                self.postButton.setTitleColor(enabled ? .grayScale1 : .grayScale7, for: .normal)
-//                self.postButton.backgroundColor = enabled ? .main : .grayScale4
-//                
-//                // 지도 표시 로직
-//                guard let place = place else {
-//                    // 선택 해제 시: 엔진을 멈추고(화면 계속 보여줄거면 생략 가능)
-//                    if self.isEngineActive {
-//                        self.mapController.pauseEngine()
-//                        self.isEngineActive = false
-//                    }
-//                    // 필요하면 지도 섹션 숨김
-//                    // self.hideMapSection()
-//                    return
-//                }
-//                
-//                // 선택됨: 지도 섹션을 보여주고 엔진 준비/활성화
-//                self.showMapSection()
-//                
-//                if !self.isEnginePrepared {
-//                    self.configureKakaoMap()
-//                    self.isEnginePrepared = true
-//                    
-//                    // 화면이 이미 보이는 상태라면 지금 바로 활성화
-//                    if self.isViewVisible && !self.isEngineActive {
-//                        self.mapController.activateEngine()
-//                        self.isEngineActive = true
-//                    }
-//                    // addViews → addViewSucceeded 델리게이트가 이어서 불립니다.
-//                    // 카메라/오버레이 첫 세팅은 addViewSucceeded에서 처리하세요.
-//                } else {
-//                    // 이미 맵 존재: 필요 시 활성화 보장
-//                    if self.isViewVisible && !self.isEngineActive {
-//                        self.mapController.activateEngine()
-//                        self.isEngineActive = true
-//                    }
-//                    // 바로 업데이트
-//                    self.updateMap(for: place)
-//                }
-//            })
-//            .disposed(by: disposeBag)
-//        
-//        let input = CongestionReportViewModel.Input(
-//            postTap: postButton.rx.tap.asSignal(),
-//            levelSelect: selectedLevelRelay.compactMap { $0 }.asSignal(onErrorJustReturn: 0)
-//        )
-//        let output = viewModel.transform(input: input)
-//        
-//        output.completed
-//            .emit(onNext: { [weak self] _ in self?.viewModel.didTapPost() })
-//            .disposed(by: disposeBag)
-//    }
-
-    
     // MARK: Setup UI
     private func setupUI() {
         view.backgroundColor = .white
         
         configureNavigationBar()
+        
+        setupScrollableContainer()
         
         configureTime()
         configureLocation()
@@ -454,6 +445,34 @@ final class CongestionReportViewController: BaseViewController {
         configureVote()
         configureTextView()
         configurePostButton()
+    }
+    
+    private func setupScrollableContainer() {
+        scrollView.keyboardDismissMode = .interactive
+        view.addSubview(scrollView)
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        let baseBottom: CGFloat = 44 + 10 + 12
+        scrollView.contentInset.bottom = baseBottom
+        scrollView.scrollIndicatorInsets.bottom = baseBottom
+
+        contentView.axis = .vertical
+        contentView.spacing = 18
+        scrollView.addSubview(contentView)
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 20),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 16),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -16),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -32)
+        ])
     }
     
     private func configureNavigationBar() {
@@ -469,7 +488,7 @@ final class CongestionReportViewController: BaseViewController {
     
     private func configureTime() {
         timeContainerView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(timeContainerView)
+        contentView.addArrangedSubview(timeContainerView)
         
         [timeImageView, timeTitleLabel, timeLabel].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
@@ -477,9 +496,9 @@ final class CongestionReportViewController: BaseViewController {
         }
         
         NSLayoutConstraint.activate([
-            timeContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            timeContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            timeContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            timeContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+//            timeContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+//            timeContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             timeContainerView.heightAnchor.constraint(equalToConstant: 24),
             
             timeImageView.centerYAnchor.constraint(equalTo: timeContainerView.centerYAnchor),
@@ -499,7 +518,7 @@ final class CongestionReportViewController: BaseViewController {
     
     private func configureLocation() {
         locationContainerView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(locationContainerView)
+        contentView.addArrangedSubview(locationContainerView)
         
         [locationImageView, locationTitleLabel, locationTextField].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
@@ -507,9 +526,9 @@ final class CongestionReportViewController: BaseViewController {
         }
         
         NSLayoutConstraint.activate([
-            locationContainerView.topAnchor.constraint(equalTo: timeContainerView.bottomAnchor, constant: 18),
-            locationContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            locationContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            locationContainerView.topAnchor.constraint(equalTo: timeContainerView.bottomAnchor, constant: 18),
+//            locationContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+//            locationContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             locationContainerView.heightAnchor.constraint(equalToConstant: 80),
             
             locationImageView.centerYAnchor.constraint(equalTo: locationTitleLabel.centerYAnchor),
@@ -530,15 +549,15 @@ final class CongestionReportViewController: BaseViewController {
     private func configureMapUI() {
         mapContainer = KMViewContainer()
         mapContainer.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(mapContainer)
+        contentView.addArrangedSubview(mapContainer)
         
         mapContainer.layer.cornerRadius = 14
         mapContainer.clipsToBounds = true
         
         NSLayoutConstraint.activate([
-            mapContainer.topAnchor.constraint(equalTo: locationContainerView.bottomAnchor, constant: 10),
-            mapContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            mapContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            mapContainer.topAnchor.constraint(equalTo: locationContainerView.bottomAnchor, constant: 10),
+//            mapContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+//            mapContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
         ])
         
         // 높이 비율 제약 보관
@@ -551,8 +570,8 @@ final class CongestionReportViewController: BaseViewController {
     
     private func showMapSection() {
         // 제약 토글
-        voteTopToLocation.isActive = false
-        voteTopToMap.isActive = true
+//        voteTopToLocation.isActive = false
+//        voteTopToMap.isActive = true
         mapHeightRatioConstraint.isActive = true
 
         mapContainer.isHidden = false
@@ -568,7 +587,7 @@ final class CongestionReportViewController: BaseViewController {
     
     private func configureVote() {
         voteContainerView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(voteContainerView)
+        contentView.addArrangedSubview(voteContainerView)
         
         buttons.forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
@@ -581,16 +600,16 @@ final class CongestionReportViewController: BaseViewController {
         }
         
         // vote의 top 제약 두 개를 만들고 보관
-        voteTopToMap = voteContainerView.topAnchor.constraint(equalTo: mapContainer.bottomAnchor, constant: 18)
-        voteTopToLocation = voteContainerView.topAnchor.constraint(equalTo: locationContainerView.bottomAnchor, constant: 18)
-        
-        voteTopToMap.isActive = false
-        voteTopToLocation.isActive = true
+//        voteTopToMap = voteContainerView.topAnchor.constraint(equalTo: mapContainer.bottomAnchor, constant: 18)
+//        voteTopToLocation = voteContainerView.topAnchor.constraint(equalTo: locationContainerView.bottomAnchor, constant: 18)
+//        
+//        voteTopToMap.isActive = false
+//        voteTopToLocation.isActive = true
         
         NSLayoutConstraint.activate([
 //            voteContainerView.topAnchor.constraint(equalTo: mapContainer.bottomAnchor, constant: 18),
-            voteContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            voteContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            voteContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+//            voteContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 //            voteContainerView.heightAnchor.constraint(equalToConstant: 128),
             
             voteImageView.centerYAnchor.constraint(equalTo: voteTitleLabel.centerYAnchor),
@@ -618,7 +637,7 @@ final class CongestionReportViewController: BaseViewController {
     
     private func configureTextView() {
         descriptionContainerView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(descriptionContainerView)
+        contentView.addArrangedSubview(descriptionContainerView)
         
         [descriptionTextView, descriptionPlaceholder, descriptionCount].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
@@ -626,9 +645,9 @@ final class CongestionReportViewController: BaseViewController {
         }
         
         NSLayoutConstraint.activate([
-            descriptionContainerView.topAnchor.constraint(equalTo: voteContainerView.bottomAnchor, constant: 18),
-            descriptionContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            descriptionContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            descriptionContainerView.topAnchor.constraint(equalTo: voteContainerView.bottomAnchor, constant: 18),
+//            descriptionContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+//            descriptionContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             descriptionContainerView.heightAnchor.constraint(equalToConstant: 165),
             
             descriptionTextView.topAnchor.constraint(equalTo: descriptionContainerView.topAnchor, constant: 12),
@@ -637,7 +656,7 @@ final class CongestionReportViewController: BaseViewController {
             descriptionTextView.trailingAnchor.constraint(equalTo: descriptionContainerView.trailingAnchor, constant: -16),
             
             descriptionPlaceholder.topAnchor.constraint(equalTo: descriptionTextView.topAnchor, constant: 8),
-            descriptionPlaceholder.leadingAnchor.constraint(equalTo: descriptionTextView.leadingAnchor, constant: 12),
+            descriptionPlaceholder.leadingAnchor.constraint(equalTo: descriptionTextView.leadingAnchor, constant: 7),
             descriptionPlaceholder.trailingAnchor.constraint(equalTo: descriptionTextView.trailingAnchor),
             
             descriptionCount.bottomAnchor.constraint(equalTo: descriptionContainerView.bottomAnchor, constant: -12),
@@ -739,7 +758,7 @@ extension CongestionReportViewController {
         }
 
         var image = UIImage.iconMapPoint
-        image = image.resized(to: CGSize(width: 40, height: 40))
+        image = image.resized(to: CGSize(width: 30, height: 30))
         
         let icon = PoiIconStyle(symbol: image, anchorPoint: CGPoint(x: 0.5, y: 1.0), badges: [])
         let perLevel = PerLevelPoiStyle(iconStyle: icon, level: 0)

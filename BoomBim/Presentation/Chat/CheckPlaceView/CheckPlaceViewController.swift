@@ -265,7 +265,7 @@ extension CheckPlaceViewController {
         }
 
         var image = UIImage.iconMapPoint
-        image = image.resized(to: CGSize(width: 40, height: 40))
+        image = image.resized(to: CGSize(width: 30, height: 30))
         
         let icon = PoiIconStyle(symbol: image, anchorPoint: CGPoint(x: 0.5, y: 1.0), badges: [])
         let perLevel = PerLevelPoiStyle(iconStyle: icon, level: 0)

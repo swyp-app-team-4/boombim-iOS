@@ -700,7 +700,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "주변에 있는 장소로 검색해주세요"
+            "value" : "300m 이내 장소로 검색해주세요"
           }
         }
       }

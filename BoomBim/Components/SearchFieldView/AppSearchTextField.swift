@@ -13,6 +13,13 @@ final class AppSearchTextField: UISearchTextField {
     // 흐림 없는 배경
     private let bgView = UIView()
 
+    var placeholderColor: UIColor = .placeholder { didSet { applyPlaceholderStyle() } }
+    var placeholderFont: UIFont = Typography.Body03.medium.font { didSet { applyPlaceholderStyle() } }
+    
+    override var placeholder: String? {
+        didSet { applyPlaceholderStyle() }   // 사용자가 placeholder 바꾸면 스타일 재적용
+    }
+    
     // ✅ 탭 전용 모드 & 콜백
     var tapOnly: Bool = false { didSet { updateTapMode() } }
     var onTap: (() -> Void)?
@@ -27,6 +34,9 @@ final class AppSearchTextField: UISearchTextField {
     init(height: CGFloat = 44) {
         super.init(frame: .zero)
         setup(height: height)
+        if placeholder == nil {              // 기본 문구는 필요할 때만
+            placeholder = "약속된 장소를 검색해보세요."
+        }
     }
     required init?(coder: NSCoder) {
         super.init(coder: coder)
@@ -88,6 +98,17 @@ final class AppSearchTextField: UISearchTextField {
     override func layoutSubviews() {
         super.layoutSubviews()
         stripSystemBackground()
+    }
+    
+    private func applyPlaceholderStyle() {
+        let text = placeholder ?? ""
+        attributedPlaceholder = NSAttributedString(
+            string: text,
+            attributes: [
+                .foregroundColor: placeholderColor,
+                .font: placeholderFont
+            ]
+        )
     }
 
     // MARK: - Tap-only mode

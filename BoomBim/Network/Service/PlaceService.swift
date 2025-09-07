@@ -53,6 +53,7 @@ struct UserPlaceItem: Decodable {
     let distance: Double
     let congestionLevelName: String
     let congestionMessage: String
+    let createdAt: String
     var isFavorite: Bool
 }
 
