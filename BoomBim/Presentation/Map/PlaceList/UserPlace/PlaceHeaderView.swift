@@ -9,11 +9,38 @@ import UIKit
 
 final class PlaceHeaderView: UIView {
     private let titleLabel = UILabel()
-    private let metaLabel  = UILabel()
+    
+    private let updateStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .fill
+        stackView.distribution = .fill
+        stackView.spacing = 4
+        
+        return stackView
+    }()
+    
+    private let timeImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.image = .iconRecycleTime
+        
+        return imageView
+    }()
+    
+    private let updateLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Caption.regular.font
+        label.textColor = .grayScale8
+        
+        return label
+    }()
+    
+    private let addressLabel  = UILabel()
     private let statusBadge = UIImageView()
     let reportButton = UIButton(type: .system) // “붐빔 알리기”
     
-    init(title: String, meta: String, currentLevel: CongestionLevel) {
+    init(title: String, update: String, address: String, currentLevel: CongestionLevel) {
         super.init(frame: .zero)
         backgroundColor = .white
         
@@ -21,9 +48,16 @@ final class PlaceHeaderView: UIView {
         titleLabel.font = Typography.Body02.semiBold.font
         titleLabel.textColor = .grayScale10
         
-        metaLabel.text = meta
-        metaLabel.font = Typography.Caption.regular.font
-        metaLabel.textColor = .grayScale8
+        updateLabel.text = update
+        
+        addressLabel.text = address
+        addressLabel.font = Typography.Caption.regular.font
+        addressLabel.textColor = .grayScale8
+        
+        [timeImageView, updateLabel, addressLabel].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            updateStackView.addArrangedSubview(view)
+        }
         
         // 붐빔 알리기 버튼 (가로 크게)
         reportButton.setTitle("＋ 붐빔 알리기", for: .normal)
@@ -34,7 +68,7 @@ final class PlaceHeaderView: UIView {
         reportButton.contentEdgeInsets = .init(top: 18, left: 16, bottom: 18, right: 16)
         
         // 레이아웃
-        let headerTop = UIStackView(arrangedSubviews: [titleLabel, metaLabel])
+        let headerTop = UIStackView(arrangedSubviews: [titleLabel, updateStackView])
         headerTop.axis = .vertical
         headerTop.alignment = .leading
         headerTop.distribution = .fill
@@ -63,9 +97,10 @@ final class PlaceHeaderView: UIView {
     }
     required init?(coder: NSCoder) { fatalError() }
     
-    func update(title: String, meta: String, level: CongestionLevel) {
+    func update(title: String, update: String, address: String, level: CongestionLevel) {
         titleLabel.text = title
-        metaLabel.text  = meta
+        updateLabel.text = update
+        addressLabel.text = address
         statusBadge.image = level.badge
     }
 }

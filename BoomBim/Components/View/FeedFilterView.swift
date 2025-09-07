@@ -24,46 +24,70 @@ enum FeedFilter: CaseIterable {
 final class FilterBarView: UIView {
     var onChange: ((FeedFilter) -> Void)?
     private var buttons: [FeedFilter: FeedChipButton] = [:]
-    private let stack = UIStackView()
-    
+
+    private let scroll = UIScrollView()
+    private let stack  = UIStackView()
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .white
-//        layer.shadowColor = UIColor.black.cgColor
-//        layer.shadowOpacity = 0.06
-//        layer.shadowRadius = 6
-//        layer.shadowOffset = .init(width: 0, height: 2)
-        
+
+        // 1) ScrollView
+        scroll.showsHorizontalScrollIndicator = false
+        scroll.alwaysBounceHorizontal = true
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(scroll)
+        NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: topAnchor),
+            scroll.leadingAnchor.constraint(equalTo: leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: bottomAnchor),
+            heightAnchor.constraint(greaterThanOrEqualToConstant: 56)
+        ])
+
+        // 2) StackView inside scroll (❗️contentLayoutGuide/ frameLayoutGuide 사용)
         stack.axis = .horizontal
         stack.spacing = 12
         stack.alignment = .center
-        stack.distribution = .fillProportionally
-        
+        stack.distribution = .fill            // ← 줄임 방지: 비율 분배 금지
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor, constant: -16),
+            stack.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor, constant: 8),
+            stack.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor, constant: -8),
+
+            // 스택의 높이를 스크롤뷰 높이에 맞춰서(세로로는 스크롤 안 하도록)
+            stack.heightAnchor.constraint(equalTo: scroll.frameLayoutGuide.heightAnchor, constant: -16)
+        ])
+
+        // 3) 버튼 추가
         FeedFilter.allCases.forEach { filter in
             let b = FeedChipButton(title: filter.title)
             b.addTarget(self, action: #selector(tap(_:)), for: .touchUpInside)
+
+            // 칩이 가로로 절대 줄지 않게
+            b.setContentHuggingPriority(.required, for: .horizontal)
+            b.setContentCompressionResistancePriority(.required, for: .horizontal)
+
             buttons[filter] = b
             stack.addArrangedSubview(b)
         }
-        addSubview(stack)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -16),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
-            heightAnchor.constraint(greaterThanOrEqualToConstant: 56) // 고정 높이 가이드
-        ])
+
         select(.latest)
     }
+
     required init?(coder: NSCoder) { fatalError() }
-    
+
     @objc private func tap(_ sender: FeedChipButton) {
         guard let (filter, _) = buttons.first(where: { $0.value === sender }) else { return }
         select(filter)
         onChange?(filter)
     }
+
     func select(_ filter: FeedFilter) {
         buttons.forEach { $0.value.isSelected = ($0.key == filter) }
     }
 }
+

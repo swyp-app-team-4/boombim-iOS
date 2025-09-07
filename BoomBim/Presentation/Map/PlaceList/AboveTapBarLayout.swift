@@ -10,8 +10,14 @@ import Foundation
 
 final class AboveTabBarLayout: FloatingPanelLayout {
     var position: FloatingPanelPosition { .bottom }
+    
     private let tabBarHeight: CGFloat
-    init(tabBarHeight: CGFloat) { self.tabBarHeight = tabBarHeight }
+    var halfFraction: CGFloat
+    
+    init(tabBarHeight: CGFloat, halfFraction: CGFloat = 0.36) { // 공식 장소가 0.36
+        self.tabBarHeight = tabBarHeight
+        self.halfFraction = halfFraction
+    }
 
     var initialState: FloatingPanelState { .tip }
 
@@ -19,7 +25,7 @@ final class AboveTabBarLayout: FloatingPanelLayout {
     var anchors: [FloatingPanelState : FloatingPanelLayoutAnchoring] {
         [
             .full: FloatingPanelLayoutAnchor(absoluteInset: 100, edge: .top, referenceGuide: .safeArea),
-            .half: FloatingPanelLayoutAnchor(fractionalInset: 0.45, edge: .bottom, referenceGuide: .superview),
+            .half: FloatingPanelLayoutAnchor(fractionalInset: halfFraction, edge: .bottom, referenceGuide: .superview),
             .tip:  FloatingPanelLayoutAnchor(absoluteInset: 35, edge: .bottom, referenceGuide: .safeArea)
         ]
     }

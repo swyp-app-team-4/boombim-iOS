@@ -8,32 +8,39 @@
 import Foundation
 
 enum TimeAgo {
-    /// observedAt: "yyyy-MM-dd'T'HH:mm:ss" 또는 ISO8601(+09:00, Z 등 포함) 지원
     static func minutes(from observedAt: String,
                         defaultTimeZone: TimeZone = TimeZone(identifier: "Asia/Seoul")!) -> Int? {
-        // 1) ISO8601 (타임존/초 단위 유무 모두 시도)
-        let iso1 = ISO8601DateFormatter()
-        iso1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let d = iso1.date(from: observedAt) {
-            return max(0, Int(Date().timeIntervalSince(d) / 60))
-        }
-        let iso2 = ISO8601DateFormatter()
-        iso2.formatOptions = [.withInternetDateTime]
-        if let d = iso2.date(from: observedAt) {
-            return max(0, Int(Date().timeIntervalSince(d) / 60))
-        }
+        guard let date = parseObservedAt(observedAt, tz: defaultTimeZone) else { return nil }
+        let diff = Date().timeIntervalSince(date)
+        return max(0, Int(diff / 60.0)) // 미래 시간이면 0으로 클램프
+    }
 
-        // 2) 타임존이 없는 형태면 KST 등 기본 타임존으로 해석
+    private static func parseObservedAt(_ s: String, tz: TimeZone) -> Date? {
+        // 1) ISO8601 + (옵션)분수초
+        let iso = ISO8601DateFormatter()
+        iso.timeZone = tz
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = iso.date(from: s) { return d }
+
+        iso.formatOptions = [.withInternetDateTime]
+        if let d = iso.date(from: s) { return d }
+
+        // 2) 타임존 표기가 전혀 없는 로컬 형태들(서버가 나이브 문자열을 줄 때)
         let df = DateFormatter()
-        df.calendar = Calendar(identifier: .iso8601)
         df.locale = Locale(identifier: "en_US_POSIX")
-        df.timeZone = defaultTimeZone
-        df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        if let d = df.date(from: observedAt) {
-            return max(0, Int(Date().timeIntervalSince(d) / 60))
-        }
+        df.timeZone = tz
 
-        return nil // 파싱 실패
+        // 마이크로초(6자리)
+        df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
+        if let d = df.date(from: s) { return d }
+
+        // 밀리초(3자리)
+        df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        if let d = df.date(from: s) { return d }
+
+        // 분수초 없음
+        df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        return df.date(from: s)
     }
 
     /// "방금 전 / N분 전 / N시간 전 ..." 같은 표시가 필요할 때

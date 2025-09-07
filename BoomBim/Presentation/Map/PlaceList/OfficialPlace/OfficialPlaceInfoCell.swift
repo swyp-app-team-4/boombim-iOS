@@ -52,8 +52,8 @@ final class OfficialPlaceInfoCell: UITableViewCell {
     
     private let favoriteButton: UIButton = {
         let button = UIButton()
-        button.setImage(.buttonUnselectedFavorite, for: .normal)
-        button.setImage(.buttonSelectedFavorite, for: .selected)
+        button.setImage(.iconNonfavoriteStar, for: .normal)
+        button.setImage(.iconFavoriteStar, for: .selected)
         button.contentMode = .scaleAspectFit
         
         return button

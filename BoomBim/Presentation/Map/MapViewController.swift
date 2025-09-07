@@ -51,6 +51,8 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         return f
     }()
     
+    private weak var trackedScrollView: UIScrollView? // floating Panel 내부 scrollView
+    
     private var officialPlaceListViewController: OfficialPlaceListViewController?
     private var officialPlaceDetailViewController: OfficialPlaceDetailViewController?
     
@@ -220,21 +222,22 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     }
 
     private func buildUI() {
-        // 검색창
-        view.addSubview(searchTextField)
-        searchTextField.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            searchTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            searchTextField.heightAnchor.constraint(equalToConstant: 44)
-        ])
+        // 검색창 - 현재는 기능 구현이 되지 않아 비활성화
+//        view.addSubview(searchTextField)
+//        searchTextField.translatesAutoresizingMaskIntoConstraints = false
+//        NSLayoutConstraint.activate([
+//            searchTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+//            searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+//            searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            searchTextField.heightAnchor.constraint(equalToConstant: 44)
+//        ])
 
         // 버튼 컨테이너(즐겨찾기 | 구분선 | [공식, 실시간])
         view.addSubview(buttonsContainer)
         buttonsContainer.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            buttonsContainer.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 8),
+//            buttonsContainer.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 8),
+            buttonsContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             buttonsContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             buttonsContainer.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16),
             buttonsContainer.heightAnchor.constraint(equalToConstant: 34)
@@ -419,15 +422,19 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
 
                 self.officialIndex = Dictionary(uniqueKeysWithValues: official.map { (String($0.officialPlaceId), $0) })
                 
-                let items: [(id: String, point: MapPoint)] = official.map {
-                    (id: String($0.officialPlaceId),
-                     point: MapPoint(longitude: $0.coordinate.longitude, latitude: $0.coordinate.latitude))
+                let items: [POIItem] = official.map {
+                    .init(
+                        id: String($0.officialPlaceId),
+                        point: MapPoint(longitude: $0.coordinate.longitude,latitude:  $0.coordinate.latitude),
+                        styleKey: self.styleKey(for: $0)
+                    )
                 }
                 
                 self.overlay.setPOIs(
                     for: .official,
                     items: items,
                     visual: visual,
+                    iconProvider: self.iconForStyleKey,
                     onTapID: { [weak self] group, id in
                         guard let self else { return }
                         guard group == .official, let model = self.officialIndex[id] else { return }
@@ -503,6 +510,19 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                 self?.moveCamera(to: coord, level: 14)
             })
             .disposed(by: disposeBag)
+    }
+    
+    private func styleKey(for p: OfficialPlaceItem) -> String {
+        // 혼잡도명/브랜드/카테고리 등 원하는 규칙으로 키 생성
+        let key = p.congestionLevelName.lowercased()
+        print("key : \(key)")
+        switch key {
+        case "relaxed", "여유":     return "congestion.relaxed"
+        case "normal",  "보통":     return "congestion.normal"
+        case "busy",    "약간 붐빔":     return "congestion.busy"
+        case "crowded", "붐빔": return "congestion.crowded"
+        default:                    return "congestion.default"
+        }
     }
     
     private func styleKey(for p: UserPlaceItem) -> String {
@@ -647,9 +667,15 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         officialPlaceListViewController?.apply(places: places)
 
         if floatingPanel.contentViewController !== officialPlaceListViewController {
+            floatingPanel.delegate = self
             floatingPanel.set(contentViewController: officialPlaceListViewController!)
+            
+            let sv = officialPlaceListViewController!.tableView
+            trackedScrollView = sv
+            floatingPanel.track(scrollView: sv)
         }
         floatingPanel.move(to: .tip, animated: true)
+        lockScroll(for: .tip)
     }
 
     private func bindListFavoriteActions() {
@@ -719,9 +745,20 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
             .disposed(by: disposeBag)
        
         if floatingPanel.contentViewController !== officialPlaceDetailViewController {
+            floatingPanel.delegate = self
             floatingPanel.set(contentViewController: officialPlaceDetailViewController!)
+            
+            let sv = officialPlaceDetailViewController!.scrollView
+            trackedScrollView = sv
+            floatingPanel.track(scrollView: sv)
         }
-        floatingPanel.move(to: .half, animated: true)
+        
+        if let layout = floatingPanel.layout as? AboveTabBarLayout {
+            layout.halfFraction = 0.36
+            floatingPanel.invalidateLayout()
+            floatingPanel.move(to: .half, animated: true)
+            lockScroll(for: .half)
+        }
     }
     
     private func showUserListPanel(with places: [UserPlaceItem]) {
@@ -733,9 +770,16 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         userPlaceListViewController?.apply(places: places)
         
         if floatingPanel.contentViewController !== userPlaceListViewController {
+            floatingPanel.delegate = self
             floatingPanel.set(contentViewController: userPlaceListViewController!)
+            
+            // 내부 스크롤뷰(예: tableView) 추적 시작
+            let sv = userPlaceListViewController!.tableView
+            trackedScrollView = sv
+            floatingPanel.track(scrollView: sv)
         }
         floatingPanel.move(to: .tip, animated: true)
+        lockScroll(for: .tip)
     }
     
     private func bindUserListFavoriteActions() {
@@ -805,9 +849,69 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
             .disposed(by: disposeBag)
         
         if floatingPanel.contentViewController !== userPlaceDetailViewController {
+            floatingPanel.delegate = self
             floatingPanel.set(contentViewController: userPlaceDetailViewController!)
+            
+            // 내부 스크롤뷰(예: tableView) 추적 시작
+            let sv = userPlaceDetailViewController!.tableView
+            trackedScrollView = sv
+            floatingPanel.track(scrollView: sv)
         }
-        floatingPanel.move(to: .half, animated: true)
+        
+        if let layout = floatingPanel.layout as? AboveTabBarLayout {
+            layout.halfFraction = 0.27
+            floatingPanel.invalidateLayout()
+            floatingPanel.move(to: .half, animated: true)
+            lockScroll(for: .half)
+        }
+    }
+    
+    func floatingPanelDidChangeState(_ fpc: FloatingPanelController) {
+        lockScroll(for: fpc.state)
+        setMapButtonsHidden(fpc.state == .full, animated: true)
+    }
+    
+    private func lockScroll(for state: FloatingPanelState) {
+        guard let sv = trackedScrollView else { return }
+        
+        switch state {
+        case .half, .tip:
+            // 패널이 스크롤뷰 제스처를 추적하지 않도록 해제 + 스크롤 자체도 잠금
+            floatingPanel.untrack(scrollView: sv)
+            sv.isScrollEnabled = false
+            sv.showsVerticalScrollIndicator = false
+            if sv.contentOffset.y > 0 { sv.setContentOffset(.zero, animated: false) } // 튕김 방지(옵션)
+            
+        case .full:
+            // 다시 추적 연결 + 스크롤 허용
+            floatingPanel.track(scrollView: sv)
+            sv.isScrollEnabled = true
+            sv.showsVerticalScrollIndicator = true
+            
+        default:
+            break
+        }
+    }
+    
+    private func setMapButtonsHidden(_ hidden: Bool, animated: Bool = true) {
+        let targets: [UIView] = [currentLocationButton, zoomStackView]
+        let apply: () -> Void = {
+            targets.forEach { $0.alpha = hidden ? 0 : 1 }
+        }
+        if animated {
+            UIView.animate(withDuration: 0.2, animations: apply) { _ in
+                targets.forEach {
+                    $0.isHidden = hidden
+                    $0.isUserInteractionEnabled = !hidden
+                }
+            }
+        } else {
+            apply()
+            targets.forEach {
+                $0.isHidden = hidden
+                $0.isUserInteractionEnabled = !hidden
+            }
+        }
     }
 }
 

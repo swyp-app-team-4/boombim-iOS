@@ -45,7 +45,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
             .asSignal(onErrorSignalWith: .empty())
     }
     
-    private let scrollView = UIScrollView()
+    let scrollView = UIScrollView()
     private let contentView = UIView()
     
     private let viewTitleLabel: UILabel = {

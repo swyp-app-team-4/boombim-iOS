@@ -8,6 +8,7 @@
 import UIKit
 import RxSwift
 import RxCocoa
+import SafariServices
 
 typealias FeedItem = MemberCongestionItem
 
@@ -73,11 +74,11 @@ final class UserPlaceDetailViewController: UIViewController {
         return view
     }()
     
-    private let tableView = UITableView(frame: .zero, style: .plain)
-    private let filterBar = FilterBarView()
     private var headerView = PlaceHeaderView(
-        title: "—", meta: "—", currentLevel: .normal
+        title: "—", update: "—", address: "-", currentLevel: .normal
     )
+    public let tableView = UITableView(frame: .zero, style: .plain)
+    private let filterBar = FilterBarView()
     
     // MARK: - Life cycle
     override func viewDidLoad() {
@@ -130,7 +131,11 @@ final class UserPlaceDetailViewController: UIViewController {
         placeTypeRelay.accept(.MEMBER_PLACE)
         favoriteState.accept(data.memberPlaceSummary.isFavorite)
         
-        headerView.update(title: data.memberPlaceSummary.name, meta: data.memberPlaceSummary.address, level: CongestionLevel(ko: data.memberCongestionItems.first?.congestionLevelName ?? "여유") ?? .relaxed)
+        headerView.update(
+            title: data.memberPlaceSummary.name,
+            update: TimeAgo.displayString(from: data.memberCongestionItems.first?.createdAt ?? ""),
+            address: data.memberPlaceSummary.address,
+            level: CongestionLevel(ko: data.memberCongestionItems.first?.congestionLevelName ?? "여유") ?? .relaxed)
         
         // 목록 데이터 반영
         allItemsRelay.accept(data.memberCongestionItems)
@@ -243,17 +248,23 @@ final class UserPlaceDetailViewController: UIViewController {
             .observe(on: MainScheduler.instance)
             .bind(to: tableView.rx.items(cellIdentifier: FeedTableViewCell.identifier, cellType: FeedTableViewCell.self)) { _, item, cell in
                 cell.apply(item)
+                cell.onTapReport = { [weak self] in
+                    self?.openReportForm()
+                }
             }
             .disposed(by: disposeBag)
     }
     
-//    override func viewDidLayoutSubviews() {
-//        super.viewDidLayoutSubviews()
-//        // 회전 등으로 필터 높이가 바뀌면 inset 재적용
-//        let h = filterBar.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
-//        if tableView.contentInset.top != h {
-//            tableView.contentInset.top = h
-//            tableView.scrollIndicatorInsets.top = h
-//        }
-//    }
+    func openReportForm() {
+        guard let url = URL(string: "https://form.naver.com/response/NQqeUb9YxKALE-2WrI6yEA") else { return }
+        let config = SFSafariViewController.Configuration()
+        config.entersReaderIfAvailable = false
+        
+        let vc = SFSafariViewController(url: url, configuration: config)
+        vc.preferredBarTintColor = .white
+        vc.preferredControlTintColor = .systemBlue
+        if #available(iOS 11.0, *) { vc.dismissButtonStyle = .close }
+        
+        present(vc, animated: true)
+    }
 }

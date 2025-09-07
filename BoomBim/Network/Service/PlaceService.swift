@@ -148,6 +148,8 @@ struct MemberPlaceSummary: Decodable {
 
 struct MemberCongestionItem: Decodable {
     let memberCongestionId: Int
+    let memberProfile: String
+    let memberName: String
     let congestionLevelName: String
     let congestionLevelMessage: String
     let createdAt: String
