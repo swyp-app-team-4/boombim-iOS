@@ -326,7 +326,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "관심 장소 추가하기"
+            "value" : "혼잡도 알리기"
           }
         }
       }
@@ -381,7 +381,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "관심 장소를 추가하고\n붐비지 않는 장소를 추천 받아 보세요"
+            "value" : "아직 알림이 없어요\n투표 후 알림을 받아보세요"
           }
         }
       }

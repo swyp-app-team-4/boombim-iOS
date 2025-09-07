@@ -21,7 +21,9 @@ final class NotificationViewController: BaseViewController {
         return pageViewController
     }()
     
-    private lazy var pages: [UIViewController] = [NewsViewController(), NoticeViewController()]
+    private lazy var newsVC = NewsViewController()
+    private lazy var noticeVC = NoticeViewController()
+    private lazy var pages: [UIViewController] = [newsVC, noticeVC]
     
     private var currentPageIndex: Int = 0
     
@@ -111,18 +113,30 @@ final class NotificationViewController: BaseViewController {
                 switch result {
                 case .success(let response):
                     print("Fetched alarm: \(response)")
+                    let items: [NoticeItem] = response.map(Self.makeNoticeItem(_:))
+                    self.noticeVC.apply(notices: items)
                 case .failure(let error):
                     print("Error fetching alarm: \(error)")
+                    self.noticeVC.apply(notices: []) // 비우거나 유지
                 }
             })
             .disposed(by: disposeBag)
         
-//        guard let fcmTokenUploadState = TokenManager.shared.fcmTokenUploadState else { return }
-//        if fcmTokenUploadState {
-//            viewModel.fetchAlarm()
-//        } else {
-//            viewModel.setFcmToken()
-//        }
+        guard let fcmTokenUploadState = TokenManager.shared.fcmTokenUploadState else { return }
+        if fcmTokenUploadState {
+            viewModel.fetchAlarm()
+        } else {
+            viewModel.setFcmToken()
+        }
+    }
+    
+    private static func makeNoticeItem(_ dto: AlarmItem) -> NoticeItem {
+        return NoticeItem(
+            image: .illustrationNotification,         // 필요 시 URL/이미지 매핑
+            title: dto.title,
+            date: dto.alarmTime,                // 포맷팅
+            isRead: false // dto.deliveryStatus
+        )
     }
     
     // MARK: - bind Action

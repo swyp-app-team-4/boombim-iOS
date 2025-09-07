@@ -13,7 +13,7 @@ final class NotificationViewModel {
     private let disposeBag = DisposeBag()
     
     let tokenResult = PublishSubject<Result<FcmTokenResponse, Error>>()
-    let alarmResult = PublishSubject<Result<AlarmItem, Error>>()
+    let alarmResult = PublishSubject<Result<[AlarmItem], Error>>()
     
     init(service: FcmService) {
         self.service = service

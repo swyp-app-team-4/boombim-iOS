@@ -55,7 +55,7 @@ final class FcmService {
         }
     }
     
-    func fetchAlarm(userToken: String) -> Observable<Result<AlarmItem, Error>> {
+    func fetchAlarm(userToken: String) -> Observable<Result<[AlarmItem], Error>> {
         return Observable.create { observer in
             let url = NetworkDefine.apiHost + NetworkDefine.Fcm.alarm
             
@@ -70,7 +70,7 @@ final class FcmService {
                 method: .get,
                 headers: headers,
                 encoding: JSONEncoding.default,
-                responseType: AlarmItem.self
+                responseType: [AlarmItem].self
             ) { result in
                 
                 debugPrint(result)

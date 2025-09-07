@@ -68,11 +68,11 @@ final class NewsViewController: UIViewController {
         setupActions()
         
         // dummy Data
-        news = [
-            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다. dldldldldldl", date: "4분 전", isNoti: true, isRead: false),
-            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "10분 전", isNoti: false, isRead: false),
-            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "15분 전", isNoti: true, isRead: false)
-        ]
+//        news = [
+//            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다. dldldldldldl", date: "4분 전", isNoti: true, isRead: false),
+//            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "10분 전", isNoti: false, isRead: false),
+//            .init(image: .dummy, title: "지금 이곳의 붐빔 정도를 알고 싶어하는 사람이 있습니다.", date: "15분 전", isNoti: true, isRead: false)
+//        ]
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -106,7 +106,7 @@ final class NewsViewController: UIViewController {
         NSLayoutConstraint.activate([
             emptyButton.heightAnchor.constraint(equalToConstant: 44),
             
-            emptyStackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 50),
+            emptyStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             emptyStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }

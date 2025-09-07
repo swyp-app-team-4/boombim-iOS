@@ -68,23 +68,31 @@ final class NoticeViewController: UIViewController {
         setupActions()
         
         // dummy Data
-        notices = [
-            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.20", isRead: false),
-            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.16", isRead: false),
-            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.10", isRead: false)
-        ]
+//        notices = [
+//            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.20", isRead: false),
+//            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.16", isRead: false),
+//            .init(image: .dummy, title: "붐빔 알림) 새로운 업데이트가 있습니다!", date: "2025.08.10", isRead: false)
+//        ]
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        if notices.isEmpty {
-            emptyStackView.isHidden = false
-            noticeTableView.isHidden = true
-        } else {
-            emptyStackView.isHidden = true
-            noticeTableView.isHidden = false
-        }
+//        if notices.isEmpty {
+//            emptyStackView.isHidden = false
+//            noticeTableView.isHidden = true
+//        } else {
+//            emptyStackView.isHidden = true
+//            noticeTableView.isHidden = false
+//        }
+    }
+    
+    func apply(notices new: [NoticeItem]) {
+        self.notices = new
+        // 비어있음/표시 토글
+        emptyStackView.isHidden = !new.isEmpty
+        noticeTableView.isHidden = new.isEmpty
+        noticeTableView.reloadData()
     }
     
     private func setupView() {
@@ -106,7 +114,7 @@ final class NoticeViewController: UIViewController {
         NSLayoutConstraint.activate([
             emptyButton.heightAnchor.constraint(equalToConstant: 44),
             
-            emptyStackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 50),
+            emptyStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             emptyStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
