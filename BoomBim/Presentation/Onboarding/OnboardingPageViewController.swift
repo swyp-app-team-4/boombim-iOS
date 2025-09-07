@@ -32,8 +32,9 @@ final class OnboardingPageViewController: UIViewController {
     private let subTitleLabel: UILabel = {
         let label = UILabel()
         label.font = Typography.Body02.regular.font
-        label.textColor = .grayScale9
+        label.textColor = .grayScale8
         label.textAlignment = .center
+        label.numberOfLines = 0
         
         return label
     }()

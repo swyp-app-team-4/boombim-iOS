@@ -61,6 +61,7 @@ enum NetworkDefine {
         case userPlaceDetail(id: Int)
         case registerFavoritePlace
         case deleteFavoritePlace(type: FavoritePlaceType, id: Int)
+        case aiRequest
         
         var path: String {
             switch self {
@@ -88,6 +89,8 @@ enum NetworkDefine {
                 return "favorite"
             case .deleteFavoritePlace(let type, let id):
                 return "favorite?placeId=\(id)&placeType=\(type)"
+            case .aiRequest:
+                return "clova/congestion-message"
             }
         }
     }

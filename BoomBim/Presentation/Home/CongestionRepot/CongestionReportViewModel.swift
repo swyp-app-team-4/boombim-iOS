@@ -16,6 +16,7 @@ final class CongestionReportViewModel {
         let levelSelect: Signal<Int>          // 0~3 (서버가 1~4면 내부에서 +1)
         let message: Driver<String>           // 설명 텍스트(최대 500자)
         let place: Driver<Place?>             // 선택된 장소
+        let aiTap: Signal<Void>
     }
 
     struct Output {
@@ -23,6 +24,7 @@ final class CongestionReportViewModel {
         let loading: Driver<Bool>
         let error: Signal<String>
         let completed: Signal<Void>
+        let aiText: Signal<String>
     }
 
     // 외부에서 이미 사용 중인 바인딩
@@ -34,6 +36,9 @@ final class CongestionReportViewModel {
     private let selectedLevelRelay = BehaviorRelay<Int?>(value: nil) // 0~3 저장
     
     private let _registerPlaceId = BehaviorRelay<Int?>(value: nil)
+    private let _registerPlaceName = BehaviorRelay<String?>(value: nil)
+    
+    private let aiTextRelay = PublishRelay<String>()
 
     private let disposeBag = DisposeBag()
     
@@ -60,6 +65,7 @@ final class CongestionReportViewModel {
     func setSelectedPlace(place: Place, id: Int) {
         _currentSelectedPlace.accept(place)
         _registerPlaceId.accept(id)
+        _registerPlaceName.accept(place.name)
     }
 
     func transform(input: Input) -> Output {
@@ -137,12 +143,59 @@ final class CongestionReportViewModel {
                 }
             })
             .disposed(by: disposeBag)
+        
+        input.aiTap
+            .asObservable()
+            .withLatestFrom(Observable.combineLatest(
+                _registerPlaceName.asObservable(),
+                selectedLevelRelay.asObservable(),
+                input.message.asObservable()
+            ))
+            .flatMapLatest { [weak self] (placeName, levelOpt, message) -> Observable<Event<AiMessageData>> in
+                guard let self else { return .empty() }
+
+                guard let place = placeName else {
+                    errorRelay.accept("장소를 등록해 주세요.")
+                    return .empty()
+                }
+                guard let level = levelOpt else {
+                    errorRelay.accept("혼잡도를 선택해 주세요.")
+                    return .empty()
+                }
+                
+                let body = AiMessageRequest(
+                    memberPlaceName: place,
+                    congestionLevelName: CongestionLevel.init(index: level)?.description ?? "보통",
+                    congestionMessage: message
+                )
+
+                loadingRelay.accept(true)
+                return PlaceService.shared.requestAi(body: body)
+                    .map { $0.data }
+                    .asObservable()
+                    .materialize()
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { event in
+                switch event {
+                case .next(let data):
+                    loadingRelay.accept(false)
+                    self.aiTextRelay.accept(data.generatedCongestionMessage)
+                case .error(let err):
+                    loadingRelay.accept(false)
+                    errorRelay.accept(err.localizedDescription)
+                case .completed:
+                    break
+                }
+            })
+            .disposed(by: disposeBag)
 
         return Output(
             postEnabled: postEnabled,
             loading: loadingRelay.asDriver(),
             error: errorRelay.asSignal(),
-            completed: completedRelay.asSignal()
+            completed: completedRelay.asSignal(),
+            aiText: aiTextRelay.asSignal()
         )
     }
 

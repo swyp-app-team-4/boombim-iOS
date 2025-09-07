@@ -23,6 +23,11 @@ enum CongestionLevel: Int, CaseIterable {
         }
     }
     
+    init?(index: Int) {
+        guard index >= 0 && index < CongestionLevel.allCases.count else { return nil }
+        self = CongestionLevel.allCases[index]
+    }
+    
     var description: String {
         switch self {
         case .relaxed: return "base.congestion.relaxed".localized()

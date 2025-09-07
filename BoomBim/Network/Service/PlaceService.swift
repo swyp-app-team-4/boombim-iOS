@@ -364,6 +364,23 @@ struct RemoveFavoritePlaceResponse: Decodable {
     let message: String
 }
 
+struct AiMessageRequest: Encodable {
+    let memberPlaceName: String
+    let congestionLevelName: String
+    let congestionMessage: String
+}
+
+struct AiMessageResponse: Decodable {
+    let code: Int
+    let status: String
+    let message: String
+    let data: AiMessageData
+}
+
+struct AiMessageData: Decodable {
+    let generatedCongestionMessage: String
+}
+
 final class PlaceService: Service {
     static let shared = PlaceService()
     override private init() {}
@@ -512,5 +529,17 @@ final class PlaceService: Service {
         }
         
         return request(url, method: .delete, header: headers, body: body)
+    }
+    
+    func requestAi(body: AiMessageRequest) -> Single<AiMessageResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.aiRequest.path
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return request(url, method: .post, header: headers, body: body)
     }
 }

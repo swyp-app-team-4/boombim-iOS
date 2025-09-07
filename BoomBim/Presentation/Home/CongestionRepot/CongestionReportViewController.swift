@@ -207,6 +207,57 @@ final class CongestionReportViewController: BaseViewController {
         return label
     }()
     
+    private let aiStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 2
+        
+        return stackView
+    }()
+    
+    private let aiTitle: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Caption.medium.font
+        label.textColor = .grayScale10
+        label.text = "어떻게 알려야할지 모르겠다면?"
+        
+        return label
+    }()
+    
+    private let aiSubStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.spacing = 4
+        
+        return stackView
+    }()
+    
+    private let aiInfoImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.image = .iconInfoGray
+        
+        return imageView
+    }()
+    
+    private let aiSubTitle: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Caption.regular.font
+        label.textColor = .grayScale7
+        label.text = "AI 작성하기는 1회만 가능합니다"
+        
+        return label
+    }()
+    
+    private let aiButton: UIButton = {
+        let button = UIButton(type: .system)
+        
+        let image = UIImage.buttonAi
+        button.setBackgroundImage(image, for: .normal)
+        
+        return button
+    }()
+    
     private let postButton: UIButton = {
         let button = UIButton()
         button.setTitle("report.button.post".localized(), for: .normal)
@@ -399,7 +450,8 @@ final class CongestionReportViewController: BaseViewController {
             postTap: postButton.rx.tap.asSignal(),
             levelSelect: levelSelect,
             message: message,
-            place: viewModel.selectedPlace
+            place: viewModel.selectedPlace,
+            aiTap: aiButton.rx.tap.asSignal()
         )
         let output = viewModel.transform(input: input)
         
@@ -410,6 +462,26 @@ final class CongestionReportViewController: BaseViewController {
                 self.postButton.isEnabled = isEnabled
                 self.postButton.setTitleColor(isEnabled ? .grayScale1 : .grayScale7, for: .normal)
                 self.postButton.backgroundColor = isEnabled ? .main : .grayScale4
+            })
+            .disposed(by: disposeBag)
+        
+        output.aiText
+            .emit(onNext: { [weak self] text in
+                guard let self else { return }
+                self.descriptionTextView.text = text
+                self.descriptionPlaceholder.isHidden = !text.isEmpty
+                self.descriptionCount.text = "\(text.count)/500자"
+                
+                // 커서를 끝으로 이동(선택)
+                if let endPosition = self.descriptionTextView.endOfDocument as UITextPosition? {
+                    self.descriptionTextView.selectedTextRange =
+                    self.descriptionTextView.textRange(from: endPosition, to: endPosition)
+                }
+                
+                // 키보드 위로 보이도록 스크롤(당신이 쓰는 scrollView가 있다면)
+                let rect = self.descriptionContainerView.convert(self.descriptionContainerView.bounds,
+                                                                 to: self.scrollView)
+                self.scrollView.scrollRectToVisible(rect.insetBy(dx: 0, dy: -12), animated: true)
             })
             .disposed(by: disposeBag)
         
@@ -444,6 +516,7 @@ final class CongestionReportViewController: BaseViewController {
 //        configureKakaoMap()
         configureVote()
         configureTextView()
+        configureAi()
         configurePostButton()
     }
     
@@ -664,6 +737,31 @@ final class CongestionReportViewController: BaseViewController {
         ])
         
         descriptionTextView.delegate = self
+    }
+    
+    private func configureAi() {
+        [aiInfoImageView, aiSubTitle].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            aiSubStackView.addArrangedSubview(view)
+        }
+        
+        [aiTitle, aiSubStackView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            aiStackView.addArrangedSubview(view)
+        }
+        
+        [aiStackView, aiButton].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            self.view.addSubview(view)
+        }
+        
+        NSLayoutConstraint.activate([
+            aiStackView.topAnchor.constraint(equalTo: descriptionContainerView.bottomAnchor, constant: 18),
+            aiStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            
+            aiButton.centerYAnchor.constraint(equalTo: aiStackView.centerYAnchor),
+            aiButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
+        ])
     }
     
     private func configurePostButton() {
