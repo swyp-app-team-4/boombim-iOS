@@ -91,13 +91,13 @@ final class FavoriteViewController: UIViewController {
             return FavoritePlaceItem(
                 image: f.imageUrl ?? "",
                 title: f.name,
-                update: TimeAgo.displayString(from: f.observedAt ?? ""),
+                update: DateHelper.displayString(from: f.observedAt ?? ""),
                 congestion: CongestionLevel.init(ko: congestion))
         } else {
             return FavoritePlaceItem(
                 image: f.imageUrl ?? "",
                 title: f.name,
-                update: TimeAgo.displayString(from: f.observedAt ?? ""),
+                update: DateHelper.displayString(from: f.observedAt ?? ""),
                 congestion: nil)
         }
     }

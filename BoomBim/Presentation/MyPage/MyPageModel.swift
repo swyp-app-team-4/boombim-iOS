@@ -44,6 +44,7 @@ typealias MyFavorite = FavoritePlaceInfo
 struct AnswerInfo: Decodable {
     let voteId: Int
     let profile: [String]
+    let voteDuplicationCnt: Int
     let day: String
     let posName: String
     let popularRes: [String]
@@ -63,6 +64,7 @@ struct MyAnswer: Decodable {
 struct QuestionInfo: Decodable {
     let voteId: Int
     let profile: [String]
+    let voteDuplicationCnt: Int
     let day: String
     let posName: String
     let popularRes: [String]

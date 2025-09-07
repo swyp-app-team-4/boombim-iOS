@@ -32,7 +32,7 @@ final class QuestionViewController: BaseViewController {
     
     private let emptyIllustrationImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = .illustrationNotification
+        imageView.image = .illustrationAskQuestion
         imageView.contentMode = .scaleAspectFit
         
         return imageView
@@ -44,9 +44,22 @@ final class QuestionViewController: BaseViewController {
         label.textColor = .grayScale10
         label.textAlignment = .center
         label.numberOfLines = 0
-        label.text = "질문이 없습니다"
+        label.text = "궁금한 장소의 투표를 올려보세요"
         
         return label
+    }()
+    
+    private lazy var emptyButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = .main
+        button.setTitle("혼잡도 질문하기", for: .normal)
+        button.setTitleColor(.grayScale1, for: .normal)
+        button.titleLabel?.font = Typography.Body02.medium.font
+        button.layer.cornerRadius = 22
+        button.layer.masksToBounds = true
+        button.contentEdgeInsets = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
+        
+        return button
     }()
     
     private let questionTableView: UITableView = {
@@ -121,7 +134,7 @@ final class QuestionViewController: BaseViewController {
     }
     
     private func configureEmptyStackView() {
-        [emptyIllustrationImageView, emptyTitleLabel].forEach { view in
+        [emptyIllustrationImageView, emptyTitleLabel, emptyButton].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             emptyStackView.addArrangedSubview(view)
         }
