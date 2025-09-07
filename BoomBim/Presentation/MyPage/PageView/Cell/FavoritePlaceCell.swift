@@ -117,6 +117,6 @@ final class FavoritePlaceCell: UICollectionViewCell {
         }
         
         title.text = item.title
-        update.text = "오늘 \(item.update)명 업데이트"
+        update.text = "오늘 \(item.update)"
     }
 }
