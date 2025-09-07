@@ -180,7 +180,7 @@ final class QuestionChatViewController: UIViewController {
                 let questionChatItem: QuestionChatItem = .init(
                     profileImage: item.profile,
                     people: item.profile.count,
-                    update: "1", // TODO: createdAt → 'n분 전'
+                    update: DateHelper.displayString(from: item.createdAt),
                     title: item.posName,
                     relaxed: item.relaxedCnt,
                     normal: item.commonly,

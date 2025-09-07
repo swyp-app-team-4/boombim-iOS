@@ -136,7 +136,7 @@ final class VoteChatViewController: BaseViewController {
                 let voteChatItem: VoteChatItem = .init(
                     profileImage: item.profile,
                     people: item.profile.count,
-                    update: "1분", // TODO: Update 날짜 계산 createdAt
+                    update: DateHelper.displayString(from: item.createdAt),
                     title: item.posName,
                     roadImage: item.posImage,
                     congestion: self?.congestion(from: item) ?? .relaxed,
@@ -177,9 +177,11 @@ final class VoteChatViewController: BaseViewController {
         })
         .disposed(by: disposeBag)
         
-//        output.toast
-//            .emit(onNext: { [weak self] msg in self?.showToast(msg) })
-//            .disposed(by: disposeBag)
+        output.toast
+            .emit(onNext: { [weak self] msg in
+                self?.presentAlert(title: "붐빔", message: "본인이 생성한 투표에는 참여할 수 없습니다.")
+            })
+            .disposed(by: disposeBag)
         
         // 종료 성공 → 부모에게 목록 갱신 요청
         output.ended

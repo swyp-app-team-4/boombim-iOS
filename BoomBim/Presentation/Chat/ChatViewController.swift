@@ -51,7 +51,7 @@ final class ChatViewController: BaseViewController {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
         
-        self.title = "소통"
+        self.title = "소통방"
     }
 
     required init?(coder: NSCoder) {
@@ -133,7 +133,7 @@ final class ChatViewController: BaseViewController {
     // MARK: - bind
     private func bindAndSetupPages() {
         let input = ChatViewModel.Input(
-            appear: rx.methodInvoked(#selector(UIViewController.viewDidAppear(_:)))
+            appear: rx.methodInvoked(#selector(UIViewController.viewWillAppear(_:)))
                 .map { _ in () }
                 .asSignal(onErrorSignalWith: .empty()),
             refresh: refreshRelay.asSignal()

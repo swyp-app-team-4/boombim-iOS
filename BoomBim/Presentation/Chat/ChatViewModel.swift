@@ -110,8 +110,13 @@ final class ChatViewModel {
             }
             .do(onNext: { [loading] _ in loading.accept(false) })
 
-        let voteList = shared.map { Array($0.voteResList.reversed()) }
-        let myVoteList = shared.map { Array($0.myVoteResList.reversed()) }
+        let voteList = shared.map { response in
+            response.voteResList.sorted { $0.createdAtDate > $1.createdAtDate }
+        }
+        
+        let myVoteList = shared.map { response in
+            response.myVoteResList.sorted { $0.createdAtDate > $1.createdAtDate }
+        }
 
         return Output(
             myCoordinate: myCoord,

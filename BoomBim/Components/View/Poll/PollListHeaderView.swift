@@ -27,7 +27,7 @@ final class PollListHeaderView: UIView {
         return s
     }()
     private lazy var root: UIStackView = {
-        let s = UIStackView(arrangedSubviews: [chipStack, UIView(), sortBtn])
+        let s = UIStackView(arrangedSubviews: [chipStack, UIView()/*, sortBtn*/]) // 최신순, 종료순 기능 우선 제거
         s.axis = .horizontal; s.alignment = .center
         return s
     }()

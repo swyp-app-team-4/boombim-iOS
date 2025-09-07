@@ -34,13 +34,17 @@ struct VoteItemResponse: Decodable {
     let voteDuplicationCnt: Int
     let createdAt: String
     let posName: String
-    let posImage: String
+    let posImage: String?
     let relaxedCnt: Int
     let commonly: Int
     let slightlyBusyCnt: Int
     let crowedCnt: Int
     let allType: String
     let voteFlag: Bool
+    
+    var createdAtDate: Date {
+        DateHelper.parse(createdAt) ?? .distantPast
+    }
 }
 
 struct MyVoteItemResponse: Decodable {
@@ -56,6 +60,10 @@ struct MyVoteItemResponse: Decodable {
     let allType: String
     let voteStatus: VoteStatus
     let voteFlag: Bool
+    
+    var createdAtDate: Date {
+        DateHelper.parse(createdAt) ?? .distantPast
+    }
 }
 
 struct VoteListResponse: Decodable {

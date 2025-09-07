@@ -43,6 +43,8 @@ final class VoteChatViewModel {
                 return VoteService.shared.castVote(body)   // Single<Void> 가정
                     .asSignal(onErrorRecover: { [weak self] error in
                         self?.loading.accept(false)
+                        print("error : \(error)")
+                        debugPrint(error)
                         if let e = error as? EndVoteError {
                             self?.toastRelay.accept(e.localizedDescription ?? "오류가 발생했어요.")
                         } else {

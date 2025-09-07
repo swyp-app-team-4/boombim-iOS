@@ -191,9 +191,11 @@ final class QuestionChatCell: UITableViewCell {
     }
     
     func configure(_ item: QuestionChatItem) {
-//        profileImageView.configure(with: item.profileImage) // TODO: URL로 이미지 가져오기
+        if !item.profileImage.isEmpty {
+            profileImageView.configure(with: item.profileImage)
+        }
         peopleLabel.text = "\(item.people)명이 궁금해하고 있어요" // TODO: Text 효과
-        updateLabel.text = "\(item.update)분 전" // TODO: 시간 계산해서 몇분전으로 보여줘야함.
+        updateLabel.text = item.update
         
         titleLabel.text = "지금 '\(item.title)' 어때요?"
         let pollTotal = item.relaxed + item.normal + item.busy + item.crowded

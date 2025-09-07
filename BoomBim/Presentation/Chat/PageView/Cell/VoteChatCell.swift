@@ -146,7 +146,7 @@ final class VoteChatCell: UITableViewCell {
     }
     
     private func configureCardView() {
-        [profileImageView, peopleLabel, updateLabel, titleLabel, roadImageView, buttonStackView, voteButton].forEach { view in
+        [profileImageView, peopleLabel, updateLabel, titleLabel, /*roadImageView, */buttonStackView, voteButton].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             cardView.addSubview(view)
         }
@@ -165,12 +165,13 @@ final class VoteChatCell: UITableViewCell {
             titleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 14),
             titleLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -14),
             
-            roadImageView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
-            roadImageView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 14),
-            roadImageView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -14),
-            roadImageView.heightAnchor.constraint(equalToConstant: 116),
+//            roadImageView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
+//            roadImageView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 14),
+//            roadImageView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -14),
+//            roadImageView.heightAnchor.constraint(equalToConstant: 116),
             
-            buttonStackView.topAnchor.constraint(equalTo: roadImageView.bottomAnchor, constant: 12),
+//            buttonStackView.topAnchor.constraint(equalTo: roadImageView.bottomAnchor, constant: 12),
+            buttonStackView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
             buttonStackView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 14),
             buttonStackView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -14),
             
@@ -236,7 +237,9 @@ final class VoteChatCell: UITableViewCell {
     }
     
     func configure(_ item: VoteChatItem) {
-        profileImageView.configure(with: item.profileImage) // TODO: URL로 이미지 가져오기
+        if !item.profileImage.isEmpty {
+            profileImageView.configure(with: item.profileImage)
+        }
         peopleLabel.text = "\(item.people)명이 궁금해하고 있어요" // TODO: Text 효과
         updateLabel.text = item.update // TODO: 시간 계산해서 몇분전으로 보여줘야함.
         
