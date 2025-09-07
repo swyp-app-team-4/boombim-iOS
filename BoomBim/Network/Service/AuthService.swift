@@ -35,7 +35,6 @@ struct ProfileImageRequest: Encodable { let image: String } // 서버 스펙에 
 
 typealias ProfileResponse = UserProfile
 
-typealias MyFavoriteResponse = MyFavorite
 typealias MyAnswerResponse = MyAnswer
 typealias MyQuestionResponse = MyQuestion
 
@@ -157,18 +156,6 @@ final class AuthService: Service {
     }
     
     // MARK: - 마이 페이지 정보 (관심 / 나의 투표 / 나의 질문)
-//    func getMyFavorite() -> Single<MyFavoriteResponse> {
-//        let url = NetworkDefine.apiHost + NetworkDefine.Profile.favorite
-//        
-//        var headers: HTTPHeaders = ["Content-Type": "application/json"]
-//        headers["Accept"] = "application/json"
-//        if let token = TokenManager.shared.currentAccessToken() {
-//            headers["Authorization"] = "Bearer \(token)"
-//        }
-//        
-//        return requestGet(url, method: .get, header: headers)
-//    }
-    
     func getMyAnswer() -> Single<[MyAnswerResponse]> {
         let url = NetworkDefine.apiHost + NetworkDefine.Profile.answer
         

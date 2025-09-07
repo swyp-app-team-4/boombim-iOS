@@ -17,6 +17,34 @@ final class UserPlaceDetailViewController: UIViewController {
     private let filterRelay = BehaviorRelay<FeedFilter>(value: .latest)
     private let allItemsRelay = BehaviorRelay<[FeedItem]>(value: [])
     private var pendingData: UserPlaceDetailInfo?   // view가 아직 안 떠있을 때 보관
+    
+    private let placeIdRelay    = BehaviorRelay<Int?>(value: nil)
+    private let placeTypeRelay  = BehaviorRelay<FavoritePlaceType>(value: .OFFICIAL_PLACE)
+    let favoriteState           = BehaviorRelay<Bool>(value: false)    // 현재 선택상태
+    let favoriteLoading         = BehaviorRelay<Bool>(value: false)    // 로딩시 버튼잠금
+    private let favoriteIdRelay = BehaviorRelay<Int?>(value: nil)      // 삭제가 favoriteId 기준이면 사용
+    
+    private let favoriteTapRelay = PublishRelay<Void>()
+    var favoriteActionRequested: Signal<FavoriteAction> {
+        favoriteTapRelay
+            .throttle(.milliseconds(500), latest: false, scheduler: MainScheduler.instance) // 중복탭 방지(옵션)
+            .withLatestFrom(Observable.combineLatest(
+                favoriteState.asObservable(),
+                placeIdRelay.compactMap { $0 },
+                placeTypeRelay.asObservable(),
+                favoriteIdRelay.asObservable()
+            ))
+            .map { isFav, placeId, placeType, favoriteId in
+                if isFav {
+                    // 현재가 '즐겨찾기 중'이면 → 삭제 요청
+                    return .remove(RemoveFavoritePlaceRequest(placeType: placeType, placeId: placeId))
+                } else {
+                    // 현재가 '미즐겨찾기'면 → 추가 요청
+                    return .add(RegisterFavoritePlaceRequest(placeType: placeType, placeId: placeId))
+                }
+            }
+            .asSignal(onErrorSignalWith: .empty())
+    }
 
     // MARK: - UI
     private let viewTitleLabel: UILabel = {
@@ -58,6 +86,7 @@ final class UserPlaceDetailViewController: UIViewController {
         
         setupView()
         bindTable()
+        bind()
         
         // view가 뜬 뒤에 pendingData가 있으면 반영
         if let data = pendingData {
@@ -65,6 +94,26 @@ final class UserPlaceDetailViewController: UIViewController {
             pendingData = nil
         }
     }
+    
+    private func bind() {
+        favoriteButton.rx.tap
+            .bind(to: favoriteTapRelay)
+            .disposed(by: disposeBag)
+        
+        // 상태 반영
+        favoriteState
+            .bind(to: favoriteButton.rx.isSelected)
+            .disposed(by: disposeBag)
+        
+        favoriteLoading
+            .map { !$0 }
+            .bind(to: favoriteButton.rx.isEnabled)
+            .disposed(by: disposeBag)
+    }
+    
+    func setFavoriteSelected(_ selected: Bool) { favoriteState.accept(selected) }
+    func setFavoriteLoading(_ loading: Bool)   { favoriteLoading.accept(loading) }
+    func setFavoriteId(_ id: Int?)             { favoriteIdRelay.accept(id) }
     
     // MARK: - Public: 외부에서 데이터 주입
     func configure(data: UserPlaceDetailInfo) {
@@ -77,6 +126,10 @@ final class UserPlaceDetailViewController: UIViewController {
     
     // MARK: - Private helpers
     private func apply(_ data: UserPlaceDetailInfo) {
+        placeIdRelay.accept(data.memberPlaceSummary.memberPlaceId)
+        placeTypeRelay.accept(.MEMBER_PLACE)
+        favoriteState.accept(data.memberPlaceSummary.isFavorite)
+        
         headerView.update(title: data.memberPlaceSummary.name, meta: data.memberPlaceSummary.address, level: CongestionLevel(ko: data.memberCongestionItems.first?.congestionLevelName ?? "여유") ?? .relaxed)
         
         // 목록 데이터 반영

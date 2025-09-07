@@ -33,7 +33,7 @@ struct OfficialPlaceItem: Decodable {
     let distance: Double
     let congestionLevelName: String
     let congestionMessage: String
-    let isFavorite: Bool
+    var isFavorite: Bool
 }
 
 struct OfficialPlaceListResponse: Decodable {
@@ -53,7 +53,7 @@ struct UserPlaceItem: Decodable {
     let distance: Double
     let congestionLevelName: String
     let congestionMessage: String
-    let isFavorite: Bool
+    var isFavorite: Bool
 }
 
 struct UserPlaceListResponse: Decodable {
@@ -255,7 +255,8 @@ struct FavoritePlaceInfo: Decodable {
     let imageUrl: String?
     let congestionLevelName: String?
     let observedAt: String?
-    let todayUpdateCount: Int
+    let updatedToday: Bool?
+    let todayUpdateCount: Int?
 }
 
 struct RankOfficialPlaceResponse: Decodable {
@@ -273,6 +274,38 @@ struct RankOfficialPlaceInfo: Decodable {
     let congestionLevelName: String
     let densityPerM2: Double
     let observedAt: String
+}
+
+enum FavoritePlaceType: String, Encodable {
+    case OFFICIAL_PLACE = "OFFICIAL_PLACE"
+    case MEMBER_PLACE = "MEMBER_PLACE"
+}
+
+struct RegisterFavoritePlaceRequest: Encodable {
+    let placeType: FavoritePlaceType
+    let placeId: Int
+}
+
+struct RegisterFavoritePlaceResponse: Decodable {
+    let code: Int
+    let status: String
+    let message: String
+    let data: FavoritePlaceId
+}
+
+struct FavoritePlaceId: Decodable {
+    let favoriteId: Int
+}
+
+struct RemoveFavoritePlaceRequest: Encodable {
+    let placeType: FavoritePlaceType
+    let placeId: Int
+}
+
+struct RemoveFavoritePlaceResponse: Decodable {
+    let code: Int
+    let status: String
+    let message: String
 }
 
 final class PlaceService: Service {
@@ -399,5 +432,29 @@ final class PlaceService: Service {
         }
         
         return requestGet(url, method: .get, header: headers)
+    }
+    
+    func registerFavoritePlace(body: RegisterFavoritePlaceRequest) -> Single<RegisterFavoritePlaceResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.registerFavoritePlace.path
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return request(url, method: .post, header: headers, body: body)
+    }
+    
+    func removeFavoritePlace(body: RemoveFavoritePlaceRequest) -> Single<RemoveFavoritePlaceResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Place.deleteFavoritePlace(type: body.placeType, id: body.placeId).path
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return request(url, method: .delete, header: headers, body: body)
     }
 }

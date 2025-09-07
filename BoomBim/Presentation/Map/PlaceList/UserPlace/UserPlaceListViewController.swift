@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 extension UserPlaceItem: Hashable {
     static func == (lhs: UserPlaceItem, rhs: UserPlaceItem) -> Bool {
@@ -17,6 +19,21 @@ extension UserPlaceItem: Hashable {
 }
 
 final class UserPlaceListViewController: UIViewController {
+    private let disposeBag = DisposeBag()
+    
+    // 셀에서 올라오는 탭(payload) → 외부로 FavoriteAction 방출
+    private let favoriteTapRelay = PublishRelay<FavoriteTapPayload>()
+    var favoriteActionRequested: Signal<FavoriteAction> {
+        favoriteTapRelay
+            .throttle(.milliseconds(400), latest: false, scheduler: MainScheduler.instance)
+            .map { p in
+                p.isFavorite
+                ? .remove(RemoveFavoritePlaceRequest(placeType: p.placeType, placeId: p.placeId))
+                : .add(RegisterFavoritePlaceRequest(placeType: p.placeType, placeId: p.placeId))
+            }
+            .asSignal(onErrorSignalWith: .empty())
+    }
+    
     // MARK: Public
     enum Section { case main }
 
@@ -37,6 +54,25 @@ final class UserPlaceListViewController: UIViewController {
         snapshot.appendItems(places, toSection: .main)
         userDataSource.apply(snapshot, animatingDifferences: animate)
         emptyView.isHidden = !places.isEmpty
+    }
+    
+    func applyFavoriteChange(placeId: Int, isFavorite: Bool) {
+        // 1) 모델 업데이트
+        guard let idx = userItems.firstIndex(where: { $0.memberPlaceId == placeId }) else { return }
+        userItems[idx].isFavorite = isFavorite
+        let item = userItems[idx]
+
+        // 2) 보이는 셀이면 버튼만 즉시 토글
+        if let indexPath = userDataSource.indexPath(for: item),
+           let cell = tableView.cellForRow(at: indexPath) as? UserPlaceInfoCell {
+            cell.setFavoriteSelected(isFavorite) // 셀에 헬퍼 추가
+            // 끝. (스냅샷 적용 불필요)
+        } else {
+            // 3) 화면에 없으면 다음 표시를 위해 최소 갱신
+            var snapshot = userDataSource.snapshot()
+            snapshot.reloadItems([item])            // iOS 15+면 reconfigureItems([item]) 권장
+            userDataSource.apply(snapshot, animatingDifferences: false)
+        }
     }
 
     // MARK: Private
@@ -167,6 +203,22 @@ private extension UserPlaceListViewController {
                 return UITableViewCell(style: .default, reuseIdentifier: "fallback")
             }
             cell.configure(with: item)
+            
+            cell.onFavoriteTapped = { [weak self] in
+                guard let self else { return }
+                
+                print("이름이 무엇 item : \(item.name)")
+                
+                let payload = FavoriteTapPayload(
+                    placeId: item.memberPlaceId,
+                    placeType: .MEMBER_PLACE,
+                    isFavorite: item.isFavorite,
+                    indexPath: indexPath
+                )
+                
+                self.favoriteTapRelay.accept(payload)
+            }
+            
             return cell
         }
         return ds

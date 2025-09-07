@@ -190,6 +190,12 @@ final class MapViewModel {
             error: errorRelay.asSignal())
     }
     
+    func registerFavoritePlace(body: RegisterFavoritePlaceRequest) -> Single<Bool> {
+        return PlaceService.shared.registerFavoritePlace(body: body)
+            .map { $0.code == 200 }
+            .catch { _ in .just(false) }
+    }
+    
     func didTapSearch() {
         goToSearchView?()
     }

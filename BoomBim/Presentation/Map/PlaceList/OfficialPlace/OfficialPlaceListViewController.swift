@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 // 고유 id로만 동일성/해시를 정의
 extension OfficialPlaceItem: Hashable {
@@ -17,8 +19,28 @@ extension OfficialPlaceItem: Hashable {
     }
 }
 
+struct FavoriteTapPayload {
+    let placeId: Int
+    let placeType: FavoritePlaceType
+    let isFavorite: Bool
+    let indexPath: IndexPath
+}
+
 final class OfficialPlaceListViewController: UIViewController {
-    // MARK: Public
+    private let disposeBag = DisposeBag()
+    
+    // 셀에서 올라오는 탭(payload) → 외부로 FavoriteAction 방출
+    private let favoriteTapRelay = PublishRelay<FavoriteTapPayload>()
+    var favoriteActionRequested: Signal<FavoriteAction> {
+        favoriteTapRelay
+            .throttle(.milliseconds(400), latest: false, scheduler: MainScheduler.instance)
+            .map { p in
+                p.isFavorite
+                ? .remove(RemoveFavoritePlaceRequest(placeType: p.placeType, placeId: p.placeId))
+                : .add(RegisterFavoritePlaceRequest(placeType: p.placeType, placeId: p.placeId))
+            }
+            .asSignal(onErrorSignalWith: .empty())
+    }
     enum Section { case main }
 
     let tableView = UITableView(frame: .zero, style: .plain)
@@ -40,30 +62,29 @@ final class OfficialPlaceListViewController: UIViewController {
         officialDataSource.apply(snapshot, animatingDifferences: animate)
         emptyView.isHidden = !places.isEmpty
     }
+    
+    func applyFavoriteChange(placeId: Int, isFavorite: Bool) {
+        // 1) 모델 업데이트
+        guard let idx = officialItems.firstIndex(where: { $0.officialPlaceId == placeId }) else { return }
+        officialItems[idx].isFavorite = isFavorite
+        let item = officialItems[idx]
 
-    // 선택 항목 강조(목록 상태 유지)
-//    func highlight(id: String) {
-//        guard let idx = items.firstIndex(where: { String($0.id) == id }) else { return }
-//        let ip = IndexPath(row: idx, section: 0)
-//        tableView.scrollToRow(at: ip, at: .middle, animated: true)
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-//            if let cell = self.tableView.cellForRow(at: ip) {
-//                UIView.animate(withDuration: 0.22, animations: {
-//                    cell.contentView.backgroundColor = UIColor.systemYellow.withAlphaComponent(0.14)
-//                }) { _ in
-//                    UIView.animate(withDuration: 0.35, delay: 0.5) {
-//                        cell.contentView.backgroundColor = .clear
-//                    }
-//                }
-//            }
-//        }
-//    }
+        // 2) 보이는 셀이면 버튼만 즉시 토글
+        if let indexPath = officialDataSource.indexPath(for: item),
+           let cell = tableView.cellForRow(at: indexPath) as? OfficialPlaceInfoCell {
+            cell.setFavoriteSelected(isFavorite) // 셀에 헬퍼 추가
+            // 끝. (스냅샷 적용 불필요)
+        } else {
+            // 3) 화면에 없으면 다음 표시를 위해 최소 갱신
+            var snapshot = officialDataSource.snapshot()
+            snapshot.reloadItems([item])            // iOS 15+면 reconfigureItems([item]) 권장
+            officialDataSource.apply(snapshot, animatingDifferences: false)
+        }
+    }
 
     // MARK: Private
     private var officialItems: [OfficialPlaceItem] = []
-    private var userItems: [UserPlaceItem] = []
     private lazy var officialDataSource = makeOfficialDataSource()
-    private lazy var userDataSource = makeUserDataSource()
 
     // Header
     private let headerContainer = UIView()
@@ -192,17 +213,22 @@ private extension OfficialPlaceListViewController {
                 return UITableViewCell(style: .default, reuseIdentifier: "fallback")
             }
             cell.configure(with: item)
-            return cell
-        }
-        return ds
-    }
-    
-    func makeUserDataSource() -> UITableViewDiffableDataSource<Section, UserPlaceItem> {
-        let ds = UITableViewDiffableDataSource<Section, UserPlaceItem>(tableView: tableView) { [weak self] tableView, indexPath, item in
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: OfficialPlaceInfoCell.reuseID, for: indexPath) as? OfficialPlaceInfoCell else {
-                return UITableViewCell(style: .default, reuseIdentifier: "fallback")
+            
+            cell.onFavoriteTapped = { [weak self] in
+                guard let self else { return }
+                
+                print("이름이 무엇 item : \(item.officialPlaceName)")
+                
+                let payload = FavoriteTapPayload(
+                    placeId: item.officialPlaceId,
+                    placeType: .OFFICIAL_PLACE,
+                    isFavorite: item.isFavorite,
+                    indexPath: indexPath
+                )
+                
+                self.favoriteTapRelay.accept(payload)
             }
-            cell.configure(with: item)
+            
             return cell
         }
         return ds
@@ -214,8 +240,6 @@ extension OfficialPlaceListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if let officialItem = officialDataSource.itemIdentifier(for: indexPath) {
             onOfficialSelect?(officialItem)
-        } else if let userItem = userDataSource.itemIdentifier(for: indexPath) {
-            onUserSelect?(userItem)
         }
         tableView.deselectRow(at: indexPath, animated: true)
     }

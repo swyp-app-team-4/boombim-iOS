@@ -182,7 +182,7 @@ final class KakaoLocalService {
     ///   - y: 위도 (lat)
     ///   - limit: 1...15 (Kakao 제한은 최대 15)
     ///   - radius: 선택. 미터(0~20000). 주면 해당 반경 내로 제한
-    func searchByKeyword(query: String, x: Double, y: Double, limit: Int = 10, radius: Int? = 300
+    func searchByKeyword(query: String, x: Double, y: Double, limit: Int = 10, radius: Int? = nil
     ) -> Single<[Place]> {
         
         let url = NetworkDefine.apiKakao + NetworkDefine.Search.keyword

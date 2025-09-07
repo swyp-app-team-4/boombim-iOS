@@ -12,6 +12,8 @@ import Nuke
 final class OfficialPlaceInfoCell: UITableViewCell {
     static let reuseID = "PlaceInfoCell"
 
+    var onFavoriteTapped: (() -> Void)?
+    
     // Container
     private let card = UIView()
 
@@ -76,12 +78,9 @@ final class OfficialPlaceInfoCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        #if canImport(Nuke)
-        imageTasks.forEach { $0?.cancel() }
-        imageTasks.removeAll()
-        #endif
-//        imageViews.forEach { $0.image = nil }
-//        favoriteBadge.isHidden = true
+        
+        onFavoriteTapped = nil
+        favoriteButton.removeTarget(nil, action: nil, for: .touchUpInside)
     }
 
     // MARK: Public
@@ -90,13 +89,18 @@ final class OfficialPlaceInfoCell: UITableViewCell {
         congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
         placeImageView.setImage(from: item.imageUrl)
         favoriteButton.isSelected = item.isFavorite
+        
+        favoriteButton.removeTarget(nil, action: nil, for: .touchUpInside)
+        favoriteButton.addTarget(self, action: #selector(didTapFavorite), for: .touchUpInside)
     }
     
-    func configure(with item: UserPlaceItem) {
-        titleLabel.text = item.name
-        congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
-//        placeImageView.setProfileImage(from: item.imageUrl)
-        favoriteButton.isSelected = item.isFavorite
+    @objc private func didTapFavorite() {
+        print("didTapFavorite")
+        onFavoriteTapped?()
+    }
+    
+    func setFavoriteSelected(_ selected: Bool) {
+        favoriteButton.isSelected = selected
     }
 
     // MARK: Private

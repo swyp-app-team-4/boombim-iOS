@@ -10,6 +10,8 @@ import UIKit
 // MARK: - Cell
 final class UserPlaceInfoCell: UITableViewCell {
     static let identifier = "UserPlaceInfoCell"
+    
+    var onFavoriteTapped: (() -> Void)?
 
     // Container
     private let card = UIView()
@@ -71,12 +73,27 @@ final class UserPlaceInfoCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
+        
+        onFavoriteTapped = nil
+        favoriteButton.removeTarget(nil, action: nil, for: .touchUpInside)
     }
     
     func configure(with item: UserPlaceItem) {
         titleLabel.text = item.name
         congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
         favoriteButton.isSelected = item.isFavorite
+        
+        favoriteButton.removeTarget(nil, action: nil, for: .touchUpInside)
+        favoriteButton.addTarget(self, action: #selector(didTapFavorite), for: .touchUpInside)
+    }
+    
+    @objc private func didTapFavorite() {
+        print("didTapFavorite")
+        onFavoriteTapped?()
+    }
+    
+    func setFavoriteSelected(_ selected: Bool) {
+        favoriteButton.isSelected = selected
     }
 
     // MARK: Private

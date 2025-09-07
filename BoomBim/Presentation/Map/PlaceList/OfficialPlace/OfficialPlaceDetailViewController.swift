@@ -6,8 +6,44 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
+
+enum FavoriteAction {
+    case add(RegisterFavoritePlaceRequest)
+    case remove(RemoveFavoritePlaceRequest)   // 서버 규격에 맞춰 정의
+}
 
 final class OfficialPlaceDetailViewController: UIViewController {
+    private let disposeBag = DisposeBag()
+    
+    private let placeIdRelay    = BehaviorRelay<Int?>(value: nil)
+    private let placeTypeRelay  = BehaviorRelay<FavoritePlaceType>(value: .OFFICIAL_PLACE)
+    let favoriteState           = BehaviorRelay<Bool>(value: false)    // 현재 선택상태
+    let favoriteLoading         = BehaviorRelay<Bool>(value: false)    // 로딩시 버튼잠금
+    private let favoriteIdRelay = BehaviorRelay<Int?>(value: nil)      // 삭제가 favoriteId 기준이면 사용
+    
+    private let favoriteTapRelay = PublishRelay<Void>()
+    var favoriteActionRequested: Signal<FavoriteAction> {
+        favoriteTapRelay
+            .throttle(.milliseconds(500), latest: false, scheduler: MainScheduler.instance) // 중복탭 방지(옵션)
+            .withLatestFrom(Observable.combineLatest(
+                favoriteState.asObservable(),
+                placeIdRelay.compactMap { $0 },
+                placeTypeRelay.asObservable(),
+                favoriteIdRelay.asObservable()
+            ))
+            .map { isFav, placeId, placeType, favoriteId in
+                if isFav {
+                    // 현재가 '즐겨찾기 중'이면 → 삭제 요청
+                    return .remove(RemoveFavoritePlaceRequest(placeType: placeType, placeId: placeId))
+                } else {
+                    // 현재가 '미즐겨찾기'면 → 추가 요청
+                    return .add(RegisterFavoritePlaceRequest(placeType: placeType, placeId: placeId))
+                }
+            }
+            .asSignal(onErrorSignalWith: .empty())
+    }
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -160,7 +196,28 @@ final class OfficialPlaceDetailViewController: UIViewController {
         super.viewDidLoad()
         
         setupView()
+        bind()
     }
+    
+    private func bind() {
+        favoriteButton.rx.tap
+            .bind(to: favoriteTapRelay)
+            .disposed(by: disposeBag)
+        
+        // 상태 반영
+        favoriteState
+            .bind(to: favoriteButton.rx.isSelected)
+            .disposed(by: disposeBag)
+        
+        favoriteLoading
+            .map { !$0 }
+            .bind(to: favoriteButton.rx.isEnabled)
+            .disposed(by: disposeBag)
+    }
+    
+    func setFavoriteSelected(_ selected: Bool) { favoriteState.accept(selected) }
+    func setFavoriteLoading(_ loading: Bool)   { favoriteLoading.accept(loading) }
+    func setFavoriteId(_ id: Int?)             { favoriteIdRelay.accept(id) }
     
     private func setupView() {
         view.backgroundColor = .background
@@ -325,6 +382,10 @@ final class OfficialPlaceDetailViewController: UIViewController {
     }
     
     func configure(data: OfficialPlaceDetailInfo) {
+        placeIdRelay.accept(data.officialPlaceId)
+        placeTypeRelay.accept(.OFFICIAL_PLACE)
+        favoriteState.accept(data.isFavorite)
+        
         favoriteButton.isSelected = data.isFavorite
         titleLabel.text = data.officialPlaceName
         addressLabel.text = data.officialPlaceName

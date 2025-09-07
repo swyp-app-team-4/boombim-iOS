@@ -59,6 +59,8 @@ enum NetworkDefine {
         case postPlace
         case officialPlaceDetail(id: Int)
         case userPlaceDetail(id: Int)
+        case registerFavoritePlace
+        case deleteFavoritePlace(type: FavoritePlaceType, id: Int)
         
         var path: String {
             switch self {
@@ -82,6 +84,10 @@ enum NetworkDefine {
                 return "official-place/\(id)/overview"
             case .userPlaceDetail(let id):
                 return "member-place/\(id)"
+            case .registerFavoritePlace:
+                return "favorite"
+            case .deleteFavoritePlace(let type, let id):
+                return "favorite?placeId=\(id)&placeType=\(type)"
             }
         }
     }

@@ -91,9 +91,7 @@ final class HomeViewModel {
             .merge(locationRepo.coordinate)
             .share(replay: 1, scope: .whileConnected)
         
-        let trigger = Observable.merge(
-            input.appear.take(1))
-            .share()
+        let trigger = input.appear.share()
         
         let loading = BehaviorRelay<Bool>(value: false)
         let errorRelay = PublishRelay<String>()
@@ -126,9 +124,8 @@ final class HomeViewModel {
         
         let isRegionNewsEmpty = regionNewsItems.map { $0.isEmpty }
         
-        let nearbyOfficialPlace: Driver<[RecommendPlaceItem]> = myCoord
-            .compactMap { $0 }
-            .take(1)
+        let nearbyOfficialPlace: Driver<[RecommendPlaceItem]> = trigger
+            .withLatestFrom(myCoord.compactMap { $0 })
             .flatMapLatest { coord in
                 let requestBody: NearbyOfficialPlaceRequest = .init(latitude: coord.latitude, longitude: coord.longitude)
                 
