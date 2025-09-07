@@ -223,6 +223,8 @@ struct OfficialPlaceDetailInfo: Decodable {
     let placeType: String
     let poiCode: String
     let imageUrl: String
+    let congestionLevelName: String
+    let congestionMessage: String
     let observedAt: String
     let centroidLatitude: Double
     let centroidLongitude: Double

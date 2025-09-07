@@ -389,7 +389,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
         favoriteButton.isSelected = data.isFavorite
         titleLabel.text = data.officialPlaceName
         addressLabel.text = data.legalDong
-        congestionImageView.image = CongestionLevel(ko: data.forecasts.first?.congestionLevelName ?? "여유")?.badge
+        congestionImageView.image = CongestionLevel(ko: data.congestionLevelName)?.badge
         placeImageView.setImage(from: data.imageUrl)
         
         let manPercent = data.demographics.filter{ $0.category == DemographicCategory.gender }.filter { $0.subCategory == GenderCategory.MALE.rawValue }.first?.rate ?? 0
