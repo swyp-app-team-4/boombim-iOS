@@ -111,9 +111,9 @@ final class FeedTableViewCell: UITableViewCell {
     func apply(_ item: FeedItem) {
         avatar.setImage(from: item.memberProfile)
         nameLabel.text = item.memberName
-        timeLabel.text = TimeAgo.displayString(from: item.createdAt)
+        timeLabel.text = DateHelper.displayString(from: item.createdAt)
         print("item.createdAt : \(item.createdAt)")
-        print("TimeAgo.displayString(from: item.createdAt) : \(TimeAgo.displayString(from: item.createdAt))")
+        print("TimeAgo.displayString(from: item.createdAt) : \(DateHelper.displayString(from: item.createdAt))")
         contentLabel.text = item.congestionLevelMessage
         
         badge.image = CongestionLevel.init(ko: item.congestionLevelName)?.badge

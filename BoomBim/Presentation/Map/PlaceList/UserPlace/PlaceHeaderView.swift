@@ -60,7 +60,7 @@ final class PlaceHeaderView: UIView {
         }
         
         // 붐빔 알리기 버튼 (가로 크게)
-        reportButton.setTitle("＋ 붐빔 알리기", for: .normal)
+        reportButton.setTitle("＋ 혼잡도 질문하기", for: .normal)
         reportButton.setTitleColor(.white, for: .normal)
         reportButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
         reportButton.backgroundColor = UIColor(red: 1.00, green: 0.66, blue: 0.19, alpha: 1)

@@ -219,6 +219,7 @@ struct OfficialPlaceDetailResponse: Decodable {
 struct OfficialPlaceDetailInfo: Decodable {
     let officialPlaceId: Int
     let officialPlaceName: String
+    let legalDong: String
     let placeType: String
     let poiCode: String
     let imageUrl: String

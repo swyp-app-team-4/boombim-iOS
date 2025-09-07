@@ -133,7 +133,7 @@ final class UserPlaceDetailViewController: UIViewController {
         
         headerView.update(
             title: data.memberPlaceSummary.name,
-            update: TimeAgo.displayString(from: data.memberCongestionItems.first?.createdAt ?? ""),
+            update: DateHelper.displayString(from: data.memberCongestionItems.first?.createdAt ?? ""),
             address: data.memberPlaceSummary.address,
             level: CongestionLevel(ko: data.memberCongestionItems.first?.congestionLevelName ?? "여유") ?? .relaxed)
         
