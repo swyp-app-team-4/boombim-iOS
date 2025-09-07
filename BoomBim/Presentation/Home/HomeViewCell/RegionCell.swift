@@ -57,7 +57,7 @@ final class RegionCell: UICollectionViewCell {
         let label = UILabel()
         label.font = Typography.Body03.regular.font
         label.textColor = .grayScale8
-        label.numberOfLines = 2
+        label.numberOfLines = 0
         
         return label
     }()

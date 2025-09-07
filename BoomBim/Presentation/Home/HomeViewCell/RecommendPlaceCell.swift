@@ -116,7 +116,7 @@ final class RecommendPlaceCell: UICollectionViewCell {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func configure(_ item: RecommendPlaceItem) {
-        imageView.setImage(from: item.image, placeholder: .dummy)
+        imageView.setImage(from: item.image, placeholder: .imageDummyPlace)
         congestionImageView.image = item.congestion.badge
         title.text = item.title
         address.text = item.address

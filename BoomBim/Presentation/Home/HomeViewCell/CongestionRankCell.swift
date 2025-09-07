@@ -49,7 +49,7 @@ final class CongestionRankCell: UICollectionViewCell {
         stackView.axis = .vertical
         stackView.alignment = .fill
         stackView.distribution = .fill
-        stackView.spacing = 12
+        stackView.spacing = 14
         
         return stackView
     }()
@@ -59,7 +59,7 @@ final class CongestionRankCell: UICollectionViewCell {
         stackView.axis = .vertical
         stackView.alignment = .fill
         stackView.distribution = .fill
-        stackView.spacing = 6
+        stackView.spacing = 2
         
         return stackView
     }()
@@ -161,7 +161,7 @@ final class CongestionRankCell: UICollectionViewCell {
             infoStackView.addArrangedSubview(view)
         }
         
-        [address, title].forEach { view in
+        [title, address].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             textStackView.addArrangedSubview(view)
         }
@@ -183,7 +183,7 @@ final class CongestionRankCell: UICollectionViewCell {
     }
 
     func configure(_ item: CongestionRankPlaceItem) {
-        imageView.setImage(from: item.image, placeholder: .dummy)
+        imageView.setImage(from: item.image, placeholder: .imageDummyPlace)
         rankLabel.text = "\(item.rank)"
         
         if item.rank < 4 {
@@ -195,6 +195,6 @@ final class CongestionRankCell: UICollectionViewCell {
         congestionImageView.image = item.congestion.badge
         title.text = item.title
         address.text = item.address
-        update.text = "\(item.update)분 전"
+        update.text = item.update
     }
 }

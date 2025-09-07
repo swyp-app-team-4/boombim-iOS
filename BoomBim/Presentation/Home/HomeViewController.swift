@@ -135,19 +135,19 @@ final class HomeViewController: BaseViewController {
         let logoItem = UIBarButtonItem(customView: logoImageView)
         navigationItem.leftBarButtonItem = logoItem
         
-        let searchButton = UIButton(type: .system)
-        searchButton.setImage(.iconSearch, for: .normal)
-        searchButton.tintColor = .grayScale9
-        searchButton.addTarget(self, action: #selector(didTapSearchButton), for: .touchUpInside)
+//        let searchButton = UIButton(type: .system)
+//        searchButton.setImage(.iconSearch, for: .normal)
+//        searchButton.tintColor = .grayScale9
+//        searchButton.addTarget(self, action: #selector(didTapSearchButton), for: .touchUpInside)
 
         let notificationButton = UIButton(type: .system)
         notificationButton.setImage(.iconAlarm, for: .normal)
         notificationButton.tintColor = .grayScale9
         notificationButton.addTarget(self, action: #selector(didTapNotificationButton), for: .touchUpInside)
 
-        let stack = UIStackView(arrangedSubviews: [notificationButton, searchButton])
-        stack.axis = .horizontal
-        stack.spacing = 12
+        let stack = UIStackView(arrangedSubviews: [notificationButton/*, searchButton*/])
+//        stack.axis = .horizontal
+//        stack.spacing = 12
 
         let barItem = UIBarButtonItem(customView: stack)
         navigationItem.rightBarButtonItem = barItem
@@ -314,7 +314,7 @@ final class HomeViewController: BaseViewController {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(151))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(200))
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
@@ -420,7 +420,7 @@ final class HomeViewController: BaseViewController {
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior = .none
         
-        section.contentInsets = .init(top: 14, leading: 16, bottom: 0, trailing: 16)
+        section.contentInsets = .init(top: 14, leading: 16, bottom: 50, trailing: 16)
         section.interGroupSpacing = 14
         
         section.boundarySupplementaryItems = [self.sectionHeader()]

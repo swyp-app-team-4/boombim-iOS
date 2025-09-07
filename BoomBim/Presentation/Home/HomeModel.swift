@@ -28,7 +28,7 @@ struct FavoritePlaceItem: Hashable {
     let id = UUID()
     let image: String
     let title: String
-    let update: Int
+    let update: String
     let congestion: CongestionLevel?
 }
 
@@ -38,7 +38,7 @@ struct CongestionRankPlaceItem: Hashable {
     let image: String
     let title: String
     let address: String
-    let update: Int
+    let update: String
     let congestion: CongestionLevel
 }
 
@@ -60,7 +60,7 @@ enum HomeSection: Int, CaseIterable {
     var headerTitle: String? {
         switch self {
         case .region: return "지역 소식"
-        case .recommendPlace: return "지금 여기가 덜 붐벼요!"
+        case .recommendPlace: return "내 근처 한적한 스팟"
         case .favoritePlace: return "관심 장소"
         case .congestionRank: return "지금 붐비는 장소 TOP 5"
         }

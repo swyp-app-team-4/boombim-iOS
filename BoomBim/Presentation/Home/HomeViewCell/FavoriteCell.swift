@@ -54,12 +54,39 @@ final class FavoriteCell: UICollectionViewCell {
         return label
     }()
     
+    private let updateStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .fill
+        stackView.distribution = .fill
+        stackView.spacing = 4
+        
+        return stackView
+    }()
+    
+    private let timeImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.image = .iconRecycleTime
+        
+        return imageView
+    }()
+    
     private let update: UILabel = {
         let label = UILabel()
         label.font = Typography.Caption.regular.font
         label.textColor = .grayScale8
         
         return label
+    }()
+    
+    private let favoriteButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.iconNonfavoriteStar, for: .normal)
+        button.setImage(.iconFavoriteStar, for: .selected)
+        button.contentMode = .scaleAspectFit
+        
+        return button
     }()
 
     override init(frame: CGRect) {
@@ -107,22 +134,36 @@ final class FavoriteCell: UICollectionViewCell {
     }
     
     private func configureTextStackView() {
-        [title, update].forEach { label in
+        [timeImageView, update].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            updateStackView.addArrangedSubview(view)
+        }
+        
+        [title, updateStackView].forEach { label in
             label.translatesAutoresizingMaskIntoConstraints = false
             textStackView.addArrangedSubview(label)
         }
+        
+        favoriteButton.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(favoriteButton)
+        
+        NSLayoutConstraint.activate([
+            favoriteButton.topAnchor.constraint(equalTo: textStackView.topAnchor),
+            favoriteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
+        ])
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func configure(_ item: FavoritePlaceItem) {
-        imageView.setImage(from: item.image, placeholder: .dummy)
+        imageView.setImage(from: item.image, placeholder: .imageDummyPlace)
         
         if let congestionImageName = item.congestion {
             congestionImageView.image = congestionImageName.badge
         }
+        favoriteButton.isSelected = true
         
         title.text = item.title
-        update.text = "오늘 \(item.update)명 업데이트"
+        update.text = item.update
     }
 }

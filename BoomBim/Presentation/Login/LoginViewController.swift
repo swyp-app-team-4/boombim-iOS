@@ -73,6 +73,7 @@ final class LoginViewController: BaseViewController {
         return button
     }()
     
+    // 로그인 없이 사용하는 기능 제거
     private let withLoginButton: UIButton = {
         let button = UIButton()
         button.setTitleColor(.systemBlue, for: .normal)
@@ -132,7 +133,7 @@ final class LoginViewController: BaseViewController {
         buttonStackView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(buttonStackView)
         
-        [bubbleImageView, kakaoButton, naverButton, appleButton, withLoginButton].forEach { button in
+        [bubbleImageView, kakaoButton, naverButton, appleButton/*, withLoginButton*/].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             
             buttonStackView.addArrangedSubview(button)

@@ -91,21 +91,15 @@ final class FavoriteViewController: UIViewController {
             return FavoritePlaceItem(
                 image: f.imageUrl ?? "",
                 title: f.name,
-                update: minutesAgo(from: f.observedAt),
+                update: TimeAgo.displayString(from: f.observedAt ?? ""),
                 congestion: CongestionLevel.init(ko: congestion))
         } else {
             return FavoritePlaceItem(
                 image: f.imageUrl ?? "",
                 title: f.name,
-                update: minutesAgo(from: f.observedAt),
+                update: TimeAgo.displayString(from: f.observedAt ?? ""),
                 congestion: nil)
         }
-    }
-
-    // updatedAt(ISO8601 등) → 'N분 전' 숫자 구하기 (필요 시)
-    private static func minutesAgo(from iso: String?) -> Int {
-        guard let iso, let date = ISO8601DateFormatter().date(from: iso) else { return 0 }
-        return max(0, Int(Date().timeIntervalSince(date) / 60))
     }
     
     private func setupView() {

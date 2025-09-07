@@ -214,13 +214,13 @@ final class HomeViewModel {
             return FavoritePlaceItem(
                 image: r.imageUrl ?? "",
                 title: r.name,
-                update: 0,
+                update: TimeAgo.displayString(from: r.observedAt ?? ""),
                 congestion: CongestionLevel.init(ko: congestion))
         } else {
             return FavoritePlaceItem(
                 image: r.imageUrl ?? "",
                 title: r.name,
-                update: 0,
+                update: TimeAgo.displayString(from: r.observedAt ?? ""),
                 congestion: nil)
         }
     }
@@ -232,7 +232,7 @@ final class HomeViewModel {
             image: r.imageUrl,
             title: r.officialPlaceName,
             address: r.legalDong,
-            update: 0,
+            update: TimeAgo.displayString(from: r.observedAt),
             congestion: CongestionLevel.init(ko: r.congestionLevelName) ?? .relaxed)
     }
     

@@ -110,7 +110,7 @@ final class FavoritePlaceCell: UICollectionViewCell {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func configure(_ item: FavoritePlaceItem) {
-        imageView.setImage(from: item.image, placeholder: .dummy)
+        imageView.setImage(from: item.image, placeholder: .imageDummyPlace)
         
         if let congestion = item.congestion {
             congestionImageView.image = congestion.badge
