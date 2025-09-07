@@ -44,14 +44,32 @@ final class FavoritePlaceCell: UICollectionViewCell {
         return label
     }()
     
+    private let updateStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .fill
+        stackView.distribution = .fill
+        stackView.spacing = 4
+        
+        return stackView
+    }()
+    
+    private let timeImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.image = .iconRecycleTimeWhite
+        
+        return imageView
+    }()
+    
     private let update: UILabel = {
         let label = UILabel()
-        label.font = Typography.Caption.medium.font
+        label.font = Typography.Caption.regular.font
         label.textColor = .grayScale1
         
         return label
     }()
-    
+
     private let favoriteImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = .iconFavoriteStar
@@ -101,7 +119,12 @@ final class FavoritePlaceCell: UICollectionViewCell {
     }
     
     private func configureTextStackView() {
-        [title, update].forEach { label in
+        [timeImageView, update].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            updateStackView.addArrangedSubview(view)
+        }
+        
+        [title, updateStackView].forEach { label in
             label.translatesAutoresizingMaskIntoConstraints = false
             textStackView.addArrangedSubview(label)
         }
@@ -117,6 +140,6 @@ final class FavoritePlaceCell: UICollectionViewCell {
         }
         
         title.text = item.title
-        update.text = "오늘 \(item.update)"
+        update.text = "\(item.update)"
     }
 }
