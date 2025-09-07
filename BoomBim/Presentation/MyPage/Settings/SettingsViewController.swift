@@ -7,6 +7,7 @@
 
 import UIKit
 import RxSwift
+import SafariServices
 
 final class SettingsViewController: BaseViewController {
     private let viewModel: SettingsViewModel
@@ -142,14 +143,27 @@ final class SettingsViewController: BaseViewController {
     }
     
     private func presentWithdrawConfirm(reason: String) {
-            let msg = "작성하신 탈퇴 사유:\n\"\(reason)\"\n정말 탈퇴하시겠어요?"
-            let ac = UIAlertController(title: "회원 탈퇴", message: msg, preferredStyle: .alert)
-            ac.addAction(UIAlertAction(title: "취소", style: .cancel))
-            ac.addAction(UIAlertAction(title: "확인", style: .destructive) { [weak self] _ in
-                self?.viewModel.confirmWithdraw(reason: reason) // ← VM에 실행 요청
-            })
-            present(ac, animated: true)
-        }
+        let msg = "작성하신 탈퇴 사유:\n\"\(reason)\"\n정말 탈퇴하시겠어요?"
+        let ac = UIAlertController(title: "회원 탈퇴", message: msg, preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "취소", style: .cancel))
+        ac.addAction(UIAlertAction(title: "확인", style: .destructive) { [weak self] _ in
+            self?.viewModel.confirmWithdraw(reason: reason) // ← VM에 실행 요청
+        })
+        present(ac, animated: true)
+    }
+    
+    func openSafariView(url: String) {
+        guard let url = URL(string: url) else { return }
+        let config = SFSafariViewController.Configuration()
+        config.entersReaderIfAvailable = false
+        
+        let vc = SFSafariViewController(url: url, configuration: config)
+        vc.preferredBarTintColor = .white
+        vc.preferredControlTintColor = .systemBlue
+        if #available(iOS 11.0, *) { vc.dismissButtonStyle = .close }
+        
+        present(vc, animated: true)
+    }
 }
 
 extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
@@ -174,44 +188,23 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        // TODO: 각각의 화면 이동
+        let row = rows[indexPath.row]
+        
+        switch row {
+        case .profile:
+            return
+        case .push:
+            return
+        case .terms:
+            openSafariView(url: "https://awesome-captain-026.notion.site/2529598992b080119479fef036d96aba?source=copy_link")
+        case .privacy:
+            openSafariView(url: "https://awesome-captain-026.notion.site/2529598992b080198821d47baaf7d23f?source=copy_link")
+        case .guide:
+            openSafariView(url: "https://awesome-captain-026.notion.site/25b9598992b08065a7ccf361e3f8ccf8?source=copy_link")
+        case .support:
+            openSafariView(url: "https://awesome-captain-026.notion.site/25b9598992b0804fb058d1310b6ecdf0?source=copy_link")
+        case .faq:
+            return
+        }
     }
-
-    // MARK: - Footer
-//    private func makeFooter() -> UIView {
-//        let container = UIView()
-//        let stack = UIStackView()
-//        stack.axis = .vertical
-//        stack.alignment = .leading
-//        stack.spacing = 8
-//        stack.translatesAutoresizingMaskIntoConstraints = false
-//
-//        let logout = UIButton(type: .system)
-//        logout.setTitle("settings.button.logout".localized(), for: .normal)
-//        logout.setTitleColor(.grayScale7, for: .normal)
-//        logout.titleLabel?.font = Typography.Body03.regular.font
-//        logout.addTarget(self, action: #selector(tapLogout), for: .touchUpInside)
-//
-//        let withdraw = UIButton(type: .system)
-//        withdraw.setTitle("settings.button.withdraw".localized(), for: .normal)
-//        withdraw.titleLabel?.font = Typography.Body03.regular.font
-//        withdraw.setTitleColor(.grayScale7, for: .normal)
-//        withdraw.addTarget(self, action: #selector(tapWithdraw), for: .touchUpInside)
-//
-//        stack.addArrangedSubview(logout)
-//        stack.addArrangedSubview(withdraw)
-//
-//        container.addSubview(stack)
-//        NSLayoutConstraint.activate([
-//            stack.topAnchor.constraint(equalTo: container.topAnchor, constant: 24),
-//            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-//            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 18),
-//            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -18),
-//            stack.heightAnchor.constraint(equalToConstant: 50)
-//        ])
-//
-//        container.frame = CGRect(x: 0, y: 0, width: 0, height: 74)
-//        
-//        return container
-//    }
 }

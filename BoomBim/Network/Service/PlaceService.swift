@@ -45,10 +45,24 @@ struct OfficialPlaceListResponse: Decodable {
 
 typealias UserPlaceRequest = OfficialPlaceRequest
 
+//struct UserPlaceItem: Decodable {
+//    let type: String
+//    let memberPlaceId: Int
+//    let name: String
+//    let coordinate: Coord
+//    let distance: Double
+//    let congestionLevelName: String
+//    let congestionMessage: String
+//    let createdAt: String
+//    var isFavorite: Bool
+//}
+
+// PLACE 전용
 struct UserPlaceItem: Decodable {
-    let type: String
+    let type: String          // "PLACE"
     let memberPlaceId: Int
     let name: String
+    let placeType: String     // "MEMBER_PLACE" (원하면 유지)
     let coordinate: Coord
     let distance: Double
     let congestionLevelName: String
@@ -57,12 +71,48 @@ struct UserPlaceItem: Decodable {
     var isFavorite: Bool
 }
 
+// CLUSTER 전용
+struct ClusterItem: Decodable {
+    let type: String          // "CLUSTER"
+    let coordinate: Coord
+    let clusterSize: Int
+    let congestionLevelCounts: [String:Int]
+}
+
+// 둘을 아우르는 합타입
+enum UserPlaceEntry: Decodable {
+    case place(UserPlaceItem)
+    case cluster(ClusterItem)
+
+    private enum CodingKeys: String, CodingKey { case type }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        switch try c.decode(String.self, forKey: .type) {
+        case "PLACE":
+            self = .place(try UserPlaceItem(from: decoder))
+        case "CLUSTER":
+            self = .cluster(try ClusterItem(from: decoder))
+        default:
+            throw DecodingError.dataCorruptedError(forKey: .type, in: c, debugDescription: "Unknown type")
+        }
+    }
+}
+
+// 응답 래퍼
 struct UserPlaceListResponse: Decodable {
     let code: Int
     let status: String
     let message: String
-    let data: [UserPlaceItem]
+    let data: [UserPlaceEntry]
 }
+
+//struct UserPlaceListResponse: Decodable {
+//    let code: Int
+//    let status: String
+//    let message: String
+//    let data: [UserPlaceItem]
+//}
 
 struct RegisterPlaceRequest: Encodable {
     let uuid: String

@@ -766,7 +766,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "자주 묻는 질문 (FAQ)"
+            "value" : "건의사항 남기기"
           }
         }
       }
@@ -782,13 +782,13 @@
         }
       }
     },
-    "settings.label.loginInfo" : {
+    "settings.label.privacy" : {
       "extractionState" : "manual",
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "로그인 정보"
+            "value" : "개인 정보 처리 방침"
           }
         }
       }
@@ -799,7 +799,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "개인 정보"
+            "value" : "개인 정보 관리"
           }
         }
       }
@@ -821,7 +821,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "고객센터(문제신고)"
+            "value" : "고객센터 / 문의"
           }
         }
       }
@@ -832,7 +832,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "이용약관 / 개인정보 동의"
+            "value" : "이용약관"
           }
         }
       }

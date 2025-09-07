@@ -372,23 +372,36 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
 
         // places → 실시간 그룹 POI
         output.places
-            .withLatestFrom(modeRelay) { places, mode in (places, mode) }
+            .withLatestFrom(modeRelay) { entries, mode in (entries, mode) }
             .filter { $0.1 == .realtime }
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] places, _ in
-                guard let self, let map = self.kakaoMap else { return }
+            .subscribe(onNext: { [weak self] entries, _ in
+                guard let self, let _ = self.kakaoMap else { return }
                 let visual = self.visual(for: .realtime)
-                
-                self.placeIndex = Dictionary(uniqueKeysWithValues: places.map { (String($0.memberPlaceId), $0) })
-                
-                let items: [POIItem] = places.map {
+
+                // ✅ PLACE만 추출
+                let onlyPlaces: [UserPlaceItem] = entries.compactMap {
+                    if case let UserPlaceEntry.place(p) = $0 { return p }
+                    else { return nil }
+                }
+
+                // ✅ 인덱스도 PLACE만으로
+                self.placeIndex = Dictionary(uniqueKeysWithValues: onlyPlaces.map {
+                    (String($0.memberPlaceId), $0)
+                })
+
+                // ✅ POI도 PLACE만으로
+                let items: [POIItem] = onlyPlaces.map {
                     .init(
                         id: String($0.memberPlaceId),
-                        point: MapPoint(longitude: $0.coordinate.longitude,latitude:  $0.coordinate.latitude),
+                        point: MapPoint(
+                            longitude: $0.coordinate.longitude,
+                            latitude:  $0.coordinate.latitude
+                        ),
                         styleKey: self.styleKey(for: $0)
                     )
                 }
-                
+
                 self.overlay.setPOIs(
                     for: .realtime,
                     items: items,
@@ -396,20 +409,60 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                     iconProvider: self.iconForStyleKey,
                     onTapID: { [weak self] group, id in
                         guard let self else { return }
-                        guard group == .realtime, let model = self.placeIndex[id] else { return }
-                        print("onTap ID : \(id)")
-                        
+                        guard group == .realtime,
+                              self.placeIndex[id] != nil else { return }
                         self.userPoiTapRelay.accept(Int(id) ?? 0)
-                    })
-                
-                // 결과가 있으면 목록 패널을 .half로 띄움, 없으면 .tip
-                if places.isEmpty {
+                    }
+                )
+
+                // ✅ 패널 표시는 PLACE 여부 기반
+                if onlyPlaces.isEmpty {
                     self.floatingPanel.move(to: .tip, animated: true)
                 } else {
-                    self.showUserListPanel(with: places) // 아래 함수
+                    self.showUserListPanel(with: onlyPlaces)
                 }
             })
             .disposed(by: disposeBag)
+
+//        output.places
+//            .withLatestFrom(modeRelay) { places, mode in (places, mode) }
+//            .filter { $0.1 == .realtime }
+//            .observe(on: MainScheduler.instance)
+//            .subscribe(onNext: { [weak self] places, _ in
+//                guard let self, let map = self.kakaoMap else { return }
+//                let visual = self.visual(for: .realtime)
+//                
+//                self.placeIndex = Dictionary(uniqueKeysWithValues: places.map { (String($0.memberPlaceId), $0) })
+//                
+//                let items: [POIItem] = places.map {
+//                    .init(
+//                        id: String($0.memberPlaceId),
+//                        point: MapPoint(longitude: $0.coordinate.longitude,latitude:  $0.coordinate.latitude),
+//                        styleKey: self.styleKey(for: $0)
+//                    )
+//                }
+//                
+//                self.overlay.setPOIs(
+//                    for: .realtime,
+//                    items: items,
+//                    visual: visual,
+//                    iconProvider: self.iconForStyleKey,
+//                    onTapID: { [weak self] group, id in
+//                        guard let self else { return }
+//                        guard group == .realtime, let model = self.placeIndex[id] else { return }
+//                        print("onTap ID : \(id)")
+//                        
+//                        self.userPoiTapRelay.accept(Int(id) ?? 0)
+//                    })
+//                
+//                // 결과가 있으면 목록 패널을 .half로 띄움, 없으면 .tip
+//                if places.isEmpty {
+//                    self.floatingPanel.move(to: .tip, animated: true)
+//                } else {
+//                    self.showUserListPanel(with: places) // 아래 함수
+//                }
+//            })
+//            .disposed(by: disposeBag)
 
         // officialPlace → 폴리곤/센터
         output.officialPlace

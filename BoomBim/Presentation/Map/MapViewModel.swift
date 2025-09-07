@@ -20,7 +20,7 @@ final class MapViewModel {
         let userPoiTap: Signal<Int>
     }
     struct Output {
-        let places: Observable<[UserPlaceItem]>
+        let places: Observable<[UserPlaceEntry]>
         let userPlaceDetail: Signal<UserPlaceDetailInfo>
         let officialPlace: Observable<[OfficialPlaceItem]>
         let officialPlaceDetail: Signal<OfficialPlaceDetailInfo>
@@ -110,9 +110,9 @@ final class MapViewModel {
             }
             .share(replay: 1, scope: .whileConnected)
         
-        let userPlaces: Observable<[UserPlaceItem]> =
+        let userPlaces: Observable<[UserPlaceEntry]> =
         zipped
-            .flatMapLatest { (rect, memberOpt, z) -> Observable<[UserPlaceItem]> in
+            .flatMapLatest { (rect, memberOpt, z) -> Observable<[UserPlaceEntry]> in
                 
                 let member = memberOpt ?? rect.centerCoord
                 
