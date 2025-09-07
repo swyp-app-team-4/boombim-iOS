@@ -26,6 +26,10 @@ struct VoteItem: Hashable {
     let image: UIImage
     let title: String
     let congestion: CongestionLevel
+    let relaxedCnt: Int
+    let commonly: Int
+    let slightlyBusyCnt: Int
+    let crowedCnt: Int
     let people: Int
     let isVoting: Bool
 }
@@ -35,6 +39,10 @@ struct QuestionItem: Hashable {
     let image: UIImage
     let title: String
     let congestion: CongestionLevel
+    let relaxedCnt: Int
+    let commonly: Int
+    let slightlyBusyCnt: Int
+    let crowedCnt: Int
     let people: Int
     let isQuesting: Bool
 }

@@ -37,7 +37,7 @@ final class VoteQuestionHeaderView: UITableViewHeaderFooterView {
         addSubview(dateLabel)
         
         NSLayoutConstraint.activate([
-            dateLabel.topAnchor.constraint(equalTo: topAnchor, constant: 24),
+            dateLabel.topAnchor.constraint(equalTo: topAnchor, constant: 14),
             dateLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             dateLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
             dateLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -14),

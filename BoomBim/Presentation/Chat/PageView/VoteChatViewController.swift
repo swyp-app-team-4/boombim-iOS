@@ -177,7 +177,7 @@ final class VoteChatViewController: BaseViewController {
         })
         .disposed(by: disposeBag)
         
-        output.toast
+        output.error
             .emit(onNext: { [weak self] msg in
                 self?.presentAlert(title: "붐빔", message: "본인이 생성한 투표에는 참여할 수 없습니다.")
             })

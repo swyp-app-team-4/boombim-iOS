@@ -10,45 +10,108 @@ import UIKit
 final class VoteQuestionCell: UITableViewCell {
     static let identifier = "VoteQuestionCell"
     
-    private let placeImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
-        imageView.layer.cornerRadius = 15
-        imageView.clipsToBounds = true
+    // 외부에서 토글 이벤트를 받기 위한 콜백
+    var onToggle: (() -> Void)?
+    // 펼침 상태 (tableView에서 주입)
+    private(set) var isExpanded: Bool = false
+    
+    private let cardView: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 14
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.grayScale3.cgColor
+        view.layer.masksToBounds = true
+        view.backgroundColor = .grayScale1
         
-        return imageView
+        return view
     }()
-
+    
+    private let cardStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 12
+        
+        return stackView
+    }()
+    
+    private let textStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .fill
+        stackView.alignment = .fill
+        
+        return stackView
+    }()
+    
     private let placeLabel: UILabel = {
         let label = UILabel()
-        label.font = Typography.Body02.medium.font
-        label.textColor = .grayScale9
+        label.font = Typography.Body02.semiBold.font
+        label.textColor = .grayScale10
         label.numberOfLines = 1
         label.lineBreakMode = .byTruncatingTail
+        label.textAlignment = .left
         
         return label
     }()
     
-    private lazy var rightStackView: UIStackView = {
+    private let peopleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Caption.medium.font
+        label.textColor = .grayScale6
+        label.numberOfLines = 1
+        label.lineBreakMode = .byTruncatingTail
+        label.textAlignment = .right
+        
+        return label
+    }()
+    
+    private let imageStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
-        stackView.alignment = .center
         stackView.distribution = .fill
-        stackView.spacing = 8
+        stackView.alignment = .fill
         
         return stackView
     }()
-
-    private let congestionLabel: StatusLabel = {
-        let lb = StatusLabel()
+    
+    private let congestionImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
         
-        return lb
+        return imageView
     }()
-
-    private let countLabel: StatusLabel = {
-        let lb = StatusLabel()
+    
+    private let arrowButton: UIButton = {
+        let b = UIButton(type: .system)
+        b.setImage(.iconBottomArrow, for: .normal)
+        b.imageView?.contentMode = .scaleAspectFit
+        b.tintColor = .grayScale6
+        b.contentHorizontalAlignment = .fill
+        b.contentVerticalAlignment   = .fill
+        b.setContentHuggingPriority(.required, for: .horizontal)
+        b.setContentCompressionResistancePriority(.required, for: .horizontal)
         
-        return lb
+        return b
+    }()
+    
+    private let pollGaugeStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 12
+        
+        return stackView
+    }()
+    
+    private let relaxedPollView = PollInfoView()
+    private let normalPollView = PollInfoView()
+    private let busyPollView = PollInfoView()
+    private let crowdedPollView = PollInfoView()
+    
+    private let spacerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        
+        return view
     }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -63,67 +126,145 @@ final class VoteQuestionCell: UITableViewCell {
         contentView.backgroundColor = .white
         
         configureView()
-        configureRightStackView()
+        configureTextView()
+        configureImageView()
+        configureGaugeView()
+        
+        configureCardStackView()
     }
-
+    
     private func configureView() {
-        [placeImageView, placeLabel, rightStackView].forEach { view in
+        [cardView, spacerView].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview(view)
         }
         
-        rightStackView.setContentHuggingPriority(.required, for: .horizontal)
-        rightStackView.setContentCompressionResistancePriority(.required, for:  .horizontal)
+        NSLayoutConstraint.activate([
+            cardView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+//            cardView.bottomAnchor.constraint(equalTo: spacerView.topAnchor),
+            
+            spacerView.topAnchor.constraint(equalTo: cardView.bottomAnchor),
+            spacerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            spacerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            spacerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            spacerView.heightAnchor.constraint(equalToConstant: 14)
+        ])
+    }
+
+    private func configureTextView() {
+        [placeLabel, peopleLabel].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            textStackView.addArrangedSubview(view)
+        }
+        
+//        textStackView.translatesAutoresizingMaskIntoConstraints = false
+//        cardStackView.addArrangedSubview(textStackView)
 
         NSLayoutConstraint.activate([
-            placeImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            placeImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            placeImageView.widthAnchor.constraint(equalToConstant: 30),
-            placeImageView.heightAnchor.constraint(equalToConstant: 30),
-
-            placeLabel.leadingAnchor.constraint(equalTo: placeImageView.trailingAnchor, constant: 8),
-            placeLabel.trailingAnchor.constraint(equalTo: rightStackView.leadingAnchor, constant: -8),
-            placeLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            
-            congestionLabel.heightAnchor.constraint(equalToConstant: 22),
-            countLabel.heightAnchor.constraint(equalToConstant: 22),
-            
-            rightStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            rightStackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-
-            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 46)
+//            textStackView.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
+//            textStackView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
+//            textStackView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
         ])
     }
     
-    private func configureRightStackView() {
-        [congestionLabel, countLabel].forEach { label in
-            label.translatesAutoresizingMaskIntoConstraints = false
-            rightStackView.addArrangedSubview(label)
+    private func configureImageView() {
+        let spacer = UIView()
+        
+        [congestionImageView, spacer, arrowButton].forEach { imageView in
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            imageStackView.addArrangedSubview(imageView)
         }
+        
+        // 가운데 스페이서가 쭉 늘어나도록
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        spacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        
+        // 양끝 아이템은 늘어나지 않도록(자기 크기 유지)
+        congestionImageView.setContentHuggingPriority(.required, for: .horizontal)
+        congestionImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
+        
+        arrowButton.setContentHuggingPriority(.required, for: .horizontal)
+        arrowButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        
+//        imageStackView.translatesAutoresizingMaskIntoConstraints = false
+//        cardStackView.addArrangedSubview(imageStackView)
+        
+        NSLayoutConstraint.activate([
+//            congestionImageView.topAnchor.constraint(equalTo: textStackView.bottomAnchor, constant: 12),
+//            congestionImageView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
+//            arrowView.centerYAnchor.constraint(equalTo: congestionImageView.centerYAnchor),
+//            arrowView.trailingAnchor.constraint(equalTo: headerButton.trailingAnchor, constant: -16)
+        ])
+    }
+    
+    private func configureGaugeView() {
+        [relaxedPollView, normalPollView, busyPollView, crowdedPollView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            pollGaugeStackView.addArrangedSubview(view)
+        }
+    }
+    
+    private func configureCardStackView() {
+        [textStackView, imageStackView, pollGaugeStackView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            cardStackView.addArrangedSubview(view)
+        }
+        
+        cardStackView.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(cardStackView)
+        
+        NSLayoutConstraint.activate([
+            cardStackView.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
+            cardStackView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
+            cardStackView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
+            cardStackView.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -16)
+        ])
+        
+        arrowButton.addTarget(self, action: #selector(didTapHeader), for: .touchUpInside)
+        
+        // 기본: 접힘
+        pollGaugeStackView.isHidden = true
+        arrowButton.transform = .identity
+    }
+    
+    @objc func didTapHeader() {
+        onToggle?() // 상태 변경은 VC에서 관리
+    }
+    
+    func setExpanded(_ expanded: Bool, animated: Bool) {
+        isExpanded = expanded
+        let changes = {
+            self.pollGaugeStackView.isHidden = !expanded
+            self.arrowButton.transform = expanded ? CGAffineTransform(rotationAngle: .pi) : .identity
+            self.layoutIfNeeded()
+        }
+        animated ? UIView.animate(withDuration: 0.25, animations: changes) : changes()
     }
 
     func configure(_ item: VoteItem) {
-        placeImageView.image = item.image
         placeLabel.text = item.title
-        congestionLabel.text = item.congestion.description
-        countLabel.text = "\(item.people)명"
+        peopleLabel.text = "\(item.people)명 참여"
+        congestionImageView.image = item.congestion.badge
         
-        congestionLabel.backgroundColor = item.isVoting ? .grayScale7 : .white
-        congestionLabel.textColor = item.isVoting ? .grayScale1 : .grayScale7
-        countLabel.backgroundColor = item.isVoting ? .grayScale7 : .white
-        countLabel.textColor = item.isVoting ? .grayScale1 : .grayScale7
+        let pollTotal = item.people
+        relaxedPollView.update(text: CongestionLevel.relaxed.description, textColor: .grayScale9, count: item.relaxedCnt, countColor: .grayScale8, total: pollTotal, color: CongestionLevel.relaxed.color, animated: true)
+        normalPollView.update(text: CongestionLevel.normal.description, textColor: .grayScale9, count: item.commonly, countColor: .grayScale8, total: pollTotal, color: CongestionLevel.normal.color, animated: true)
+        busyPollView.update(text: CongestionLevel.busy.description, textColor: .grayScale9, count: item.slightlyBusyCnt, countColor: .grayScale8, total: pollTotal, color: CongestionLevel.busy.color, animated: true)
+        crowdedPollView.update(text: CongestionLevel.crowded.description, textColor: .grayScale9, count: item.crowedCnt, countColor: .grayScale8, total: pollTotal, color: CongestionLevel.crowded.color, animated: true)
     }
     
     func configure(_ item: QuestionItem) {
-        placeImageView.image = item.image
         placeLabel.text = item.title
-        congestionLabel.text = item.congestion.description
-        countLabel.text = "\(item.people)명"
+        peopleLabel.text = "\(item.people)명 참여"
+        congestionImageView.image = item.congestion.badge
         
-        congestionLabel.backgroundColor = item.isQuesting ? .grayScale7 : .white
-        congestionLabel.textColor = item.isQuesting ? .grayScale1 : .grayScale7
-        countLabel.backgroundColor = item.isQuesting ? .grayScale7 : .white
-        countLabel.textColor = item.isQuesting ? .grayScale1 : .grayScale7
+        let pollTotal = item.people
+        relaxedPollView.update(text: CongestionLevel.relaxed.description, textColor: .grayScale9, count: item.relaxedCnt, countColor: .grayScale8, total: pollTotal, color: CongestionLevel.relaxed.color, animated: true)
+        normalPollView.update(text: CongestionLevel.normal.description, textColor: .grayScale9, count: item.commonly, countColor: .grayScale8, total: pollTotal, color: CongestionLevel.normal.color, animated: true)
+        busyPollView.update(text: CongestionLevel.busy.description, textColor: .grayScale9, count: item.slightlyBusyCnt, countColor: .grayScale8, total: pollTotal, color: CongestionLevel.busy.color, animated: true)
+        crowdedPollView.update(text: CongestionLevel.crowded.description, textColor: .grayScale9, count: item.crowedCnt, countColor: .grayScale8, total: pollTotal, color: CongestionLevel.crowded.color, animated: true)
     }
 }
 

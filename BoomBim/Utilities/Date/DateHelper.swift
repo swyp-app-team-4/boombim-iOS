@@ -82,4 +82,43 @@ enum DateHelper {
         // 3) 그냥 초 단위 포맷 시도
         return iso0.date(from: s)
     }
+    
+    /// "2025-09-07T00:00:00" → "2025년 9월 7일 (일)"
+    static func koreanFullDate(_ isoString: String,
+                        defaultTimeZone: TimeZone = TimeZone(identifier: "Asia/Seoul")!) -> String {
+        // 1) 가능한 입력 포맷들(소수초/타임존 유무 포함)
+        let patterns = [
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXXXX", // 2025-09-07T00:00:00.807035+09:00
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX",    // 2025-09-07T00:00:00.807+09:00
+            "yyyy-MM-dd'T'HH:mm:ssXXXXX",        // 2025-09-07T00:00:00+09:00 / Z
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",      // 2025-09-07T00:00:00.807035
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",         // 2025-09-07T00:00:00.807
+            "yyyy-MM-dd'T'HH:mm:ss"              // 2025-09-07T00:00:00
+        ]
+
+        let posix = Locale(identifier: "en_US_POSIX")
+        var parsedDate: Date?
+
+        // 2) 순서대로 파싱 시도
+        for p in patterns {
+            let f = DateFormatter()
+            f.locale = posix
+            f.dateFormat = p
+            // 입력에 타임존 정보가 없으면 기본 타임존으로 해석
+            f.timeZone = p.contains("X") ? TimeZone(secondsFromGMT: 0) : defaultTimeZone
+            if let d = f.date(from: isoString) {
+                parsedDate = d
+                break
+            }
+        }
+
+        guard let date = parsedDate else { return "-" }
+
+        // 3) 한국어 표기 출력
+        let out = DateFormatter()
+        out.locale = Locale(identifier: "ko_KR")
+        out.timeZone = defaultTimeZone
+        out.dateFormat = "yyyy년 M월 d일 (E)"   // (일), (월) 같은 요일 약식
+        return out.string(from: date)
+    }
 }

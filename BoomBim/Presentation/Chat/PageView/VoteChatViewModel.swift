@@ -21,12 +21,14 @@ final class VoteChatViewModel {
     struct Output {
         let isLoading: Driver<Bool>
         let toast: Signal<String>
+        let error: Signal<String>
         let ended: Signal<Int>       // 종료 성공한 voteId
         let items: Driver<[VoteItemResponse]> // 그대로 전달
     }
 
     private let loading = BehaviorRelay<Bool>(value: false)
     private let toastRelay = PublishRelay<String>()
+    private let errorRelay = PublishRelay<String>()
     private let endedRelay = PublishRelay<Int>()
     private let disposeBag = DisposeBag()
 
@@ -46,9 +48,9 @@ final class VoteChatViewModel {
                         print("error : \(error)")
                         debugPrint(error)
                         if let e = error as? EndVoteError {
-                            self?.toastRelay.accept(e.localizedDescription ?? "오류가 발생했어요.")
+                            self?.errorRelay.accept(e.localizedDescription ?? "오류가 발생했어요.")
                         } else {
-                            self?.toastRelay.accept(error.localizedDescription)
+                            self?.errorRelay.accept(error.localizedDescription)
                         }
                         return .empty() // Signal<Void>
                     })
@@ -65,6 +67,7 @@ final class VoteChatViewModel {
         return Output(
             isLoading: loading.asDriver(),
             toast: toastRelay.asSignal(),
+            error: errorRelay.asSignal(),
             ended: endedRelay.asSignal(),
             items: items
         )
