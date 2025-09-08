@@ -251,22 +251,23 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         segmentStack.spacing = 8
         segmentStack.translatesAutoresizingMaskIntoConstraints = false
 
-        buttonsContainer.addSubview(favoriteButton)
-        buttonsContainer.addSubview(dividerView)
+//        buttonsContainer.addSubview(favoriteButton)
+//        buttonsContainer.addSubview(dividerView)
         buttonsContainer.addSubview(segmentStack)
 
         NSLayoutConstraint.activate([
-            favoriteButton.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
-            favoriteButton.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-            favoriteButton.widthAnchor.constraint(equalToConstant: 34),
-            favoriteButton.heightAnchor.constraint(equalToConstant: 34),
+//            favoriteButton.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
+//            favoriteButton.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
+//            favoriteButton.widthAnchor.constraint(equalToConstant: 34),
+//            favoriteButton.heightAnchor.constraint(equalToConstant: 34),
+//
+//            dividerView.leadingAnchor.constraint(equalTo: favoriteButton.trailingAnchor, constant: 12),
+//            dividerView.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
+//            dividerView.widthAnchor.constraint(equalToConstant: 1),
+//            dividerView.heightAnchor.constraint(equalTo: buttonsContainer.heightAnchor, multiplier: 0.7),
 
-            dividerView.leadingAnchor.constraint(equalTo: favoriteButton.trailingAnchor, constant: 12),
-            dividerView.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-            dividerView.widthAnchor.constraint(equalToConstant: 1),
-            dividerView.heightAnchor.constraint(equalTo: buttonsContainer.heightAnchor, multiplier: 0.7),
-
-            segmentStack.leadingAnchor.constraint(equalTo: dividerView.trailingAnchor, constant: 12),
+            segmentStack.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
+//            segmentStack.leadingAnchor.constraint(equalTo: dividerView.trailingAnchor, constant: 12),
             segmentStack.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
             segmentStack.trailingAnchor.constraint(lessThanOrEqualTo: buttonsContainer.trailingAnchor)
         ])

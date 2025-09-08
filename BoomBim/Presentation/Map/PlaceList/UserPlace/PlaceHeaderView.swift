@@ -66,6 +66,9 @@ final class PlaceHeaderView: UIView {
         reportButton.backgroundColor = UIColor(red: 1.00, green: 0.66, blue: 0.19, alpha: 1)
         reportButton.layer.cornerRadius = 12
         reportButton.contentEdgeInsets = .init(top: 18, left: 16, bottom: 18, right: 16)
+        reportButton.alpha = 0            // 보이지 않음 (공간은 그대로)
+        reportButton.isUserInteractionEnabled = false  // 탭 방지
+        reportButton.isAccessibilityElement = false 
         
         // 레이아웃
         let headerTop = UIStackView(arrangedSubviews: [titleLabel, updateStackView])
