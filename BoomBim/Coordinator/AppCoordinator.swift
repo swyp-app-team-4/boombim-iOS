@@ -183,5 +183,21 @@ final class AppCoordinator: Coordinator {
         
         window.rootViewController = tabBarCoordinator.tabBarController
         resetRoot(tabBarCoordinator.tabBarController)
+        
+        self.upsertFcmIfNeeded()
+    }
+    
+    private func upsertFcmIfNeeded() {
+        guard let token = TokenManager.shared.fcmToken,
+              let userToken = TokenManager.shared.currentAccessToken() else { return }
+
+        FcmService.shared.registerFcmToken(userToken: userToken, token: token)
+//            .timeout(.seconds(3), scheduler: MainScheduler.instance) // 너무 느리면 스킵
+            .subscribe(onNext: { result in
+                print("FCM register result:", result)
+            }, onError: { err in
+                print("FCM register failed:", err)
+            })
+            .disposed(by: disposeBag)
     }
 }

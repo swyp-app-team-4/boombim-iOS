@@ -78,6 +78,6 @@ extension AppDelegate: MessagingDelegate {
         guard let token = fcmToken else { return }
         print("FCM token:", token)
         
-//        TokenManager.shared.fcmToken = token
+        TokenManager.shared.fcmToken = token
     }
 }
