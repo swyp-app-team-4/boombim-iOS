@@ -16,6 +16,8 @@ final class NicknameViewController: BaseViewController {
     
     // 이미지 선택 값을 담아 ViewModel로 전달
     private let pickedImageRelay = BehaviorRelay<UIImage?>(value: nil)
+    // ✅ 추가: 약관 동의 완료 후에만 ViewModel로 실제 가입을 트리거
+    private let proceedSignupRelay = PublishRelay<Void>()
     
     // MARK: - UI
     private let activityIndicator = UIActivityIndicatorView(style: .large)
@@ -210,10 +212,10 @@ final class NicknameViewController: BaseViewController {
         let input = NicknameViewModel.Input(
             nicknameText: nicknameTextField.rx.text.orEmpty.asDriver(),
             pickedImage: pickedImageRelay.asDriver(), // UIImage? 전달
-            signupTap: signUpButton.rx.tap.asSignal()
+            signupTap: proceedSignupRelay.asSignal()// signUpButton.rx.tap.asSignal()
         )
         
-        let output = viewModel.tansform(input: input)
+        let output = viewModel.transform(input: input)
         
         // 로딩 인디케이터
         output.isLoading
@@ -252,13 +254,20 @@ final class NicknameViewController: BaseViewController {
             .disposed(by: disposeBag)
         
         let placeholder = UIImage.iconEmptyProfile
-        
-        print("image : \(profileImageView.image)")
 
         pickedImageRelay
             .asDriver()
             .map { $0 ?? placeholder }     // ← nil일 때 기본 이미지 유지
             .drive(profileImageView.rx.image)
+            .disposed(by: disposeBag)
+        
+        // “회원가입” 버튼을 먼저 가로채 약관 바텀시트를 띄움
+        signUpButton.rx.tap
+            .withLatestFrom(output.isSignupEnabled) // 닉네임 유효할 때만
+            .filter { $0 }
+            .subscribe(onNext: { [weak self] _ in
+                self?.presentTerms()
+            })
             .disposed(by: disposeBag)
     }
     
@@ -293,6 +302,52 @@ final class NicknameViewController: BaseViewController {
         alertView.addAction(UIAlertAction(title: "취소", style: .cancel))
         
         present(alertView, animated: true)
+    }
+    
+    // 약관 바텀시트 표시 → 필수 동의 확인 → 실제 가입 진행 트리거
+    private func presentTerms() {
+        // TODO: 서버/설정에서 내려준 실제 URL로 교체
+        let items: [TermsModel] = [
+            .init(id: "tos",
+                  title: "이용약관 동의",
+                  url: URL(string:"https://example.com/tos")!,
+                  kind: .required,
+                  isChecked: false),
+            .init(id: "privacy",
+                  title: "개인정보 처리방침 동의",
+                  url: URL(string:"https://example.com/privacy")!,
+                  kind: .required,
+                  isChecked: false),
+            .init(id: "loc",
+                  title: "위치 정보 수집 동의",
+                  url: URL(string:"https://example.com/location")!,
+                  kind: .optional,
+                  isChecked: false),
+            .init(id: "mkt",
+                  title: "마케팅 활용 및 광고성 정보 수신 동의",
+                  url: URL(string:"https://example.com/marketing")!,
+                  kind: .optional,
+                  isChecked: false)
+        ]
+
+        presentTermsSheet(items: items) { [weak self] updated in
+            guard let self = self else { return }
+            // (더블체크) 필수 항목 모두 체크되었는지 확인
+            let requiredOK = updated
+                .filter { $0.kind == .required }
+                .allSatisfy { $0.isChecked }
+            guard requiredOK else {
+                self.presentAlert(title: "안내", message: "필수 약관에 동의해 주세요.")
+                return
+            }
+
+            // 선택 동의 예: 마케팅 동의 값 저장
+            let marketingAgreed = updated.first(where: { $0.id == "mkt" })?.isChecked ?? false
+            UserDefaults.standard.set(marketingAgreed, forKey: "agreed_marketing")
+
+            // ✅ 약관 동의 완료 → ViewModel로 “진짜 가입” 트리거
+            self.proceedSignupRelay.accept(())
+        }
     }
 }
 

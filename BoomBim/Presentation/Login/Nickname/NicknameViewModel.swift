@@ -42,7 +42,7 @@ final class NicknameViewModel {
         return NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: trimmed)
     }
     
-    func tansform(input: Input) -> Output {
+    func transform(input: Input) -> Output {
         let isSignupEnabled = input.nicknameText
             .map(validate)
             .distinctUntilChanged()
