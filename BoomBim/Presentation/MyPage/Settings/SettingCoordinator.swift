@@ -33,17 +33,17 @@ final class SettingCoordinator: Coordinator {
         let viewModel = FeedbackViewModel()
         let viewController = FeedbackViewController(viewModel: viewModel)
         
-        viewModel.onSubmit = { [weak self] reason in
-            guard let self, let settingsVM = self.settingsViewModel else { return }
-            
-            // pop 완료 후에 알럿을 띄우도록 VM에 reason 전달
-            CATransaction.begin()
-            CATransaction.setCompletionBlock {
-                settingsVM.setWithdrawReason(reason) // → VC가 알럿을 띄우는 트리거
-            }
-            self.navigationController.popViewController(animated: true)
-            CATransaction.commit()
-        }
+//        viewModel.onSubmit = { [weak self] reason in
+//            guard let self, let settingsVM = self.settingsViewModel else { return }
+//            
+//            // pop 완료 후에 알럿을 띄우도록 VM에 reason 전달
+//            CATransaction.begin()
+//            CATransaction.setCompletionBlock {
+//                settingsVM.setWithdrawReason(reason) // → VC가 알럿을 띄우는 트리거
+//            }
+//            self.navigationController.popViewController(animated: true)
+//            CATransaction.commit()
+//        }
         
         navigationController.pushViewController(viewController, animated: true)
     }
