@@ -310,23 +310,13 @@ final class NicknameViewController: BaseViewController {
         let items: [TermsModel] = [
             .init(id: "tos",
                   title: "이용약관 동의",
-                  url: URL(string:"https://example.com/tos")!,
+                  url: URL(string:"https://awesome-captain-026.notion.site/2529598992b080119479fef036d96aba?source=copy_link")!,
                   kind: .required,
                   isChecked: false),
             .init(id: "privacy",
                   title: "개인정보 처리방침 동의",
-                  url: URL(string:"https://example.com/privacy")!,
+                  url: URL(string:"https://awesome-captain-026.notion.site/2529598992b080198821d47baaf7d23f?source=copy_link")!,
                   kind: .required,
-                  isChecked: false),
-            .init(id: "loc",
-                  title: "위치 정보 수집 동의",
-                  url: URL(string:"https://example.com/location")!,
-                  kind: .optional,
-                  isChecked: false),
-            .init(id: "mkt",
-                  title: "마케팅 활용 및 광고성 정보 수신 동의",
-                  url: URL(string:"https://example.com/marketing")!,
-                  kind: .optional,
                   isChecked: false)
         ]
 

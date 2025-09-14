@@ -45,7 +45,7 @@ final class TermsBottomSheetViewController: UIViewController {
     // MARK: View
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .white
         setupLayout()
         buildRows()
         syncAgreeAllState()
@@ -116,11 +116,11 @@ final class TermsBottomSheetViewController: UIViewController {
             let titlePrefix = item.kind == .required ? "(필수) " : "(선택) "
             let row = TermRowView(title: titlePrefix + item.title, checked: item.isChecked, showChevron: true)
             
-            row.onToggleCheck = { [weak self] _ in
-                guard let self else { return }
+            row.onToggleCheck = { [weak self, weak row] newChecked in
+                guard let self, let row else { return }
                 // 상태 반영
                 if let idx = self.items.firstIndex(where: { $0.id == item.id }) {
-                    self.items[idx].isChecked = row.isChecked
+                    self.items[idx].isChecked = newChecked
                 }
                 self.syncAgreeAllState()
                 self.updateConfirmButtonState()
@@ -140,25 +140,30 @@ final class TermsBottomSheetViewController: UIViewController {
         let v = UIView()
         v.backgroundColor = .secondarySystemBackground
         v.translatesAutoresizingMaskIntoConstraints = false
-        v.heightAnchor.constraint(equalToConstant: 8).isActive = true
+        v.heightAnchor.constraint(equalToConstant: 3).isActive = true
         return v
     }
     
     // MARK: State Handling
     
     private func toggleAll(_ checked: Bool) {
-        // UI + 데이터 모두 갱신
-        for (i, it) in items.enumerated() {
-            items[i].isChecked = checked || (it.kind == .optional ? checked : checked) // 모두 동일 토글
-            itemRows[it.id]?.setChecked(checked)
+        // 데이터/뷰 동기 갱신 (콜백 방지)
+        for i in items.indices {
+            items[i].isChecked = checked
+            if let row = itemRows[items[i].id] {
+                row.setChecked(checked, emit: false) // ✅ 콜백 방지
+            }
         }
+        // 전체동의 UI도 재귀 없이 맞추기
+        agreeAllRow.setChecked(checked, emit: false)
+        
         updateConfirmButtonState()
     }
     
     private func syncAgreeAllState() {
         // 모든 항목이 체크되어 있으면 전체동의도 체크
         let allChecked = items.allSatisfy { $0.isChecked }
-        agreeAllRow.setChecked(allChecked)
+        agreeAllRow.setChecked(allChecked, emit: false) // ✅ 재귀 방지
     }
     
     private func updateConfirmButtonState() {
@@ -194,19 +199,3 @@ extension UIViewController {
         present(vc, animated: true)
     }
 }
-
-// MARK: - Example Usage
-// 호출 측(예: 회원가입 화면)에서:
-/*
-let terms: [TermItem] = [
-    .init(id: "tos", title: "이용약관 동의", url: URL(string:"https://example.com/tos")!, kind: .required, isChecked: false),
-    .init(id: "privacy", title: "개인정보 처리방침 동의", url: URL(string:"https://example.com/privacy")!, kind: .required, isChecked: false),
-    .init(id: "loc", title: "위치 정보 수집 동의", url: URL(string:"https://example.com/location")!, kind: .optional, isChecked: false),
-    .init(id: "mkt", title: "마케팅 활용 및 광고성 정보 수신 동의", url: URL(string:"https://example.com/marketing")!, kind: .optional, isChecked: false),
-]
-
-presentTermsSheet(items: terms) { updated in
-    // updated에 체크 최종 상태 들어있음
-    // 필수 체크 확인 후 가입 로직 진행
-}
-*/

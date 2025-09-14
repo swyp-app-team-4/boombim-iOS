@@ -29,13 +29,13 @@ final class TermRowView: UIControl {
         // checkbox
         checkbox.setContentHuggingPriority(.required, for: .horizontal)
         checkbox.addTarget(self, action: #selector(tapCheckbox), for: .touchUpInside)
-        checkbox.tintColor = .label
+        checkbox.tintColor = .grayScale8
         updateCheckboxImage()
         
         // title
         titleLabel.text = title
-        titleLabel.font = .systemFont(ofSize: 16, weight: .regular)
-        titleLabel.textColor = .label
+        titleLabel.font = Typography.Body03.regular.font
+        titleLabel.textColor = .grayScale8
         titleLabel.numberOfLines = 1
         
         // chevron
@@ -46,6 +46,7 @@ final class TermRowView: UIControl {
             openButton.addTarget(self, action: #selector(tapOpen), for: .touchUpInside)
         } else {
             openButton.isHidden = true
+            openButton.isUserInteractionEnabled = false
         }
         
         // layout
@@ -63,7 +64,7 @@ final class TermRowView: UIControl {
             heightAnchor.constraint(greaterThanOrEqualToConstant: 48)
         ])
         
-        // 행 탭 → URL 열기
+        // 행 탭 → URL 열기 (체크 토글은 체크박스 버튼으로만)
         addTarget(self, action: #selector(tapOpen), for: .touchUpInside)
         
         // 하단 1px 구분선
@@ -81,11 +82,12 @@ final class TermRowView: UIControl {
     
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
-    func setChecked(_ new: Bool) {
+    // 프로그램/사용자 공통 세터 (emit 옵션)
+    func setChecked(_ new: Bool, emit: Bool = false) {
         guard isChecked != new else { return }
         isChecked = new
         updateCheckboxImage()
-        onToggleCheck?(new)
+        if emit { onToggleCheck?(new) }
     }
     
     private func updateCheckboxImage() {
@@ -94,7 +96,7 @@ final class TermRowView: UIControl {
     }
     
     @objc private func tapCheckbox() {
-        setChecked(!isChecked)
+        setChecked(!isChecked, emit: true) // 사용자 탭 → 콜백 발화
     }
     
     @objc private func tapOpen() {
