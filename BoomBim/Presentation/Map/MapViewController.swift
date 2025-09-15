@@ -425,46 +425,6 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
             })
             .disposed(by: disposeBag)
 
-//        output.places
-//            .withLatestFrom(modeRelay) { places, mode in (places, mode) }
-//            .filter { $0.1 == .realtime }
-//            .observe(on: MainScheduler.instance)
-//            .subscribe(onNext: { [weak self] places, _ in
-//                guard let self, let map = self.kakaoMap else { return }
-//                let visual = self.visual(for: .realtime)
-//                
-//                self.placeIndex = Dictionary(uniqueKeysWithValues: places.map { (String($0.memberPlaceId), $0) })
-//                
-//                let items: [POIItem] = places.map {
-//                    .init(
-//                        id: String($0.memberPlaceId),
-//                        point: MapPoint(longitude: $0.coordinate.longitude,latitude:  $0.coordinate.latitude),
-//                        styleKey: self.styleKey(for: $0)
-//                    )
-//                }
-//                
-//                self.overlay.setPOIs(
-//                    for: .realtime,
-//                    items: items,
-//                    visual: visual,
-//                    iconProvider: self.iconForStyleKey,
-//                    onTapID: { [weak self] group, id in
-//                        guard let self else { return }
-//                        guard group == .realtime, let model = self.placeIndex[id] else { return }
-//                        print("onTap ID : \(id)")
-//                        
-//                        self.userPoiTapRelay.accept(Int(id) ?? 0)
-//                    })
-//                
-//                // 결과가 있으면 목록 패널을 .half로 띄움, 없으면 .tip
-//                if places.isEmpty {
-//                    self.floatingPanel.move(to: .tip, animated: true)
-//                } else {
-//                    self.showUserListPanel(with: places) // 아래 함수
-//                }
-//            })
-//            .disposed(by: disposeBag)
-
         // officialPlace → 폴리곤/센터
         output.officialPlace
             .withLatestFrom(modeRelay) { official, mode in (official, mode) }
@@ -569,7 +529,6 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private func styleKey(for p: OfficialPlaceItem) -> String {
         // 혼잡도명/브랜드/카테고리 등 원하는 규칙으로 키 생성
         let key = p.congestionLevelName.lowercased()
-        print("key : \(key)")
         switch key {
         case "relaxed", "여유":     return "congestion.relaxed"
         case "normal",  "보통":     return "congestion.normal"
@@ -582,7 +541,6 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private func styleKey(for p: UserPlaceItem) -> String {
         // 혼잡도명/브랜드/카테고리 등 원하는 규칙으로 키 생성
         let key = p.congestionLevelName.lowercased()
-        print("key : \(key)")
         switch key {
         case "relaxed", "여유":     return "congestion.relaxed"
         case "normal",  "보통":     return "congestion.normal"
@@ -678,8 +636,8 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
             guard let self else { return }
             // 여기서 직접 이벤트 쏘고 싶으면 사용 (중복되면 생략)
             let rect = self.currentViewportRect()
-            self.cameraRectSubject.onNext(rect)
-            self.zoomLevelSubject.onNext(target)
+//            self.cameraRectSubject.onNext(rect)
+//            self.zoomLevelSubject.onNext(target)
         }
 
         // 2b) 즉시 이동하고 싶으면 아래 한 줄로 대체:

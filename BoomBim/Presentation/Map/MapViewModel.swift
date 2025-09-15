@@ -50,22 +50,6 @@ final class MapViewModel {
         // 초기 프리워밍(필요 시)
         locationRepo.getCoordinate(ttl: 180).subscribe().disposed(by: disposeBag)
         
-        let rectWhenZoomOK = Observable
-            .combineLatest(input.cameraRect, input.zoomLevel.startWith(14))
-            .filter { _, zoom in
-                print("🍎 줌 레벨 : \(zoom)")
-                return zoom >= 11 }
-            .map { rect, _ in rect }
-            .distinctUntilChanged { a, b in
-                func r6(_ d: Double) -> Double { (d * 1e6).rounded() / 1e6 }
-                return r6(a.left) == r6(b.left) &&
-                r6(a.right) == r6(b.right) &&
-                r6(a.top) == r6(b.top) &&
-                r6(a.bottom) == r6(b.bottom)
-            }
-            .debounce(.milliseconds(250), scheduler: MainScheduler.instance)
-            .share(replay: 1, scope: .whileConnected)
-        
         // 현재 위치 버튼 → 강제 새로고침
         let refreshTap = input.didTapMyLocation
             .flatMapLatest { [locationRepo] in
@@ -75,28 +59,47 @@ final class MapViewModel {
         let myCoord = Observable
             .merge(locationRepo.coordinate, refreshTap)
             .share(replay: 1, scope: .whileConnected)
+            .do(onNext: { _ in
+                print("😎 myCoord")
+            })
+        
+        let rect = input.cameraRect
+            .distinctUntilChanged { a, b in
+                func r6(_ d: Double) -> Double { (d * 1e6).rounded() / 1e6 }
+                return r6(a.left) == r6(b.left) &&
+                       r6(a.right) == r6(b.right) &&
+                       r6(a.top) == r6(b.top) &&
+                       r6(a.bottom) == r6(b.bottom)
+            }
+            .debounce(.milliseconds(250), scheduler: MainScheduler.instance)
+            .share(replay: 1, scope: .whileConnected)
+            .do(onNext: { _ in
+                print("😎 rect")
+            })
         
         // 최신 줌값 스트림 (기본값 14)
         let zoom = input.zoomLevel
             .startWith(14)
             .distinctUntilChanged()
             .share(replay: 1, scope: .whileConnected)
+            .do(onNext: { _ in
+                print("😎 zoom")
+            })
         
-        // 공식 장소: rect + 내 좌표 + 줌을 묶어서 서버 조회
-        let zipped: Observable<(ViewportRect, CLLocationCoordinate2D?, Int)> =
-        Observable.combineLatest(
-            rectWhenZoomOK,
-            myCoord,
-            zoom,
-            resultSelector: { rect, memberOpt, z in (rect, memberOpt, z) }
-        )
+        // 1) 최신 상태
+        let state = Observable.combineLatest(myCoord, zoom) // (coord, z)
+            .share(replay: 1, scope: .whileConnected)
+
+        // 2) rect가 멈췄을 때만 트리거
+        let trigger = rect
+            .withLatestFrom(state) { (rect: $0, coord: $1.0, z: $1.1) }
+            .filter { $0.z >= 10 } // 줌 조건
         
         let officialPlace: Observable<[OfficialPlaceItem]> =
-        zipped
+        trigger
             .flatMapLatest { (rect, memberOpt, z) -> Observable<[OfficialPlaceItem]> in
-                
+                print("official 장소 요청")
                 let member = memberOpt ?? rect.centerCoord
-                
                 let requestBody: OfficialPlaceRequest = .init(
                     topLeft: Coord(latitude: rect.top, longitude: rect.left),
                     bottomRight: Coord.init(latitude: rect.bottom, longitude: rect.right),
@@ -111,7 +114,7 @@ final class MapViewModel {
             .share(replay: 1, scope: .whileConnected)
         
         let userPlaces: Observable<[UserPlaceEntry]> =
-        zipped
+        trigger
             .flatMapLatest { (rect, memberOpt, z) -> Observable<[UserPlaceEntry]> in
                 
                 let member = memberOpt ?? rect.centerCoord
