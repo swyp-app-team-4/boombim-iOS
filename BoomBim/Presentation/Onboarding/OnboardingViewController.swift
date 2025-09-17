@@ -71,11 +71,11 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         }
         
         NSLayoutConstraint.activate([
-            skipButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 15),
+            skipButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             skipButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             skipButton.heightAnchor.constraint(equalToConstant: 30),
             
-            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -5),
+            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
             startButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             startButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             startButton.heightAnchor.constraint(equalToConstant: 54)
@@ -106,10 +106,10 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         pageControl.pageIndicatorTintColor = .grayScale4
         pageControl.currentPageIndicatorTintColor = .grayScale9
 
-        updatePageControlAppearance(current: 0) // ← 핵심
+        updatePageControlAppearance(current: 0)
         
         NSLayoutConstraint.activate([
-            pageControl.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -15),
+            pageControl.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -32),
             pageControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             pageControl.heightAnchor.constraint(equalToConstant: 6),
             

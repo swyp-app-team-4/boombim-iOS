@@ -80,9 +80,9 @@ final class OnboardingPageViewController: UIViewController {
         view.addSubview(titleStackView)
         
         NSLayoutConstraint.activate([
-            titleStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 6),
-            titleStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            titleStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            titleStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 22),
+            titleStackView.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
+            titleStackView.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor)
         ])
     }
     
@@ -91,7 +91,7 @@ final class OnboardingPageViewController: UIViewController {
         view.addSubview(imageView)
         
         NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: titleStackView.bottomAnchor, constant: 16),
+            imageView.topAnchor.constraint(equalTo: titleStackView.bottomAnchor, constant: 14),
             imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
             imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
             imageView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32)
