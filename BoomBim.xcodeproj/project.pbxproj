@@ -144,10 +144,9 @@
 				};
 			};
 			buildConfigurationList = CF820C822E3B72750048B51C /* Build configuration list for PBXProject "BoomBim" */;
-			developmentRegion = en;
+			developmentRegion = ko;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
 				Base,
 				ko,
 			);
