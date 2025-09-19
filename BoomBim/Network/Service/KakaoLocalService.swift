@@ -195,7 +195,11 @@ final class KakaoLocalService {
             "sort": "distance",            // 거리순
             "size": limit
         ]
+#if REVIEW_BUILD
+        // if let r = radius { params["radius"] = String(r) } // 0~20000
+#else
         if let r = radius { params["radius"] = String(r) } // 0~20000
+#endif
         
         return Single.create { single in
             let req = AF.request(url, method: .get, parameters: params, headers: headers)

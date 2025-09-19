@@ -204,7 +204,7 @@
 				INFOPLIST_FILE = BoomBim/App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "붐빔";
 				INFOPLIST_KEY_NSCameraUsageDescription = "\"사용자 프로필을 설정하기 위해 카메라 사용이 필요합니다.\"";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"지도 표시를 위해 위치 정보가 필요합니다.\"";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"지도에서 내 위치 주변의 실시간 혼잡도와 가까운 공식 장소 정보를 제공하기 위해 위치가 필요합니다.\"";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "\"사용자 프로필을 설정하기 위해 앨범 접근이 필요합니다.\"";
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -239,7 +239,7 @@
 				INFOPLIST_FILE = BoomBim/App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "붐빔";
 				INFOPLIST_KEY_NSCameraUsageDescription = "\"사용자 프로필을 설정하기 위해 카메라 사용이 필요합니다.\"";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"지도 표시를 위해 위치 정보가 필요합니다.\"";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"지도에서 내 위치 주변의 실시간 혼잡도와 가까운 공식 장소 정보를 제공하기 위해 위치가 필요합니다.\"";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "\"사용자 프로필을 설정하기 위해 앨범 접근이 필요합니다.\"";
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
