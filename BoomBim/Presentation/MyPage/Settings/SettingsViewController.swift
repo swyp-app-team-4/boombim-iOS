@@ -196,13 +196,13 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
         case .push:
             return
         case .terms:
-            openSafariView(url: "https://awesome-captain-026.notion.site/2529598992b080119479fef036d96aba?source=copy_link")
+            openSafariView(url: "https://awesome-captain-026.notion.site/2529598992b080119479fef036d96aba")
         case .privacy:
-            openSafariView(url: "https://awesome-captain-026.notion.site/2529598992b080198821d47baaf7d23f?source=copy_link")
+            openSafariView(url: "https://awesome-captain-026.notion.site/2529598992b080198821d47baaf7d23f")
         case .guide:
-            openSafariView(url: "https://awesome-captain-026.notion.site/25b9598992b08065a7ccf361e3f8ccf8?source=copy_link")
+            openSafariView(url: "https://boombim.netlify.app/intro")
         case .support:
-            openSafariView(url: "https://awesome-captain-026.notion.site/25b9598992b0804fb058d1310b6ecdf0?source=copy_link")
+            openSafariView(url: "https://awesome-captain-026.notion.site/25b9598992b0804fb058d1310b6ecdf0")
         case .faq:
             return
         }
