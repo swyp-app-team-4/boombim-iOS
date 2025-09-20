@@ -806,6 +806,27 @@ extension CongestionReportViewController: UITextViewDelegate {
     private func updateCounter() {
         descriptionCount.text = "\(descriptionTextView.text.count)/\(500)자"
     }
+    
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        // 입력 후 최종 문자열을 만들어 검사
+        let current = textView.text ?? ""
+        guard let r = Range(range, in: current) else { return true }
+        let next = current.replacingCharacters(in: r, with: text)
+        
+        if let bad = Profanity.contains(in: next) {
+            // 가벼운 피드백
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            // 시각 경고 (테두리 빨강)
+            descriptionContainerView.layer.borderColor = UIColor.systemRed.cgColor
+            // 경고 토스트/알럿 (원하는 방식으로)
+            presentAlert(title: "금칙어 감지", message: "금칙어(\"\(bad)\")가 포함되어 입력할 수 없습니다.")
+            return false
+        } else {
+            // 정상 색 복원
+            descriptionContainerView.layer.borderColor = UIColor.grayScale4.cgColor
+            return true
+        }
+    }
 }
 
 // MARK: Kakao Map Camera 동작
