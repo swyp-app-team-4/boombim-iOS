@@ -11,19 +11,21 @@ final class FeedTableViewCell: UITableViewCell {
     static let identifier = "FeedTableViewCell"
     
     var onTapReport: (() -> Void)?
+    var onTapBlock:  (() -> Void)? 
     
     private let avatar = UIImageView()
     private let nameLabel = UILabel()
     private let timeLabel = UILabel()
     private let badge = UIImageView()
     private let contentLabel = UILabel()
+    private let blockButton = UIButton(type: .system) // 차단하기
     private let reportButton = UIButton(type: .system)
     private lazy var reportRow: UIStackView = {
         // 왼쪽 spacer + 버튼
-        let row = UIStackView(arrangedSubviews: [UIView(), reportButton])
+        let row = UIStackView(arrangedSubviews: [UIView(), blockButton, reportButton])
         row.axis = .horizontal
         row.alignment = .center
-        row.spacing = 0
+        row.spacing = 12
         return row
     }()
     
@@ -67,6 +69,12 @@ final class FeedTableViewCell: UITableViewCell {
         reportButton.titleLabel?.font = Typography.Caption.medium.font
         reportButton.titleEdgeInsets = .init(top: 0, left: 2, bottom: 0, right: 0)
         reportButton.addTarget(self, action: #selector(didTapReport), for: .touchUpInside)
+        
+        blockButton.setTitle("차단하기", for: .normal)
+        blockButton.setTitleColor(.systemRed, for: .normal)
+        blockButton.titleLabel?.font = Typography.Caption.medium.font
+        blockButton.addTarget(self, action: #selector(didTapBlock), for: .touchUpInside)
+
         
         let nameStack = VStack([nameLabel, timeLabel], spacing: 2)
         // 가운데 스택은 '잘 줄어들도록'
@@ -121,6 +129,10 @@ final class FeedTableViewCell: UITableViewCell {
     
     @objc private func didTapReport() {
         onTapReport?()
+    }
+    
+    @objc private func didTapBlock()  {
+        onTapBlock?()
     }
 }
 

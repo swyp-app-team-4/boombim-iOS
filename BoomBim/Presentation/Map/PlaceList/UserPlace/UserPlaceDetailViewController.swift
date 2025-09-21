@@ -235,14 +235,21 @@ final class UserPlaceDetailViewController: UIViewController {
     private func bindTable() {
         // 필터링
         Observable
-            .combineLatest(allItemsRelay.asObservable(), filterRelay.asObservable())
-            .map { items, filter -> [FeedItem] in
+            .combineLatest(
+                allItemsRelay.asObservable(),
+                filterRelay.asObservable(),
+                UserBlock.shared.blockedNamesDriver.asObservable())
+            .map { items, filter, blocked -> [FeedItem] in
+                let visible = items.filter { !blocked.contains($0.memberName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) }
+                
+                print("visible : \(visible)")
+                
                 switch filter {
-                case .latest:        return items
-                case .crowded:       return items.filter { $0.congestionLevelName == FeedFilter.crowded.title }
-                case .busy:          return items.filter { $0.congestionLevelName == FeedFilter.busy.title }
-                case .normal:        return items.filter { $0.congestionLevelName == FeedFilter.normal.title }
-                case .relaxed:       return items.filter { $0.congestionLevelName == FeedFilter.relaxed.title }
+                case .latest:        return visible
+                case .crowded:       return visible.filter { $0.congestionLevelName == FeedFilter.crowded.title }
+                case .busy:          return visible.filter { $0.congestionLevelName == FeedFilter.busy.title }
+                case .normal:        return visible.filter { $0.congestionLevelName == FeedFilter.normal.title }
+                case .relaxed:       return visible.filter { $0.congestionLevelName == FeedFilter.relaxed.title }
                 }
             }
             .observe(on: MainScheduler.instance)
@@ -250,6 +257,10 @@ final class UserPlaceDetailViewController: UIViewController {
                 cell.apply(item)
                 cell.onTapReport = { [weak self] in
                     self?.openReportForm()
+                }
+                
+                cell.onTapBlock = { [weak self] in
+                    self?.confirmBlock(userName: item.memberName)
                 }
             }
             .disposed(by: disposeBag)
@@ -266,5 +277,21 @@ final class UserPlaceDetailViewController: UIViewController {
         if #available(iOS 11.0, *) { vc.dismissButtonStyle = .close }
         
         present(vc, animated: true)
+    }
+    
+    private func confirmBlock(userName: String) {
+        let name = userName
+        let alert = UIAlertController(
+            title: "사용자 차단",
+            message: "‘\(name)’ 님을 차단하면 이 사용자의 글과 댓글이 더 이상 표시되지 않습니다.",
+            preferredStyle: .actionSheet
+        )
+        alert.addAction(UIAlertAction(title: "차단하기", style: .destructive, handler: { _ in
+            UserBlock.shared.block(name: name)
+            // 별도 리로드 불필요: blockedNamesDriver가 바뀌면서 테이블 바인딩이 자동 갱신됩니다.
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }))
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        present(alert, animated: true)
     }
 }
