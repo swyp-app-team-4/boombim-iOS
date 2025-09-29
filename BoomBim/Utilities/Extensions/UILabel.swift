@@ -31,4 +31,17 @@ extension UILabel {
         
         self.attributedText = attributedString
     }
+    
+    // Text 높이를 조절하기 위하여 적용
+    func setText(_ text: String?,
+                 style: TextStyle,
+                 color: UIColor? = nil,
+                 alignment: NSTextAlignment? = nil,
+                 kern: CGFloat? = nil) {
+        let raw = text ?? ""
+        let attr = style.attributed(raw, color: color ?? self.textColor, alignment: alignment ?? self.textAlignment, kern: kern)
+        
+        numberOfLines = 0
+        attributedText = attr
+    }
 }

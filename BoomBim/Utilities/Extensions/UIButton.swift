@@ -32,4 +32,26 @@ extension UIButton {
         
         setAttributedTitle(attributedString, for: .normal)
     }
+    
+    // Text 높이를 조절하기 위하여 적용
+    func setTitle(_ title: String?,
+                  style: TextStyle,
+                  for state: UIControl.State,
+                  color: UIColor? = nil,
+                  kern: CGFloat? = nil) {
+        let raw = title ?? ""
+        
+        // 버튼의 horizontalAlignment를 NSTextAlignment로 매핑
+        let align: NSTextAlignment = {
+            switch self.contentHorizontalAlignment {
+            case .left, .leading:  return .left
+            case .right, .trailing: return .right
+            default: return .center
+            }}()
+        
+        let attr = style.attributed(raw, color: color ?? self.titleColor(for: state), alignment: align, kern: kern)
+        
+        setAttributedTitle(attr, for: state)
+        titleLabel?.numberOfLines = 1
+    }
 }

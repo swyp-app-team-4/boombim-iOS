@@ -12,6 +12,33 @@ struct TextStyle {
     let lineHeight: CGFloat
 }
 
+extension TextStyle {
+    func attributed(_ text: String,
+                    color: UIColor? = nil,
+                    alignment: NSTextAlignment = .natural,
+                    kern: CGFloat? = nil) -> NSAttributedString {
+        
+        let style = NSMutableParagraphStyle()
+        
+        style.minimumLineHeight = lineHeight
+        style.maximumLineHeight = lineHeight
+        style.alignment = alignment
+        
+        let baseline = (lineHeight - font.lineHeight) / 2
+        
+        var attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .paragraphStyle: style,
+            .baselineOffset: baseline
+        ]
+        
+        if let c = color { attrs[.foregroundColor] = c }
+        if let k = kern  { attrs[.kern] = k }
+        
+        return NSAttributedString(string: text, attributes: attrs)
+    }
+}
+
 enum Typography {
 
     enum Heading01 {
