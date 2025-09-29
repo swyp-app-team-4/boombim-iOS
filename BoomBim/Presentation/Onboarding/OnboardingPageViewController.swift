@@ -21,7 +21,6 @@ final class OnboardingPageViewController: UIViewController {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = Typography.Heading01.semiBold.font
         label.textColor = .grayScale10
         label.numberOfLines = 0
         label.textAlignment = .center
@@ -31,7 +30,6 @@ final class OnboardingPageViewController: UIViewController {
     
     private let subTitleLabel: UILabel = {
         let label = UILabel()
-        label.font = Typography.Body02.regular.font
         label.textColor = .grayScale8
         label.textAlignment = .center
         label.numberOfLines = 0
@@ -50,8 +48,15 @@ final class OnboardingPageViewController: UIViewController {
     init(title: String, subTitle: String?, image: UIImage) {
         super.init(nibName: nil, bundle: nil)
         
-        self.titleLabel.text = title
-        self.subTitleLabel.text = subTitle
+        titleLabel.setText(title, style: Typography.Heading01.semiBold)
+        
+        if let sub = subTitle, !sub.isEmpty {
+            subTitleLabel.setText(sub, style: Typography.Body02.regular)
+            subTitleLabel.isHidden = false
+        } else {
+            subTitleLabel.isHidden = true
+        }
+        
         self.imageView.image = image
     }
     
@@ -91,10 +96,10 @@ final class OnboardingPageViewController: UIViewController {
         view.addSubview(imageView)
         
         NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: titleStackView.bottomAnchor, constant: 16),
+            imageView.topAnchor.constraint(equalTo: titleStackView.bottomAnchor, constant: 6),
             imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
             imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
-            imageView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32)
+            imageView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
 }

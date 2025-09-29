@@ -25,26 +25,26 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
     
     private let skipButton: UIButton = {
         let button = UIButton()
-        button.setTitle("onboarding.button.skip".localized(), for: .normal)
         button.backgroundColor = .grayScale4
-        button.titleLabel?.font = Typography.Body03.medium.font
         button.setTitleColor(.grayScale8, for: .normal)
         button.layer.cornerRadius = 15
         button.clipsToBounds = true
         
-        button.contentEdgeInsets = UIEdgeInsets(top: 4, left: 12.5, bottom: 4, right: 12.5)
+        if #available(iOS 15.0, *) {
+            var config = button.configuration ?? UIButton.Configuration.plain()
+            config.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 12.5, bottom: 4, trailing: 12.5)
+            button.configuration = config
+        } else {
+            button.contentEdgeInsets = UIEdgeInsets(top: 4, left: 12.5, bottom: 4, right: 12.5)
+        }
         
         return button
     }()
     
     private let startButton: UIButton = {
         let button = UIButton()
-        button.setTitle("onboarding.button.start".localized(), for: .normal)
-        button.titleLabel?.font = Typography.Body02.medium.font
         button.setTitleColor(.grayScale7, for: .normal)
         button.backgroundColor = .grayScale4
-//        button.setTitleColor(.grayScale1, for: .normal)
-//        button.backgroundColor = .main
         button.layer.cornerRadius = 10
         button.isEnabled = false
         
@@ -65,17 +65,20 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
     }
     
     private func configureButton() {
+        skipButton.setTitle("onboarding.button.skip".localized(), style: Typography.Body03.medium, for: .normal)
+        startButton.setTitle("onboarding.button.start".localized(), style: Typography.Body02.medium, for: .normal)
+        
         [skipButton, startButton].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(button)
         }
         
         NSLayoutConstraint.activate([
-            skipButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 15),
+            skipButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             skipButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            skipButton.heightAnchor.constraint(equalToConstant: 30),
+//            skipButton.heightAnchor.constraint(equalToConstant: 30),
             
-            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -5),
+            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
             startButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             startButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             startButton.heightAnchor.constraint(equalToConstant: 54)
@@ -109,11 +112,11 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         updatePageControlAppearance(current: 0) // ← 핵심
         
         NSLayoutConstraint.activate([
-            pageControl.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -15),
+            pageControl.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -32),
             pageControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             pageControl.heightAnchor.constraint(equalToConstant: 6),
             
-            pageViewController.view.topAnchor.constraint(equalTo: skipButton.bottomAnchor, constant: 4),
+            pageViewController.view.topAnchor.constraint(equalTo: skipButton.bottomAnchor, constant: 30),
             pageViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             pageViewController.view.bottomAnchor.constraint(equalTo: pageControl.topAnchor, constant: -15)
@@ -156,13 +159,16 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         updatePageControlAppearance(current: currentIndex)
         
         let isLast = (currentIndex == pages.count - 1)
-        print("isLast : \(isLast)")
-        print("currentIndex : \(currentIndex)")
-        print("page.count : \(pages.count)")
         
         startButton.isEnabled = isLast
         startButton.backgroundColor = isLast ? .main : .grayScale4
-        startButton.setTitleColor(isLast ? .grayScale1 : .grayScale7, for: .normal)
+        
+        startButton.setTitle(
+            "onboarding.button.start".localized(),
+            style: Typography.Body02.medium,
+            for: .normal,
+            color: isLast ? .grayScale1 : .grayScale7
+        )
     }
 
     // MARK: - Page Control: 점 vs 알약

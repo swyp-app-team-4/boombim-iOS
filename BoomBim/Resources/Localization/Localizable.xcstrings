@@ -491,7 +491,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "지금 내 주변은 어떨까 ?"
+            "value" : "알고 싶은 장소가 없다면?"
           }
         }
       }
@@ -535,7 +535,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "지금 내 주변은 어떨까 ?"
+            "value" : "내 주변의 혼잡도를 알려요"
           }
         }
       }
