@@ -21,6 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         // Override point for customization after application launch.
         
         // Keychain Token Manager
+        FirstLaunchGuard.handleFirstLaunchAndWipeKeychainIfNeeded() // keychain에 있는 데이터를 비운다.
         TokenManager.configure(store: KeychainTokenStore(key: KeychainIDs.backendTokenPair(env: AppEnvironment.current)))
         
         // Kakao

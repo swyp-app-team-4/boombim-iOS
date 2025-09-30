@@ -40,6 +40,9 @@ final class AppCoordinator: Coordinator {
     }
     
     func start() {
+        let accessValid  = TokenManager.shared.isAccessValid()
+        let refreshValid = TokenManager.shared.isRefreshValid()
+        
         // 1) 시작은 스플래시
         window.rootViewController = splashVC
         window.makeKeyAndVisible()
@@ -60,6 +63,9 @@ final class AppCoordinator: Coordinator {
             return
         }
         
+        // 먼저 "토큰 상태 정규화"를 끝낸 뒤에 구독을 잡습니다.
+        normalizeAuthState()
+        
         // 초기 1회 라우팅 (스플래시 통과용)
         let initialAuth = TokenManager.shared.authState
             .distinctUntilChanged()
@@ -70,17 +76,6 @@ final class AppCoordinator: Coordinator {
             .share(replay: 1)
         
         bindAuthStateChanges()
-        
-        // Silent refresh 시도(루트 전환은 여기서 하지 않음)
-        if TokenManager.shared.isAccessValid() {
-            // 바로 .loggedIn 이 나올 것 → 아래 zip이 처리
-        } else if TokenManager.shared.isRefreshValid() {
-            _ = TokenManager.shared.ensureValidAccessToken { rt in
-                AuthService.shared.refresh(rt)
-            }.subscribe()
-        } else {
-            TokenManager.shared.clear(type: .loggedOut) // → authState = .loggedOut 방출
-        }
         
         // 최소 노출 + 확정 상태 동시 충족 시 라우팅
         Observable.zip(initialAuth, minDelay)
@@ -95,6 +90,26 @@ final class AppCoordinator: Coordinator {
                 }
             })
             .disposed(by: disposeBag)
+    }
+    
+    /// 토큰 상태를 '먼저' 정규화: access/refresh 체크 → 갱신 시도 or 명시 로그아웃
+    private func normalizeAuthState() {
+        let accessValid  = TokenManager.shared.isAccessValid()
+        let refreshValid = TokenManager.shared.isRefreshValid()
+        
+        if accessValid {
+            // 이미 유효 → 아무 것도 안 해도 됨 (authState는 곧 .loggedIn이어야 함)
+            return
+        }
+        if refreshValid {
+            _ = TokenManager.shared.ensureValidAccessToken { rt in
+                AuthService.shared.refresh(rt)
+            }
+            .subscribe() // 결과는 authState로 반영됨(.loggedIn or .loggedOut)
+            return
+        }
+        // 둘 다 무효 → 확실히 로그아웃 상태를 밀어 넣어 초기값 오염 방지
+        TokenManager.shared.clear(type: .loggedOut)
     }
     
     private func bindAuthStateChanges() {
@@ -176,6 +191,12 @@ final class AppCoordinator: Coordinator {
     }
 
     private func showMainTabBar() {
+        // 로그인 되기 전에 TabBar로 가는 것을 방지하는 안전장치
+        guard TokenManager.shared.isAccessValid() else {
+            showLogin()
+            return
+        }
+        
         let tabBarCoordinator = MainTabBarCoordinator()
         
         self.tabBarCoordinator = tabBarCoordinator
