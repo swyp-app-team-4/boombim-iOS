@@ -89,4 +89,14 @@ enum Typography {
         static let medium   = TextStyle(font: .pretendard(.medium,   size: 12), lineHeight: lh)
         static let regular  = TextStyle(font: .pretendard(.regular,  size: 12), lineHeight: lh)
     }
+    
+    enum Taebaek {
+        private static let lh: CGFloat = 46
+        static let regular  = TextStyle(font: .taebaek(size: 32), lineHeight: lh)
+    }
+    
+    enum NotoSans {
+        private static let lh: CGFloat = 24
+        static let semiBold = TextStyle(font: .notoSans(.semiBold, size: 19), lineHeight: lh)
+    }
 }

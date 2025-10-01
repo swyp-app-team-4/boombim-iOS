@@ -25,6 +25,7 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
     
     private let skipButton: UIButton = {
         let button = UIButton()
+        button.setTitle("onboarding.button.skip".localized(), style: Typography.Body03.medium, for: .normal)
         button.backgroundColor = .grayScale4
         button.setTitleColor(.grayScale8, for: .normal)
         button.layer.cornerRadius = 15
@@ -43,6 +44,7 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
     
     private let startButton: UIButton = {
         let button = UIButton()
+        button.setTitle("onboarding.button.start".localized(), style: Typography.Body02.medium, for: .normal)
         button.setTitleColor(.grayScale7, for: .normal)
         button.backgroundColor = .grayScale4
         button.layer.cornerRadius = 10
@@ -65,8 +67,6 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
     }
     
     private func configureButton() {
-        skipButton.setTitle("onboarding.button.skip".localized(), style: Typography.Body03.medium, for: .normal)
-        startButton.setTitle("onboarding.button.start".localized(), style: Typography.Body02.medium, for: .normal)
         
         [skipButton, startButton].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false

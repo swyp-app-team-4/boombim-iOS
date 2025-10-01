@@ -31,10 +31,14 @@ final class LoginViewController: BaseViewController {
         let label = UILabel()
         label.textAlignment = .center
         label.numberOfLines = 0
+        
         label.setStyledText(
-            fullText: "login.label.title".localized(), highlight: "login.label.title.highlight".localized(),
-            font: .taebaek(size: 32), highlightFont: .taebaek(size: 32),
-            color: UIColor(hex: "#0F0F10"), highlightColor: .main)
+            fullText: "login.label.title".localized(),
+            highlight: "login.label.title.highlight".localized(),
+            baseStyle: Typography.Taebaek.regular,
+            highlightFont: Typography.Taebaek.regular.font,
+            baseColor: .grayScale10,
+            highlightColor: .main)
         
         return label
     }()
@@ -52,7 +56,7 @@ final class LoginViewController: BaseViewController {
         stackView.axis = .vertical
         stackView.alignment = .fill
         stackView.distribution = .fill
-        stackView.spacing = 12
+        stackView.spacing = 17
         
         return stackView
     }()
@@ -122,31 +126,37 @@ final class LoginViewController: BaseViewController {
         }
         
         NSLayoutConstraint.activate([
-            titleStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 70),
-//            titleStackView.bottomAnchor.constraint(equalTo: buttonStackView.topAnchor, constant: -44),
+            titleStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 114),
             titleStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            titleStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
+            titleStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            loginTitleImageView.widthAnchor.constraint(equalToConstant: 240),
         ])
     }
     
     private func configureButton() {
-        buttonStackView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(buttonStackView)
+        [bubbleImageView, buttonStackView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            self.view.addSubview(view)
+        }
         
-        [bubbleImageView, kakaoButton, naverButton, appleButton/*, withLoginButton*/].forEach { button in
+        [kakaoButton, naverButton, appleButton].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             
             buttonStackView.addArrangedSubview(button)
         }
         
         NSLayoutConstraint.activate([
-            kakaoButton.heightAnchor.constraint(equalToConstant: 56),
-            naverButton.heightAnchor.constraint(equalToConstant: 56),
-            appleButton.heightAnchor.constraint(equalToConstant: 56),
+            kakaoButton.heightAnchor.constraint(equalToConstant: 54),
+            naverButton.heightAnchor.constraint(equalToConstant: 54),
+            appleButton.heightAnchor.constraint(equalToConstant: 54),
             
-            buttonStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -70),
+            buttonStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -84),
             buttonStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            buttonStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
+            buttonStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            bubbleImageView.bottomAnchor.constraint(equalTo: buttonStackView.topAnchor, constant: -20),
+            bubbleImageView.centerXAnchor.constraint(equalTo: buttonStackView.centerXAnchor)
         ])
     }
     

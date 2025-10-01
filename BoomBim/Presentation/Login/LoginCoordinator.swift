@@ -47,6 +47,9 @@ final class LoginCoordinator: Coordinator {
         // 3) VC를 만들어 뷰모델 주입 후 표시
         //    (VC는 isLoading/error 바인딩만 하고, 라우팅은 안함)
         let vc = LoginViewController(viewModel: viewModel)
+        
+        navigationController.setNavigationBarHidden(true, animated: false)
+        
         navigationController.setViewControllers([vc], animated: false)
     }
 
