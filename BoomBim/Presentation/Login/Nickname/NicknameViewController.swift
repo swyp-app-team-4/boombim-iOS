@@ -25,10 +25,9 @@ final class NicknameViewController: BaseViewController {
     private let nicknameTitleLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor.grayScale9
-        label.font = Typography.Heading01.semiBold.font
+        label.setText("nickname.label.title.main".localized(), style: Typography.Heading01.semiBold)
         label.textAlignment = .left
         label.numberOfLines = 1
-        label.text = "nickname.label.title.main".localized()
         
         return label
     }()
@@ -36,10 +35,9 @@ final class NicknameViewController: BaseViewController {
     private let nicknameSubTitleLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor.grayScale8
-        label.font = Typography.Caption.regular.font
+        label.setText("nickname.label.title.sub".localized(), style: Typography.Caption.regular)
         label.textAlignment = .left
         label.numberOfLines = 1
-        label.text = "nickname.label.title.sub".localized()
         
         return label
     }()
@@ -63,16 +61,17 @@ final class NicknameViewController: BaseViewController {
     private let textFieldTitleLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor.grayScale8
-        label.font = Typography.Body03.regular.font
+        label.setText("nickname.label.nickname".localized(), style: Typography.Body03.regular)
         label.textAlignment = .left
         label.numberOfLines = 1
-        label.text = "nickname.label.nickname".localized()
         
         return label
     }()
     
-    private let nicknameTextField: InsetTextField = {
-        let textField = InsetTextField()
+    private let nicknameTextField: KoreanOnlyTextField = {
+        let textField = KoreanOnlyTextField()
+        textField.maxLength = 10
+        
         textField.borderStyle = .none
         textField.backgroundColor = .grayScale1
         textField.layer.cornerRadius = 6
@@ -147,7 +146,7 @@ final class NicknameViewController: BaseViewController {
         }
         
         NSLayoutConstraint.activate([
-            nicknameTitleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 18),
+            nicknameTitleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 64),
             nicknameTitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             nicknameTitleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
@@ -192,6 +191,7 @@ final class NicknameViewController: BaseViewController {
             nicknameTextField.topAnchor.constraint(equalTo: textFieldTitleLabel.bottomAnchor, constant: 4),
             nicknameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             nicknameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            nicknameTextField.heightAnchor.constraint(equalToConstant: 46)
         ])
     }
     
@@ -278,17 +278,16 @@ final class NicknameViewController: BaseViewController {
     }
     
     private func setupTextFieldActions() {
-        nicknameTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
+        nicknameTextField.addTarget(self, action: #selector(textFieldEditingBegan), for: .editingDidBegin)
+        nicknameTextField.addTarget(self, action: #selector(textFieldEditingEnded), for: .editingDidEnd)
     }
     
-    @objc private func textFieldDidChange(_ textField: UITextField) {
-        if let text = textField.text, !text.isEmpty {
-            textField.layer.borderWidth = 1
-            textField.layer.borderColor = UIColor.grayScale7.cgColor
-        } else {
-            textField.layer.borderWidth = 1
-            textField.layer.borderColor = UIColor.grayScale4.cgColor
-        }
+    @objc private func textFieldEditingBegan(_ textField: UITextField) {
+        textField.layer.borderColor = UIColor.grayScale7.cgColor
+    }
+
+    @objc private func textFieldEditingEnded(_ textField: UITextField) {
+        textField.layer.borderColor = UIColor.grayScale4.cgColor
     }
     
     private func setupCameraButtonAction() {
