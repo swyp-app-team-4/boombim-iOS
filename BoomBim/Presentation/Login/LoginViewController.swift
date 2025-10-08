@@ -80,13 +80,21 @@ final class LoginViewController: BaseViewController {
     // 로그인 없이 사용하는 기능 제거
     private let withLoginButton: UIButton = {
         let button = UIButton()
-        button.setTitleColor(.systemBlue, for: .normal)
         button.setTitle("login.button.without_login".localized(), for: .normal)
         button.titleLabel?.font = Typography.Caption.regular.font
         button.setTitleColor(UIColor(hex: "#70737C"), for: .normal)
         button.setUnderline(underlineColor: UIColor(hex: "#70737C"), spacing: 4)
         
         button.backgroundColor = .clear
+        return button
+    }()
+    
+    private let testButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("test", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.tintColor = .yellow
+        
         return button
     }()
     
@@ -140,16 +148,19 @@ final class LoginViewController: BaseViewController {
             self.view.addSubview(view)
         }
         
-        [kakaoButton, naverButton, appleButton].forEach { button in
+        [kakaoButton, naverButton, appleButton/*, testButton*/].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             
             buttonStackView.addArrangedSubview(button)
         }
         
+//        testButton.addTarget(self, action: #selector(presentTerms), for: .touchUpInside)
+        
         NSLayoutConstraint.activate([
             kakaoButton.heightAnchor.constraint(equalToConstant: 54),
             naverButton.heightAnchor.constraint(equalToConstant: 54),
             appleButton.heightAnchor.constraint(equalToConstant: 54),
+            testButton.heightAnchor.constraint(equalToConstant: 54),
             
             buttonStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -84),
             buttonStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
@@ -201,5 +212,32 @@ final class LoginViewController: BaseViewController {
                 self?.presentAlert(title: "로그인 실패", message: message)
             })
             .disposed(by: disposeBag)
+    }
+    
+    // 약관 바텀시트 표시 → 필수 동의 확인 → 실제 가입 진행 트리거
+    @objc private func presentTerms() {
+        // TODO: 서버/설정에서 내려준 실제 URL로 교체
+        let items: [TermsModel] = [
+            .init(title: "이용약관 동의",
+                  url: URL(string:"https://awesome-captain-026.notion.site/2529598992b080119479fef036d96aba")!,
+                  kind: .required,
+                  isChecked: false),
+            .init(title: "개인정보 처리방침 동의",
+                  url: URL(string:"https://awesome-captain-026.notion.site/2529598992b080198821d47baaf7d23f")!,
+                  kind: .required,
+                  isChecked: false)
+        ]
+
+        presentTermsSheet(items: items) { [weak self] updated in
+            guard let self = self else { return }
+            // (더블체크) 필수 항목 모두 체크되었는지 확인
+            let requiredOK = updated
+                .filter { $0.kind == .required }
+                .allSatisfy { $0.isChecked }
+            guard requiredOK else {
+                self.presentAlert(title: "안내", message: "필수 약관에 동의해 주세요.")
+                return
+            }
+        }
     }
 }

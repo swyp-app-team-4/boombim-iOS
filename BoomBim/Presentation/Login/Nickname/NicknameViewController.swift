@@ -307,13 +307,11 @@ final class NicknameViewController: BaseViewController {
     private func presentTerms() {
         // TODO: 서버/설정에서 내려준 실제 URL로 교체
         let items: [TermsModel] = [
-            .init(id: "tos",
-                  title: "이용약관 동의",
+            .init(title: "이용약관 동의",
                   url: URL(string:"https://awesome-captain-026.notion.site/2529598992b080119479fef036d96aba")!,
                   kind: .required,
                   isChecked: false),
-            .init(id: "privacy",
-                  title: "개인정보 처리방침 동의",
+            .init(title: "개인정보 처리방침 동의",
                   url: URL(string:"https://awesome-captain-026.notion.site/2529598992b080198821d47baaf7d23f")!,
                   kind: .required,
                   isChecked: false)
@@ -329,10 +327,6 @@ final class NicknameViewController: BaseViewController {
                 self.presentAlert(title: "안내", message: "필수 약관에 동의해 주세요.")
                 return
             }
-
-            // 선택 동의 예: 마케팅 동의 값 저장
-            let marketingAgreed = updated.first(where: { $0.id == "mkt" })?.isChecked ?? false
-            UserDefaults.standard.set(marketingAgreed, forKey: "agreed_marketing")
 
             // ✅ 약관 동의 완료 → ViewModel로 “진짜 가입” 트리거
             self.proceedSignupRelay.accept(())

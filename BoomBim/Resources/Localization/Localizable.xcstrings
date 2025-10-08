@@ -836,6 +836,17 @@
           }
         }
       }
+    },
+    "term.title.all_agree" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 동의하기"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
