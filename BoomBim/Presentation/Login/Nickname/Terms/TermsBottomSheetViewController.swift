@@ -38,16 +38,14 @@ final class TermsBottomSheetViewController: UIViewController {
     
     private let signUpButton: UIButton = {
         let button = UIButton(type: .system)
-        button.backgroundColor = .main
+        button.backgroundColor = .grayScale4
         button.setTitle( "nickname.button.signup".localized(), for: .normal)
-        button.setTitleColor(.grayScale1, for: .normal)
+        button.setTitleColor(.grayScale7, for: .normal)
         button.titleLabel?.font = Typography.Body02.medium.font
         button.layer.cornerRadius = 10
         
         return button
     }()
-    
-    private let bottomShield = UIView()
     
     // MARK: Init
     init(items: [TermsModel]) {
@@ -118,7 +116,7 @@ final class TermsBottomSheetViewController: UIViewController {
             allAgreeView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
             allAgreeView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             allAgreeView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            allAgreeView.heightAnchor.constraint(equalToConstant: 34),
+            allAgreeView.heightAnchor.constraint(equalToConstant: 37),
             
             lineView.topAnchor.constraint(equalTo: allAgreeView.bottomAnchor, constant: 14),
             lineView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
@@ -187,6 +185,13 @@ final class TermsBottomSheetViewController: UIViewController {
         let requiredOK = items.filter { $0.kind == .required }.allSatisfy { $0.isChecked }
         signUpButton.isEnabled = requiredOK
         // TODO: enable에 따른 색상
+        if requiredOK {
+            signUpButton.backgroundColor = .main
+            signUpButton.setTitleColor(.grayScale1, for: .normal)
+        } else {
+            signUpButton.backgroundColor = .grayScale4
+            signUpButton.setTitleColor(.grayScale7, for: .normal)
+        }
     }
     
     @objc private func tapConfirm() {

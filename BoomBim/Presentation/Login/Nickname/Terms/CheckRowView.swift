@@ -8,7 +8,7 @@
 import UIKit
 import SafariServices
 
-final class CheckRowView: UIControl {
+final class CheckRowView: UIView {
     // 콜백
     var onToggleCheck: ((Bool) -> Void)?
     

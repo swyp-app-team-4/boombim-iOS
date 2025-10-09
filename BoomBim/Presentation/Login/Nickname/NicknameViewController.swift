@@ -305,6 +305,9 @@ final class NicknameViewController: BaseViewController {
     
     // 약관 바텀시트 표시 → 필수 동의 확인 → 실제 가입 진행 트리거
     private func presentTerms() {
+        // Ensure keyboard is dismissed before presenting the terms sheet
+        view.endEditing(true)
+        
         // TODO: 서버/설정에서 내려준 실제 URL로 교체
         let items: [TermsModel] = [
             .init(title: "이용약관 동의",
@@ -441,3 +444,4 @@ extension NicknameViewController: UIImagePickerControllerDelegate, UINavigationC
         }
     }
 }
+
