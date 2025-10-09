@@ -50,6 +50,7 @@ final class FavoriteCell: UICollectionViewCell {
         let label = UILabel()
         label.font = Typography.Body02.semiBold.font
         label.textColor = .grayScale10
+        label.numberOfLines = 1
         
         return label
     }()
@@ -78,6 +79,12 @@ final class FavoriteCell: UICollectionViewCell {
         label.textColor = .grayScale8
         
         return label
+    }()
+    
+    private let spacerView: UIView = {
+        let view = UIView()
+        
+        return view
     }()
     
     private let favoriteButton: UIButton = {
@@ -134,7 +141,7 @@ final class FavoriteCell: UICollectionViewCell {
     }
     
     private func configureTextStackView() {
-        [timeImageView, update].forEach { view in
+        [timeImageView, update, spacerView].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             updateStackView.addArrangedSubview(view)
         }
@@ -148,6 +155,8 @@ final class FavoriteCell: UICollectionViewCell {
         contentView.addSubview(favoriteButton)
         
         NSLayoutConstraint.activate([
+            textStackView.trailingAnchor.constraint(lessThanOrEqualTo: favoriteButton.leadingAnchor, constant: -4),
+            
             favoriteButton.topAnchor.constraint(equalTo: textStackView.topAnchor),
             favoriteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])
