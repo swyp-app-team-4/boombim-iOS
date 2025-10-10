@@ -12,6 +12,7 @@ import RxCocoa
 final class HomeViewController: BaseViewController {
     private let viewModel: HomeViewModel
     private let disposeBag = DisposeBag()
+    private let refreshRankRelay = PublishRelay<Void>()
     
     private var dataSource: UICollectionViewDiffableDataSource<HomeSection, HomeItem>!
     
@@ -59,9 +60,8 @@ final class HomeViewController: BaseViewController {
     private func bind() {
         let output = viewModel.transform(.init(
             appear: rx.methodInvoked(#selector(UIViewController.viewWillAppear(_:)))
-                .map { _ in () }//,
-//            pullToRefresh: refreshControl.rx.controlEvent(.valueChanged).asSignal(),
-//            retryTap: retryButton.rx.tap.asSignal()
+                .map { _ in () },
+            refreshRank: refreshRankRelay.asObservable()
         ))
         
         output.regionNewsItems
@@ -211,7 +211,7 @@ final class HomeViewController: BaseViewController {
             let showsButton = section.headerButton
             
             header.configure(text: title ?? "", image: image, button: showsButton, buttonHandler: {
-                print("button Action")
+                self?.refreshRankRelay.accept(())
             })
         }
         

@@ -35,6 +35,12 @@ final class HomeViewModel {
     
     struct Input {
         let appear: Observable<Void>        // 최초 1회
+        let refreshRank: Observable<Void>   // 랭킹 새로고침 버튼 탭
+        
+        init(appear: Observable<Void>, refreshRank: Observable<Void> = .empty()) {
+            self.appear = appear
+            self.refreshRank = refreshRank
+        }
     }
     
     struct Output {
@@ -92,6 +98,8 @@ final class HomeViewModel {
             .share(replay: 1, scope: .whileConnected)
         
         let trigger = input.appear.share()
+        
+        let rankTrigger = Observable.merge(trigger, input.refreshRank).share()
         
         let loading = BehaviorRelay<Bool>(value: false)
         let errorRelay = PublishRelay<String>()
@@ -154,7 +162,7 @@ final class HomeViewModel {
             .compactMap { $0.element }
             .asDriver(onErrorJustReturn: [])
         
-        let rankOfficialPlace: Driver<[CongestionRankPlaceItem]> = trigger
+        let rankOfficialPlace: Driver<[CongestionRankPlaceItem]> = rankTrigger
             .flatMapLatest {  _ in
                 PlaceService.shared.getRankOfficialPlace()
                     .map { $0.data.enumerated().map { index, place in
