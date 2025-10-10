@@ -251,25 +251,25 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         segmentStack.spacing = 8
         segmentStack.translatesAutoresizingMaskIntoConstraints = false
 
-//        buttonsContainer.addSubview(favoriteButton)
-//        buttonsContainer.addSubview(dividerView)
+        buttonsContainer.addSubview(favoriteButton)
+        buttonsContainer.addSubview(dividerView)
         buttonsContainer.addSubview(segmentStack)
 
         NSLayoutConstraint.activate([
-//            favoriteButton.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
-//            favoriteButton.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-//            favoriteButton.widthAnchor.constraint(equalToConstant: 34),
-//            favoriteButton.heightAnchor.constraint(equalToConstant: 34),
-//
-//            dividerView.leadingAnchor.constraint(equalTo: favoriteButton.trailingAnchor, constant: 12),
-//            dividerView.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-//            dividerView.widthAnchor.constraint(equalToConstant: 1),
-//            dividerView.heightAnchor.constraint(equalTo: buttonsContainer.heightAnchor, multiplier: 0.7),
+            favoriteButton.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
+            favoriteButton.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
+            favoriteButton.widthAnchor.constraint(equalToConstant: 34),
+            favoriteButton.heightAnchor.constraint(equalToConstant: 34),
 
-            segmentStack.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
-//            segmentStack.leadingAnchor.constraint(equalTo: dividerView.trailingAnchor, constant: 12),
+            dividerView.leadingAnchor.constraint(equalTo: favoriteButton.trailingAnchor, constant: 10),
+            dividerView.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
+            dividerView.widthAnchor.constraint(equalToConstant: 2),
+            dividerView.heightAnchor.constraint(equalToConstant: 15),
+
+            segmentStack.leadingAnchor.constraint(equalTo: dividerView.trailingAnchor, constant: 4),
             segmentStack.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-            segmentStack.trailingAnchor.constraint(lessThanOrEqualTo: buttonsContainer.trailingAnchor)
+            segmentStack.trailingAnchor.constraint(lessThanOrEqualTo: buttonsContainer.trailingAnchor),
+            segmentStack.heightAnchor.constraint(equalToConstant: 34)
         ])
 
         // 현재 위치 버튼
@@ -564,11 +564,12 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private func selectMode(_ group: OverlayGroup) {
         // 버튼 선택 상태/스타일 변경
         publicButton.isSelected   = (group == .official)
+        publicButton.layer.borderColor   = (publicButton.isSelected ? UIColor.grayScale7 : .grayScale6).cgColor
+        publicButton.backgroundColor   = publicButton.isSelected ? UIColor.grayScale4 : .grayScale1
+        
         realtimeButton.isSelected = (group == .realtime)
-
-        // 선택된 버튼에만 진한 테두리 색
-        publicButton.layer.borderColor   = (publicButton.isSelected ? UIColor.grayScale9 : .grayScale6).cgColor
-        realtimeButton.layer.borderColor = (realtimeButton.isSelected ? UIColor.grayScale9 : .grayScale6).cgColor
+        realtimeButton.layer.borderColor = (realtimeButton.isSelected ? UIColor.grayScale7 : .grayScale6).cgColor
+        realtimeButton.backgroundColor = realtimeButton.isSelected ? UIColor.grayScale4 : .grayScale1
 
         // 오버레이 표시 모드
         modeRelay.accept(group)
