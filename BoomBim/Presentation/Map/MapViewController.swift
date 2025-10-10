@@ -385,6 +385,11 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                     if case let UserPlaceEntry.place(p) = $0 { return p }
                     else { return nil }
                 }
+                
+                let onlyCluster: [ClusterItem] = entries.compactMap {
+                    if case let UserPlaceEntry.cluster(c) = $0 { return c }
+                    else { return nil }
+                }
 
                 // ✅ 인덱스도 PLACE만으로
                 self.placeIndex = Dictionary(uniqueKeysWithValues: onlyPlaces.map {
@@ -402,6 +407,17 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                         styleKey: self.styleKey(for: $0)
                     )
                 }
+                
+                let clusterItems: [POIClusterItem] = onlyCluster.map {
+                    .init(
+                        point: MapPoint(
+                            longitude: $0.coordinate.longitude,
+                            latitude:  $0.coordinate.latitude
+                        ),
+                        itemCount: $0.clusterSize,
+                        styleKey: "congestion.relaxed" // TODO: 각 클러스터링마다 가장 큰 값을 정해야함.
+                    )
+                }
 
                 self.overlay.setPOIs(
                     for: .realtime,
@@ -414,6 +430,13 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                               self.placeIndex[id] != nil else { return }
                         self.userPoiTapRelay.accept(Int(id) ?? 0)
                     }
+                )
+                
+                self.overlay.setPOIs(
+                    for: .realtime,
+                    items: clusterItems,
+                    visual: visual,
+                    iconProvider: self.iconForStyleKey, // TODO: 각 클러스터링마다 가장 큰 값에 따라 이미지 변경
                 )
 
                 // ✅ 패널 표시는 PLACE 여부 기반
