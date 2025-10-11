@@ -693,11 +693,21 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     
     // MARK: Floating Panel
     private var listBindingsBag = DisposeBag()  // 리스트 전용 bag
+    private var didBindOfficialListActions = false
+    private var officialDetailBindingsBag = DisposeBag()
+    private var didBindOfficialDetailActions = false
+    private var didBindUserListActions = false
+    private var userDetailBindingsBag = DisposeBag()
+    private var didBindUserDetailActions = false
 
     private func showOfficialListPanel(with places: [OfficialPlaceItem]) {
         if officialPlaceListViewController == nil {
             officialPlaceListViewController = OfficialPlaceListViewController()
-            bindListFavoriteActions() // ← 생성 시 1회만 바인딩
+            listBindingsBag = DisposeBag()
+            if didBindOfficialListActions == false {
+                bindListFavoriteActions() // ← 생성 시 1회만 바인딩
+                didBindOfficialListActions = true
+            }
         }
 
         officialPlaceListViewController?.apply(places: places)
@@ -742,43 +752,47 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     }
     
     private func showOfficialDetailPanel(with places: OfficialPlaceDetailInfo) {
-        if officialPlaceDetailViewController == nil { officialPlaceDetailViewController = OfficialPlaceDetailViewController() }
+        if officialPlaceDetailViewController == nil {
+            officialPlaceDetailViewController = OfficialPlaceDetailViewController()
+            officialDetailBindingsBag = DisposeBag()
+        }
         officialPlaceDetailViewController?.configure(data: places)
         
-        officialPlaceDetailViewController?.favoriteActionRequested
-            .emit(onNext: { [weak officialPlaceDetailViewController] action in
-                guard let officialPlaceDetailViewController else { return }
-                officialPlaceDetailViewController.setFavoriteLoading(true)
+        if didBindOfficialDetailActions == false, let detailVC = officialPlaceDetailViewController {
+            detailVC.favoriteActionRequested
+                .emit(onNext: { [weak detailVC, weak self] action in
+                    guard let detailVC, let self else { return }
+                    detailVC.setFavoriteLoading(true)
 
-                switch action {
-                case .add(let req):
-                    PlaceService.shared.registerFavoritePlace(body: req)
-                        .observe(on: MainScheduler.instance)
-                        .subscribe(onSuccess: { res in
-                            officialPlaceDetailViewController.setFavoriteSelected(true)
-                            officialPlaceDetailViewController.setFavoriteLoading(false)
-                            // 서버가 favoriteId를 반환하면 저장(삭제시 활용)
-                            // panelVC.setFavoriteId(res.favoriteId)
-                        }, onFailure: { _ in
-                            officialPlaceDetailViewController.setFavoriteLoading(false)
-                            // 토스트 등
-                        })
-                        .disposed(by: self.disposeBag)
+                    switch action {
+                    case .add(let req):
+                        PlaceService.shared.registerFavoritePlace(body: req)
+                            .observe(on: MainScheduler.instance)
+                            .subscribe(onSuccess: { _ in
+                                detailVC.setFavoriteSelected(true)
+                                detailVC.setFavoriteLoading(false)
+                            }, onFailure: { _ in
+                                detailVC.setFavoriteLoading(false)
+                            })
+                            .disposed(by: self.officialDetailBindingsBag)
 
-                case .remove(let req):
-                    PlaceService.shared.removeFavoritePlace(body: req)
-                        .observe(on: MainScheduler.instance)
-                        .subscribe(onSuccess: { _ in
-                            officialPlaceDetailViewController.setFavoriteSelected(false)
-                            officialPlaceDetailViewController.setFavoriteLoading(false)
-                            officialPlaceDetailViewController.setFavoriteId(nil)
-                        }, onFailure: { _ in
-                            officialPlaceDetailViewController.setFavoriteLoading(false)
-                        })
-                        .disposed(by: self.disposeBag)
-                }
-            })
-            .disposed(by: disposeBag)
+                    case .remove(let req):
+                        PlaceService.shared.removeFavoritePlace(body: req)
+                            .observe(on: MainScheduler.instance)
+                            .subscribe(onSuccess: { _ in
+                                detailVC.setFavoriteSelected(false)
+                                detailVC.setFavoriteLoading(false)
+                                detailVC.setFavoriteId(nil)
+                            }, onFailure: { _ in
+                                detailVC.setFavoriteLoading(false)
+                            })
+                            .disposed(by: self.officialDetailBindingsBag)
+                    }
+                })
+                .disposed(by: officialDetailBindingsBag)
+
+            didBindOfficialDetailActions = true
+        }
        
         if floatingPanel.contentViewController !== officialPlaceDetailViewController {
             floatingPanel.delegate = self
@@ -800,7 +814,11 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private func showUserListPanel(with places: [UserPlaceItem]) {
         if userPlaceListViewController == nil {
             userPlaceListViewController = UserPlaceListViewController()
-            bindUserListFavoriteActions()
+            listBindingsBag = DisposeBag()
+            if didBindUserListActions == false {
+                bindUserListFavoriteActions()
+                didBindUserListActions = true
+            }
         }
         userPlaceListViewController?.updateHeader(title: "내 주변 여유로운 장소에요!")
         userPlaceListViewController?.apply(places: places)
@@ -846,43 +864,47 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     }
     
     private func showUserDetailPanel(with places: UserPlaceDetailInfo) {
-        if userPlaceDetailViewController == nil { userPlaceDetailViewController = UserPlaceDetailViewController() }
+        if userPlaceDetailViewController == nil {
+            userPlaceDetailViewController = UserPlaceDetailViewController()
+            userDetailBindingsBag = DisposeBag()
+        }
         userPlaceDetailViewController?.configure(data: places)
         
-        userPlaceDetailViewController?.favoriteActionRequested
-            .emit(onNext: { [weak userPlaceDetailViewController] action in
-                guard let userPlaceDetailViewController else { return }
-                userPlaceDetailViewController.setFavoriteLoading(true)
+        if didBindUserDetailActions == false, let detailVC = userPlaceDetailViewController {
+            detailVC.favoriteActionRequested
+                .emit(onNext: { [weak detailVC, weak self] action in
+                    guard let detailVC, let self else { return }
+                    detailVC.setFavoriteLoading(true)
 
-                switch action {
-                case .add(let req):
-                    PlaceService.shared.registerFavoritePlace(body: req)
-                        .observe(on: MainScheduler.instance)
-                        .subscribe(onSuccess: { res in
-                            userPlaceDetailViewController.setFavoriteSelected(true)
-                            userPlaceDetailViewController.setFavoriteLoading(false)
-                            // 서버가 favoriteId를 반환하면 저장(삭제시 활용)
-                            // panelVC.setFavoriteId(res.favoriteId)
-                        }, onFailure: { _ in
-                            userPlaceDetailViewController.setFavoriteLoading(false)
-                            // 토스트 등
-                        })
-                        .disposed(by: self.disposeBag)
+                    switch action {
+                    case .add(let req):
+                        PlaceService.shared.registerFavoritePlace(body: req)
+                            .observe(on: MainScheduler.instance)
+                            .subscribe(onSuccess: { _ in
+                                detailVC.setFavoriteSelected(true)
+                                detailVC.setFavoriteLoading(false)
+                            }, onFailure: { _ in
+                                detailVC.setFavoriteLoading(false)
+                            })
+                            .disposed(by: self.userDetailBindingsBag)
 
-                case .remove(let req):
-                    PlaceService.shared.removeFavoritePlace(body: req)
-                        .observe(on: MainScheduler.instance)
-                        .subscribe(onSuccess: { _ in
-                            userPlaceDetailViewController.setFavoriteSelected(false)
-                            userPlaceDetailViewController.setFavoriteLoading(false)
-                            userPlaceDetailViewController.setFavoriteId(nil)
-                        }, onFailure: { _ in
-                            userPlaceDetailViewController.setFavoriteLoading(false)
-                        })
-                        .disposed(by: self.disposeBag)
-                }
-            })
-            .disposed(by: disposeBag)
+                    case .remove(let req):
+                        PlaceService.shared.removeFavoritePlace(body: req)
+                            .observe(on: MainScheduler.instance)
+                            .subscribe(onSuccess: { _ in
+                                detailVC.setFavoriteSelected(false)
+                                detailVC.setFavoriteLoading(false)
+                                detailVC.setFavoriteId(nil)
+                            }, onFailure: { _ in
+                                detailVC.setFavoriteLoading(false)
+                            })
+                            .disposed(by: self.userDetailBindingsBag)
+                    }
+                })
+                .disposed(by: userDetailBindingsBag)
+
+            didBindUserDetailActions = true
+        }
         
         if floatingPanel.contentViewController !== userPlaceDetailViewController {
             floatingPanel.delegate = self
@@ -1006,3 +1028,4 @@ extension MapViewController: KakaoMapEventDelegate {
         zoomLevelSubject.onNext(Int(zoom))
     }
 }
+
