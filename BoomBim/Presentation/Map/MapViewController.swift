@@ -820,7 +820,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                 didBindUserListActions = true
             }
         }
-        userPlaceListViewController?.updateHeader(title: "내 주변 여유로운 장소에요!")
+//        userPlaceListViewController?.updateHeader(title: "내 주변 여유로운 장소에요!")
         userPlaceListViewController?.apply(places: places)
         
         if floatingPanel.contentViewController !== userPlaceListViewController {

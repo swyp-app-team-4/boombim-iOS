@@ -27,6 +27,7 @@ struct OfficialPlaceRequest: Encodable {
 struct OfficialPlaceItem: Decodable {
     let officialPlaceId: Int
     let officialPlaceName: String
+    let legalDong: String
     let placeType: String
     let imageUrl: String
     let coordinate: Coord

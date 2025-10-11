@@ -83,7 +83,7 @@ final class UserPlaceListViewController: UIViewController {
     private let headerContainer = UIView()
     private let grabber = UIView()
     private let headerStack = UIStackView()
-    private let headerIcon = UIImageView(image: UIImage(systemName: "location.circle.fill"))
+    private let headerIcon = UIImageView(image: .iconLocationPosition)
     private let headerLabel = UILabel()
 
     // Empty state
@@ -126,7 +126,7 @@ private extension UserPlaceListViewController {
         headerIcon.tintColor = .label
         headerIcon.setContentCompressionResistancePriority(.required, for: .horizontal)
 
-        headerLabel.text = "주변 혼잡도를 확인해보세요 !"
+        headerLabel.setText("주변 혼잡도를 확인해보세요 !", style: Typography.Body01.medium)
         headerLabel.font = Typography.Body01.medium.font
         headerLabel.adjustsFontForContentSizeCategory = true
         headerLabel.textColor = .grayScale10
