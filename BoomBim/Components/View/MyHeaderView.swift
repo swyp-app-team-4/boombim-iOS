@@ -77,7 +77,7 @@ final class MyHeaderView: UIView {
     }
     
     private func configureButton() {
-        [favoriteButton, voteButton, questionButton].forEach { button in
+        [favoriteButton/*, voteButton, questionButton*/].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             stackView.addArrangedSubview(button)
         }

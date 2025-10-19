@@ -182,7 +182,8 @@ final class MyPageViewController: BaseViewController {
         let questionViewModel = QuestionViewModel(items: output.question)
         let questionViewController = QuestionViewController(viewModel: questionViewModel)
         
-        self.pages = [favoriteViewController, voteViewController, questionViewController]
+        /// 1.0.1 version 적용 내역) 투표와 질문이 사라짐.
+        self.pages = [favoriteViewController/*, voteViewController, questionViewController*/]
         
         // 현재 인덱스가 범위를 벗어나지 않게 보정
         self.currentPageIndex = min(self.currentPageIndex, max(self.pages.count - 1, 0))
