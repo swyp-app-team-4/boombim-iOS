@@ -847,6 +847,28 @@
           }
         }
       }
+    },
+    "terms.label.privacy_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(필수) 개인정보 처리방침 동의"
+          }
+        }
+      }
+    },
+    "terms.label.term_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(필수) 이용약관 동의"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
