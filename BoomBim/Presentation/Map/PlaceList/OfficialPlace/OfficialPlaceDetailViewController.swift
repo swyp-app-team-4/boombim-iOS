@@ -201,6 +201,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
     
     private func bind() {
         favoriteButton.rx.tap
+            .do(onNext: { print("favoriteButton tap!") })
             .bind(to: favoriteTapRelay)
             .disposed(by: disposeBag)
         

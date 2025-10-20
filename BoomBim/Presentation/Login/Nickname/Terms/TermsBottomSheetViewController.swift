@@ -16,161 +16,182 @@ final class TermsBottomSheetViewController: UIViewController {
     private var items: [TermsModel]
     
     // UI
-    private let grabberSpace = UIView()
-    private let container = UIStackView()
-    private let agreeAllRow = TermRowView(title: "전체 동의하기", checked: false, showChevron: false)
-    private var itemRows: [String: TermRowView] = [:]
-    private let confirmButton = UIButton(type: .system)
+    private let allAgreeView = CheckBoxRowView()
+    
+    private let lineView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .grayScale3
+        
+        return view
+    }()
+    
+    private let agreeStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.distribution = .fill
+        stackView.spacing = 10
+        
+        return stackView
+    }()
+    
+    private var termsRows: [CheckRowView] = []
+    
+    private let signUpButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = .grayScale4
+        button.setTitle( "nickname.button.signup".localized(), for: .normal)
+        button.setTitleColor(.grayScale7, for: .normal)
+        button.titleLabel?.font = Typography.Body02.medium.font
+        button.layer.cornerRadius = 10
+        
+        return button
+    }()
     
     // MARK: Init
     init(items: [TermsModel]) {
         self.items = items
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .pageSheet
+        
         if let sheet = sheetPresentationController {
             sheet.prefersGrabberVisible = true
-            sheet.detents = [.custom { [weak self] ctx in
-                // 내용 높이 기반으로 동적 계산
-                guard let self else { return 400 }
-                let intrinsic = self.intrinsicContentHeight(forWidth: ctx.maximumDetentValue) // 실제 가용 폭 전달
-                // 상한/하한 가드
-                return min(max(intrinsic, 260), ctx.maximumDetentValue * 0.9)
-            }]
             sheet.prefersScrollingExpandsWhenScrolledToEdge = false
-            sheet.preferredCornerRadius = 16
+            sheet.preferredCornerRadius = 22
+            
+            sheet.detents = [.custom { _ in 320 }]
+        }
+        
+        for item in items {
+            let row = CheckRowView(info: item)
+            termsRows.append(row)
         }
     }
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: View
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
-        setupLayout()
-        buildRows()
-        syncAgreeAllState()
-        updateConfirmButtonState()
+        
+        setupViews()
+        setupConstraints()
+        configureContent()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        guard let sheet = sheetPresentationController else { return }
+        // Recalculate after layout so the custom detent matches current content size
+        let width = sheet.largestUndimmedDetentIdentifier == nil ? view.bounds.width : view.bounds.width
+        let h = intrinsicContentHeight(forWidth: width)
+        
+        let minHeight: CGFloat = 250
+        let maxHeight: CGFloat = view.bounds.height
+        let target = minHeight // min(max(h, minHeight), maxHeight)
+        
+        sheet.detents = [.custom { _ in target }]
     }
     
-    private func setupLayout() {
-        // Safe-area 패딩
-        let outer = UIStackView(arrangedSubviews: [])
-        outer.axis = .vertical
-        outer.spacing = 0
-        view.addSubview(outer)
-        outer.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            outer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            outer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            outer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            outer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8)
-        ])
+    private func setupViews() {
+        view.backgroundColor = .grayScale1
         
-        // 상단 여백(그랩버 여지)
-        grabberSpace.translatesAutoresizingMaskIntoConstraints = false
-        grabberSpace.heightAnchor.constraint(equalToConstant: 6).isActive = true
-        outer.addArrangedSubview(grabberSpace)
-        
-        // 내용 스택
-        container.axis = .vertical
-        container.spacing = 0
-        outer.addArrangedSubview(container)
-        
-        // 하단 버튼 영역
-        let buttonHolder = UIView()
-        buttonHolder.layoutMargins = .init(top: 16, left: 20, bottom: 16, right: 20)
-        outer.addArrangedSubview(buttonHolder)
-        
-        confirmButton.setTitle("회원가입", for: .normal)
-        confirmButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
-        confirmButton.layer.cornerRadius = 12
-        confirmButton.clipsToBounds = true
-        confirmButton.backgroundColor = .systemOrange
-        confirmButton.setTitleColor(.white, for: .normal)
-        confirmButton.setTitleColor(.white.withAlphaComponent(0.5), for: .disabled)
-        confirmButton.addTarget(self, action: #selector(tapConfirm), for: .touchUpInside)
-        buttonHolder.addSubview(confirmButton)
-        confirmButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            confirmButton.leadingAnchor.constraint(equalTo: buttonHolder.layoutMarginsGuide.leadingAnchor),
-            confirmButton.trailingAnchor.constraint(equalTo: buttonHolder.layoutMarginsGuide.trailingAnchor),
-            confirmButton.topAnchor.constraint(equalTo: buttonHolder.layoutMarginsGuide.topAnchor),
-            confirmButton.bottomAnchor.constraint(equalTo: buttonHolder.layoutMarginsGuide.bottomAnchor),
-            confirmButton.heightAnchor.constraint(equalToConstant: 52)
-        ])
-    }
-    
-    private func buildRows() {
-        // 전체 동의
-        agreeAllRow.onToggleCheck = { [weak self] checked in
-            self?.toggleAll(checked)
+        termsRows.forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            agreeStackView.addArrangedSubview($0)
         }
-        agreeAllRow.onOpenURL = nil // 전체동의는 URL 없음
-        container.addArrangedSubview(agreeAllRow)
         
-        // 섹션 구분선
-        container.addArrangedSubview(divider())
+        [allAgreeView, lineView, agreeStackView, signUpButton].forEach {
+            view.addSubview($0)
+        }
+    }
+    
+    private func setupConstraints() {
+        [allAgreeView, lineView, agreeStackView, signUpButton].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
         
-        // 각 항목
-        for item in items {
-            let titlePrefix = item.kind == .required ? "(필수) " : "(선택) "
-            let row = TermRowView(title: titlePrefix + item.title, checked: item.isChecked, showChevron: true)
+        NSLayoutConstraint.activate([
+            allAgreeView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
+            allAgreeView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            allAgreeView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            allAgreeView.heightAnchor.constraint(equalToConstant: 37),
             
-            row.onToggleCheck = { [weak self, weak row] newChecked in
-                guard let self, let row else { return }
-                // 상태 반영
-                if let idx = self.items.firstIndex(where: { $0.id == item.id }) {
-                    self.items[idx].isChecked = newChecked
+            lineView.topAnchor.constraint(equalTo: allAgreeView.bottomAnchor, constant: 14),
+            lineView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            lineView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            lineView.heightAnchor.constraint(equalToConstant: 1),
+            
+            agreeStackView.topAnchor.constraint(equalTo: lineView.bottomAnchor, constant: 14),
+            agreeStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            agreeStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            agreeStackView.bottomAnchor.constraint(equalTo: signUpButton.topAnchor, constant: -36),
+            agreeStackView.heightAnchor.constraint(equalToConstant: 74),
+            
+            signUpButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            signUpButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            signUpButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+            signUpButton.heightAnchor.constraint(equalToConstant: 44)
+        ])
+    }
+    
+    private func configureContent() {
+        allAgreeView.configure(title: "term.title.all_agree".localized())
+        allAgreeView.onToggleCheck = { [weak self] _ in
+            print("handleAllAgreeTap")
+            self?.handleAllAgreeTap()
+        }
+
+        // 각 약관 row의 체크 변경을 감지하여 items와 allAgreeView를 동기화
+        for (index, row) in termsRows.enumerated() {
+            // 개별 Row가 토글될 때 모델과 전체동의 상태를 동기화
+            row.onToggleCheck = { [weak self] isChecked in
+                guard let self = self else { return }
+                // 모델 상태 갱신
+                if self.items.indices.contains(index) {
+                    self.items[index].isChecked = isChecked
                 }
-                self.syncAgreeAllState()
+                // 모든 항목 체크 여부 계산
+                let isAllChecked = self.items.allSatisfy { $0.isChecked }
+                // 전체동의 UI 동기화 (재귀 방지 위해 emit: false)
+                self.allAgreeView.setChecked(isAllChecked, emit: false)
+                // 가입 버튼 상태 갱신(필수 항목 체크 여부 반영)
                 self.updateConfirmButtonState()
             }
-            row.onOpenURL = { [weak self] in
-                guard let self else { return }
-                let safari = SFSafariViewController(url: item.url)
-                safari.modalPresentationStyle = .formSheet
-                self.present(safari, animated: true)
-            }
-            itemRows[item.id] = row
-            container.addArrangedSubview(row)
         }
-    }
-    
-    private func divider() -> UIView {
-        let v = UIView()
-        v.backgroundColor = .secondarySystemBackground
-        v.translatesAutoresizingMaskIntoConstraints = false
-        v.heightAnchor.constraint(equalToConstant: 3).isActive = true
-        return v
+
+        // 초기 버튼 상태 동기화
+        updateConfirmButtonState()
+        
+        signUpButton.addTarget(self, action: #selector(tapConfirm), for: .touchUpInside)
     }
     
     // MARK: State Handling
-    
     private func toggleAll(_ checked: Bool) {
         // 데이터/뷰 동기 갱신 (콜백 방지)
         for i in items.indices {
             items[i].isChecked = checked
-            if let row = itemRows[items[i].id] {
-                row.setChecked(checked, emit: false) // ✅ 콜백 방지
-            }
+            termsRows[i].setChecked(checked)
         }
         // 전체동의 UI도 재귀 없이 맞추기
-        agreeAllRow.setChecked(checked, emit: false)
-        
+        allAgreeView.setChecked(checked, emit: false)
+        print("checkd: \(checked)")
         updateConfirmButtonState()
-    }
-    
-    private func syncAgreeAllState() {
-        // 모든 항목이 체크되어 있으면 전체동의도 체크
-        let allChecked = items.allSatisfy { $0.isChecked }
-        agreeAllRow.setChecked(allChecked, emit: false) // ✅ 재귀 방지
     }
     
     private func updateConfirmButtonState() {
         // 필수 항목 체크 여부
         let requiredOK = items.filter { $0.kind == .required }.allSatisfy { $0.isChecked }
-        confirmButton.isEnabled = requiredOK
-        confirmButton.alpha = requiredOK ? 1.0 : 0.5
+        signUpButton.isEnabled = requiredOK
+        // TODO: enable에 따른 색상
+        if requiredOK {
+            signUpButton.backgroundColor = .main
+            signUpButton.setTitleColor(.grayScale1, for: .normal)
+        } else {
+            signUpButton.backgroundColor = .grayScale4
+            signUpButton.setTitleColor(.grayScale7, for: .normal)
+        }
     }
     
     @objc private func tapConfirm() {
@@ -178,20 +199,23 @@ final class TermsBottomSheetViewController: UIViewController {
         dismiss(animated: true)
     }
     
+    @objc private func handleAllAgreeTap() {
+        // Determine current state from items and flip
+        let allChecked = items.allSatisfy { $0.isChecked }
+        let next = !allChecked
+        toggleAll(next)
+    }
+    
     // MARK: Dynamic Height (for custom detent)
     private func intrinsicContentHeight(forWidth width: CGFloat) -> CGFloat {
-        // 가상의 너비를 주고 오토레이아웃 수치 얻기
         view.layoutIfNeeded()
         let target = CGSize(width: width, height: UIView.layoutFittingCompressedSize.height)
-        let height = view.systemLayoutSizeFitting(target,
-                                                 withHorizontalFittingPriority: .required,
-                                                 verticalFittingPriority: .fittingSizeLevel).height
+        let height = view.systemLayoutSizeFitting(target, withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel).height
         return height
     }
 }
 
 // MARK: - Present Helper
-
 extension UIViewController {
     func presentTermsSheet(items: [TermsModel], onConfirm: @escaping ([TermsModel]) -> Void) {
         let vc = TermsBottomSheetViewController(items: items)
@@ -199,3 +223,4 @@ extension UIViewController {
         present(vc, animated: true)
     }
 }
+

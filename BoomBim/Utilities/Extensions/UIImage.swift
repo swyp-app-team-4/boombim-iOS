@@ -12,9 +12,10 @@ extension UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.scale = scale
         format.opaque = false
-        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        return renderer.image { _ in
             self.draw(in: CGRect(origin: .zero, size: size))
-        }
+        }.withRenderingMode(.alwaysOriginal)
     }
     
     /// 업로드용 데이터 생성 (리사이즈 + JPEG 압축)
@@ -79,5 +80,44 @@ extension UIImage {
                        baseName: String = "profile") -> (data: Data, fileName: String, mimeType: String)? {
         guard let data = preparedForUpload(maxBytes: maxBytes, maxDimension: maxDimension) else { return nil }
         return (data, "\(baseName).jpg", "image/jpeg")
+    }
+    
+    /// UIImage 내에 Text 추가
+    func withCenteredBadgeText(_ text: String,
+                               font: UIFont = .boldSystemFont(ofSize: 18),
+                               textColor: UIColor = .white) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { _ in
+            self.draw(in: CGRect(origin: .zero, size: size))
+
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: textColor
+            ]
+            var textSize = (text as NSString).size(withAttributes: attributes)
+            textSize = CGSize(width: ceil(textSize.width), height: ceil(textSize.height))
+
+            let textRect = CGRect(
+                x: size.width/2 - textSize.width / 2,
+                y: size.height/2 - textSize.height / 2,
+                width: textSize.width,
+                height: textSize.height
+            )
+            (text as NSString).draw(in: textRect, withAttributes: attributes)
+        }
+    }
+    
+    /// 전체 이미지에 동일한 알파를 곱한 새 UIImage를 반환
+    func withAlpha(_ alpha: CGFloat) -> UIImage {
+        let format = UIGraphicsImageRendererFormat.default()
+        format.opaque = false            // 투명 채널 유지
+        format.scale = self.scale        // 원본 스케일 유지 (레티나 선명도)
+        
+        let renderer = UIGraphicsImageRenderer(size: self.size, format: format)
+        return renderer.image { _ in
+            let rect = CGRect(origin: .zero, size: self.size)
+            // 전체에 alpha 적용하여 그리기
+            self.draw(in: rect, blendMode: .normal, alpha: alpha)
+        }
     }
 }

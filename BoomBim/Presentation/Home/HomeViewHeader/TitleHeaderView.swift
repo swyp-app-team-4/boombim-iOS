@@ -28,7 +28,7 @@ final class TitleHeaderView: UICollectionReusableView {
     
     private let rightButton: UIButton = {
         let button = UIButton()
-        button.setImage(.iconRefresh, for: .normal)
+        button.setImage(.buttonRefresh, for: .normal)
         
         return button
     }()

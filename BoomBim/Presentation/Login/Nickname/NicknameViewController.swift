@@ -25,10 +25,9 @@ final class NicknameViewController: BaseViewController {
     private let nicknameTitleLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor.grayScale9
-        label.font = Typography.Heading01.semiBold.font
+        label.setText("nickname.label.title.main".localized(), style: Typography.Heading01.semiBold)
         label.textAlignment = .left
         label.numberOfLines = 1
-        label.text = "nickname.label.title.main".localized()
         
         return label
     }()
@@ -36,10 +35,9 @@ final class NicknameViewController: BaseViewController {
     private let nicknameSubTitleLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor.grayScale8
-        label.font = Typography.Caption.regular.font
+        label.setText("nickname.label.title.sub".localized(), style: Typography.Caption.regular)
         label.textAlignment = .left
         label.numberOfLines = 1
-        label.text = "nickname.label.title.sub".localized()
         
         return label
     }()
@@ -63,16 +61,17 @@ final class NicknameViewController: BaseViewController {
     private let textFieldTitleLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor.grayScale8
-        label.font = Typography.Body03.regular.font
+        label.setText("nickname.label.nickname".localized(), style: Typography.Body03.regular)
         label.textAlignment = .left
         label.numberOfLines = 1
-        label.text = "nickname.label.nickname".localized()
         
         return label
     }()
     
-    private let nicknameTextField: InsetTextField = {
-        let textField = InsetTextField()
+    private let nicknameTextField: KoreanOnlyTextField = {
+        let textField = KoreanOnlyTextField()
+        textField.maxLength = 10
+        
         textField.borderStyle = .none
         textField.backgroundColor = .grayScale1
         textField.layer.cornerRadius = 6
@@ -147,7 +146,7 @@ final class NicknameViewController: BaseViewController {
         }
         
         NSLayoutConstraint.activate([
-            nicknameTitleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 18),
+            nicknameTitleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 64),
             nicknameTitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             nicknameTitleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
@@ -192,6 +191,7 @@ final class NicknameViewController: BaseViewController {
             nicknameTextField.topAnchor.constraint(equalTo: textFieldTitleLabel.bottomAnchor, constant: 4),
             nicknameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             nicknameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            nicknameTextField.heightAnchor.constraint(equalToConstant: 46)
         ])
     }
     
@@ -278,17 +278,16 @@ final class NicknameViewController: BaseViewController {
     }
     
     private func setupTextFieldActions() {
-        nicknameTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
+        nicknameTextField.addTarget(self, action: #selector(textFieldEditingBegan), for: .editingDidBegin)
+        nicknameTextField.addTarget(self, action: #selector(textFieldEditingEnded), for: .editingDidEnd)
     }
     
-    @objc private func textFieldDidChange(_ textField: UITextField) {
-        if let text = textField.text, !text.isEmpty {
-            textField.layer.borderWidth = 1
-            textField.layer.borderColor = UIColor.grayScale7.cgColor
-        } else {
-            textField.layer.borderWidth = 1
-            textField.layer.borderColor = UIColor.grayScale4.cgColor
-        }
+    @objc private func textFieldEditingBegan(_ textField: UITextField) {
+        textField.layer.borderColor = UIColor.grayScale7.cgColor
+    }
+
+    @objc private func textFieldEditingEnded(_ textField: UITextField) {
+        textField.layer.borderColor = UIColor.grayScale4.cgColor
     }
     
     private func setupCameraButtonAction() {
@@ -306,15 +305,16 @@ final class NicknameViewController: BaseViewController {
     
     // 약관 바텀시트 표시 → 필수 동의 확인 → 실제 가입 진행 트리거
     private func presentTerms() {
+        // Ensure keyboard is dismissed before presenting the terms sheet
+        view.endEditing(true)
+        
         // TODO: 서버/설정에서 내려준 실제 URL로 교체
         let items: [TermsModel] = [
-            .init(id: "tos",
-                  title: "이용약관 동의",
+            .init(title: "terms.label.term_title".localized(),
                   url: URL(string:"https://awesome-captain-026.notion.site/2529598992b080119479fef036d96aba")!,
                   kind: .required,
                   isChecked: false),
-            .init(id: "privacy",
-                  title: "개인정보 처리방침 동의",
+            .init(title: "terms.label.privacy_title".localized(),
                   url: URL(string:"https://awesome-captain-026.notion.site/2529598992b080198821d47baaf7d23f")!,
                   kind: .required,
                   isChecked: false)
@@ -330,10 +330,6 @@ final class NicknameViewController: BaseViewController {
                 self.presentAlert(title: "안내", message: "필수 약관에 동의해 주세요.")
                 return
             }
-
-            // 선택 동의 예: 마케팅 동의 값 저장
-            let marketingAgreed = updated.first(where: { $0.id == "mkt" })?.isChecked ?? false
-            UserDefaults.standard.set(marketingAgreed, forKey: "agreed_marketing")
 
             // ✅ 약관 동의 완료 → ViewModel로 “진짜 가입” 트리거
             self.proceedSignupRelay.accept(())
@@ -448,3 +444,4 @@ extension NicknameViewController: UIImagePickerControllerDelegate, UINavigationC
         }
     }
 }
+

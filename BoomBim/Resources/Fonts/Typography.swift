@@ -12,6 +12,33 @@ struct TextStyle {
     let lineHeight: CGFloat
 }
 
+extension TextStyle {
+    func attributed(_ text: String,
+                    color: UIColor? = nil,
+                    alignment: NSTextAlignment = .natural,
+                    kern: CGFloat? = nil) -> NSAttributedString {
+        
+        let style = NSMutableParagraphStyle()
+        
+        style.minimumLineHeight = lineHeight
+        style.maximumLineHeight = lineHeight
+        style.alignment = alignment
+        
+        let baseline = (lineHeight - font.lineHeight) / 2
+        
+        var attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .paragraphStyle: style,
+            .baselineOffset: baseline
+        ]
+        
+        if let c = color { attrs[.foregroundColor] = c }
+        if let k = kern  { attrs[.kern] = k }
+        
+        return NSAttributedString(string: text, attributes: attrs)
+    }
+}
+
 enum Typography {
 
     enum Heading01 {
@@ -61,5 +88,15 @@ enum Typography {
         static let semiBold = TextStyle(font: .pretendard(.semiBold, size: 12), lineHeight: lh)
         static let medium   = TextStyle(font: .pretendard(.medium,   size: 12), lineHeight: lh)
         static let regular  = TextStyle(font: .pretendard(.regular,  size: 12), lineHeight: lh)
+    }
+    
+    enum Taebaek {
+        private static let lh: CGFloat = 46
+        static let regular  = TextStyle(font: .taebaek(size: 32), lineHeight: lh)
+    }
+    
+    enum NotoSans {
+        private static let lh: CGFloat = 24
+        static let semiBold = TextStyle(font: .notoSans(.semiBold, size: 19), lineHeight: lh)
     }
 }

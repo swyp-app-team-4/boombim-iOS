@@ -304,7 +304,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "한글 최대 ~자, 공백, 영문, 숫자, 특수기호 불가"
+            "value" : "한글 최대 10자, 공백, 영문, 숫자, 특수기호 불가"
           }
         }
       }
@@ -491,7 +491,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "지금 내 주변은 어떨까 ?"
+            "value" : "알고 싶은 장소가 없다면?"
           }
         }
       }
@@ -535,7 +535,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "지금 내 주변은 어떨까 ?"
+            "value" : "내 주변의 혼잡도를 알려요"
           }
         }
       }
@@ -833,6 +833,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이용약관"
+          }
+        }
+      }
+    },
+    "term.title.all_agree" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 동의하기"
+          }
+        }
+      }
+    },
+    "terms.label.privacy_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(필수) 개인정보 처리방침 동의"
+          }
+        }
+      }
+    },
+    "terms.label.term_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(필수) 이용약관 동의"
           }
         }
       }

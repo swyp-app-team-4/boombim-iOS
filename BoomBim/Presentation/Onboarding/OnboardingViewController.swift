@@ -6,16 +6,23 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class OnboardingViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate {
-    private let pages: [UIViewController] = [
-        OnboardingPageViewController(title: "onboarding.label.title.first".localized(), subTitle: nil, image: .onboarding1),
-        OnboardingPageViewController(title: "onboarding.label.title.second".localized(), subTitle: "onboarding.label.subtitle.second".localized(), image: .onboarding2),
-        OnboardingPageViewController(title: "onboarding.label.title.third".localized(), subTitle: "onboarding.label.subtitle.third".localized(), image: .onboarding3),
-        OnboardingPageViewController(title: "onboarding.label.title.fourth".localized(), subTitle: "onboarding.label.subtitle.fourth".localized(), image: .onboarding4),
-        OnboardingPageViewController(title: "onboarding.label.title.fifth".localized(), subTitle: "onboarding.label.subtitle.fifth".localized(), image: .onboarding5),
-        OnboardingPageViewController(title: "onboarding.label.title.sixth".localized(), subTitle: "onboarding.label.subtitle.sixth".localized(), image: .onboarding6)
-    ]
+    private let models: [OnboardingPageModel]
+    private let pageFactory: OnboardingPageFactory
+    private let viewModel: OnboardingViewModel
+    
+    private lazy var pages: [UIViewController] = models.map { pageFactory.make(from: $0) }
+    
+    private let disposeBag = DisposeBag()
+    
+    // MARK: Inputs to ViewModel
+    private let tapNext = PublishRelay<Void>()
+    private let tapSkip = PublishRelay<Void>()
+    private let tapStart = PublishRelay<Void>()
+    private let swipedTo = PublishRelay<Int>()
     
     var onFinish: (() -> Void)?
 
@@ -25,36 +32,89 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
     
     private let skipButton: UIButton = {
         let button = UIButton()
-        button.setTitle("onboarding.button.skip".localized(), for: .normal)
+        button.setTitle("onboarding.button.skip".localized(), style: Typography.Body03.medium, for: .normal)
         button.backgroundColor = .grayScale4
-        button.titleLabel?.font = Typography.Body03.medium.font
         button.setTitleColor(.grayScale8, for: .normal)
         button.layer.cornerRadius = 15
         button.clipsToBounds = true
         
-        button.contentEdgeInsets = UIEdgeInsets(top: 4, left: 12.5, bottom: 4, right: 12.5)
+        if #available(iOS 15.0, *) {
+            var config = button.configuration ?? UIButton.Configuration.plain()
+            config.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 12.5, bottom: 4, trailing: 12.5)
+            button.configuration = config
+        } else {
+            button.contentEdgeInsets = UIEdgeInsets(top: 4, left: 12.5, bottom: 4, right: 12.5)
+        }
         
         return button
     }()
     
     private let startButton: UIButton = {
         let button = UIButton()
-        button.setTitle("onboarding.button.start".localized(), for: .normal)
-        button.titleLabel?.font = Typography.Body02.medium.font
+        button.setTitle("onboarding.button.start".localized(), style: Typography.Body02.medium, for: .normal)
         button.setTitleColor(.grayScale7, for: .normal)
         button.backgroundColor = .grayScale4
-//        button.setTitleColor(.grayScale1, for: .normal)
-//        button.backgroundColor = .main
         button.layer.cornerRadius = 10
         button.isEnabled = false
         
         return button
     }()
-
+    
+    init(models: [OnboardingPageModel], pageFactory: OnboardingPageFactory, viewModel: OnboardingViewModel) {
+        self.models = models
+        self.pageFactory = pageFactory
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupView()
+    }
+    
+    private func bind() {
+        // 버튼 → 입력
+        startButton.rx.tap.bind(to: tapStart).disposed(by: disposeBag)
+        skipButton.rx.tap.bind(to: tapSkip).disposed(by: disposeBag)
+        
+        // 입력/출력 연결
+        let input = OnboardingViewModel.Input(
+            tapNext: tapNext.asObservable(),
+            tapSkip: tapSkip.asObservable(),
+            tapStart: tapStart.asObservable(),
+            swipedTo: swipedTo.asObservable()
+        )
+        let output = viewModel.transform(input)
+        
+        
+        // 현재 페이지 지시자 & 버튼 상태
+        output.pageIndex
+            .drive(onNext: { [weak self] idx in
+                guard let self = self else { return }
+                self.currentIndex = idx
+                self.pageControl.currentPage = idx
+                self.updatePageControlAppearance(current: idx)
+            })
+            .disposed(by: disposeBag)
+        
+        
+        output.isLastPage
+            .drive(onNext: { [weak self] isLast in
+                guard let self = self else { return }
+                self.startButton.isEnabled = isLast
+                self.startButton.alpha = isLast ? 1.0 : 0.5
+            })
+            .disposed(by: disposeBag)
+        
+        
+        output.finish
+            .emit(onNext: { [weak self] in self?.onFinish?() })
+            .disposed(by: disposeBag)
     }
     
     private func setupView() {
@@ -65,17 +125,18 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
     }
     
     private func configureButton() {
+        
         [skipButton, startButton].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(button)
         }
         
         NSLayoutConstraint.activate([
-            skipButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 15),
+            skipButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             skipButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            skipButton.heightAnchor.constraint(equalToConstant: 30),
+//            skipButton.heightAnchor.constraint(equalToConstant: 30),
             
-            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -5),
+            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
             startButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             startButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             startButton.heightAnchor.constraint(equalToConstant: 54)
@@ -93,10 +154,11 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         pageViewController.view.translatesAutoresizingMaskIntoConstraints = false
         
         view.addSubview(pageControl)
-        view.addSubview(pageViewController.view)
-        addChild(pageViewController)
         
+        addChild(pageViewController)
+        view.addSubview(pageViewController.view)
         pageViewController.didMove(toParent: self)
+        
         pageViewController.dataSource = self
         pageViewController.delegate = self
         pageViewController.setViewControllers([pages[0]], direction: .forward, animated: false)
@@ -106,14 +168,14 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         pageControl.pageIndicatorTintColor = .grayScale4
         pageControl.currentPageIndicatorTintColor = .grayScale9
 
-        updatePageControlAppearance(current: 0) // ← 핵심
+        updatePageControlAppearance(current: 0)
         
         NSLayoutConstraint.activate([
-            pageControl.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -15),
+            pageControl.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -32),
             pageControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             pageControl.heightAnchor.constraint(equalToConstant: 6),
             
-            pageViewController.view.topAnchor.constraint(equalTo: skipButton.bottomAnchor, constant: 4),
+            pageViewController.view.topAnchor.constraint(equalTo: skipButton.bottomAnchor, constant: 30),
             pageViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             pageViewController.view.bottomAnchor.constraint(equalTo: pageControl.topAnchor, constant: -15)
@@ -143,6 +205,8 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
     }
     
     private func goTo(index: Int) {
+        guard (0..<pages.count).contains(index) else { return }
+        
         let direction: UIPageViewController.NavigationDirection = index > currentIndex ? .forward : .reverse
         pageViewController.setViewControllers([pages[index]], direction: direction, animated: true) { [weak self] _ in
             
@@ -156,13 +220,16 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         updatePageControlAppearance(current: currentIndex)
         
         let isLast = (currentIndex == pages.count - 1)
-        print("isLast : \(isLast)")
-        print("currentIndex : \(currentIndex)")
-        print("page.count : \(pages.count)")
         
         startButton.isEnabled = isLast
         startButton.backgroundColor = isLast ? .main : .grayScale4
-        startButton.setTitleColor(isLast ? .grayScale1 : .grayScale7, for: .normal)
+        
+        startButton.setTitle(
+            "onboarding.button.start".localized(),
+            style: Typography.Body02.medium,
+            for: .normal,
+            color: isLast ? .grayScale1 : .grayScale7
+        )
     }
 
     // MARK: - Page Control: 점 vs 알약
@@ -210,4 +277,3 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         updateUI() // ✅ 알약 + 버튼/시작하기 상태 한 번에 갱신
     }
 }
-

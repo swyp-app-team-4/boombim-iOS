@@ -11,7 +11,6 @@ import Foundation
 struct TermsModel {
     enum Kind { case required, optional }
     
-    let id: String
     let title: String
     let url: URL
     let kind: Kind

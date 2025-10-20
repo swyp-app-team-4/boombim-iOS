@@ -35,6 +35,12 @@ final class HomeViewModel {
     
     struct Input {
         let appear: Observable<Void>        // 최초 1회
+        let refreshRank: Observable<Void>   // 랭킹 새로고침 버튼 탭
+        
+        init(appear: Observable<Void>, refreshRank: Observable<Void> = .empty()) {
+            self.appear = appear
+            self.refreshRank = refreshRank
+        }
     }
     
     struct Output {
@@ -93,6 +99,8 @@ final class HomeViewModel {
         
         let trigger = input.appear.share()
         
+        let rankTrigger = Observable.merge(trigger, input.refreshRank).share()
+        
         let loading = BehaviorRelay<Bool>(value: false)
         let errorRelay = PublishRelay<String>()
         
@@ -124,8 +132,13 @@ final class HomeViewModel {
         
         let isRegionNewsEmpty = regionNewsItems.map { $0.isEmpty }
         
+        let coordReady = myCoord.compactMap { $0 } // nil 제거
+        
         let nearbyOfficialPlace: Driver<[RecommendPlaceItem]> = trigger
-            .withLatestFrom(myCoord.compactMap { $0 })
+//            .withLatestFrom(myCoord.compactMap { $0 })
+            .flatMapLatest { _ in
+                coordReady.take(1) // 좌표가 최초로 방출될 때까지 대기
+            }
             .flatMapLatest { coord in
                 let requestBody: NearbyOfficialPlaceRequest = .init(latitude: coord.latitude, longitude: coord.longitude)
                 
@@ -149,7 +162,7 @@ final class HomeViewModel {
             .compactMap { $0.element }
             .asDriver(onErrorJustReturn: [])
         
-        let rankOfficialPlace: Driver<[CongestionRankPlaceItem]> = trigger
+        let rankOfficialPlace: Driver<[CongestionRankPlaceItem]> = rankTrigger
             .flatMapLatest {  _ in
                 PlaceService.shared.getRankOfficialPlace()
                     .map { $0.data.enumerated().map { index, place in

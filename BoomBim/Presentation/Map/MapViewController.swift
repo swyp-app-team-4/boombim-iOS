@@ -251,25 +251,25 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         segmentStack.spacing = 8
         segmentStack.translatesAutoresizingMaskIntoConstraints = false
 
-//        buttonsContainer.addSubview(favoriteButton)
-//        buttonsContainer.addSubview(dividerView)
+        buttonsContainer.addSubview(favoriteButton)
+        buttonsContainer.addSubview(dividerView)
         buttonsContainer.addSubview(segmentStack)
 
         NSLayoutConstraint.activate([
-//            favoriteButton.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
-//            favoriteButton.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-//            favoriteButton.widthAnchor.constraint(equalToConstant: 34),
-//            favoriteButton.heightAnchor.constraint(equalToConstant: 34),
-//
-//            dividerView.leadingAnchor.constraint(equalTo: favoriteButton.trailingAnchor, constant: 12),
-//            dividerView.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-//            dividerView.widthAnchor.constraint(equalToConstant: 1),
-//            dividerView.heightAnchor.constraint(equalTo: buttonsContainer.heightAnchor, multiplier: 0.7),
+            favoriteButton.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
+            favoriteButton.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
+            favoriteButton.widthAnchor.constraint(equalToConstant: 34),
+            favoriteButton.heightAnchor.constraint(equalToConstant: 34),
 
-            segmentStack.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
-//            segmentStack.leadingAnchor.constraint(equalTo: dividerView.trailingAnchor, constant: 12),
+            dividerView.leadingAnchor.constraint(equalTo: favoriteButton.trailingAnchor, constant: 10),
+            dividerView.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
+            dividerView.widthAnchor.constraint(equalToConstant: 2),
+            dividerView.heightAnchor.constraint(equalToConstant: 15),
+
+            segmentStack.leadingAnchor.constraint(equalTo: dividerView.trailingAnchor, constant: 4),
             segmentStack.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-            segmentStack.trailingAnchor.constraint(lessThanOrEqualTo: buttonsContainer.trailingAnchor)
+            segmentStack.trailingAnchor.constraint(lessThanOrEqualTo: buttonsContainer.trailingAnchor),
+            segmentStack.heightAnchor.constraint(equalToConstant: 34)
         ])
 
         // 현재 위치 버튼
@@ -385,6 +385,11 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                     if case let UserPlaceEntry.place(p) = $0 { return p }
                     else { return nil }
                 }
+                
+                let onlyCluster: [ClusterItem] = entries.compactMap {
+                    if case let UserPlaceEntry.cluster(c) = $0 { return c }
+                    else { return nil }
+                }
 
                 // ✅ 인덱스도 PLACE만으로
                 self.placeIndex = Dictionary(uniqueKeysWithValues: onlyPlaces.map {
@@ -402,6 +407,17 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                         styleKey: self.styleKey(for: $0)
                     )
                 }
+                
+                let clusterItems: [POIClusterItem] = onlyCluster.map {
+                    .init(
+                        point: MapPoint(
+                            longitude: $0.coordinate.longitude,
+                            latitude:  $0.coordinate.latitude
+                        ),
+                        itemCount: $0.clusterSize,
+                        styleKey: "congestion.relaxed" // TODO: 각 클러스터링마다 가장 큰 값을 정해야함.
+                    )
+                }
 
                 self.overlay.setPOIs(
                     for: .realtime,
@@ -414,6 +430,13 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                               self.placeIndex[id] != nil else { return }
                         self.userPoiTapRelay.accept(Int(id) ?? 0)
                     }
+                )
+                
+                self.overlay.setPOIs(
+                    for: .realtime,
+                    items: clusterItems,
+                    visual: visual,
+                    iconProvider: self.iconForStyleKey, // TODO: 각 클러스터링마다 가장 큰 값에 따라 이미지 변경
                 )
 
                 // ✅ 패널 표시는 PLACE 여부 기반
@@ -564,11 +587,12 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private func selectMode(_ group: OverlayGroup) {
         // 버튼 선택 상태/스타일 변경
         publicButton.isSelected   = (group == .official)
+        publicButton.layer.borderColor   = (publicButton.isSelected ? UIColor.grayScale7 : .grayScale6).cgColor
+        publicButton.backgroundColor   = publicButton.isSelected ? UIColor.grayScale4 : .grayScale1
+        
         realtimeButton.isSelected = (group == .realtime)
-
-        // 선택된 버튼에만 진한 테두리 색
-        publicButton.layer.borderColor   = (publicButton.isSelected ? UIColor.grayScale9 : .grayScale6).cgColor
-        realtimeButton.layer.borderColor = (realtimeButton.isSelected ? UIColor.grayScale9 : .grayScale6).cgColor
+        realtimeButton.layer.borderColor = (realtimeButton.isSelected ? UIColor.grayScale7 : .grayScale6).cgColor
+        realtimeButton.backgroundColor = realtimeButton.isSelected ? UIColor.grayScale4 : .grayScale1
 
         // 오버레이 표시 모드
         modeRelay.accept(group)
@@ -669,11 +693,21 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     
     // MARK: Floating Panel
     private var listBindingsBag = DisposeBag()  // 리스트 전용 bag
+    private var didBindOfficialListActions = false
+    private var officialDetailBindingsBag = DisposeBag()
+    private var didBindOfficialDetailActions = false
+    private var didBindUserListActions = false
+    private var userDetailBindingsBag = DisposeBag()
+    private var didBindUserDetailActions = false
 
     private func showOfficialListPanel(with places: [OfficialPlaceItem]) {
         if officialPlaceListViewController == nil {
             officialPlaceListViewController = OfficialPlaceListViewController()
-            bindListFavoriteActions() // ← 생성 시 1회만 바인딩
+            listBindingsBag = DisposeBag()
+            if didBindOfficialListActions == false {
+                bindListFavoriteActions() // ← 생성 시 1회만 바인딩
+                didBindOfficialListActions = true
+            }
         }
 
         officialPlaceListViewController?.apply(places: places)
@@ -718,43 +752,47 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     }
     
     private func showOfficialDetailPanel(with places: OfficialPlaceDetailInfo) {
-        if officialPlaceDetailViewController == nil { officialPlaceDetailViewController = OfficialPlaceDetailViewController() }
+        if officialPlaceDetailViewController == nil {
+            officialPlaceDetailViewController = OfficialPlaceDetailViewController()
+            officialDetailBindingsBag = DisposeBag()
+        }
         officialPlaceDetailViewController?.configure(data: places)
         
-        officialPlaceDetailViewController?.favoriteActionRequested
-            .emit(onNext: { [weak officialPlaceDetailViewController] action in
-                guard let officialPlaceDetailViewController else { return }
-                officialPlaceDetailViewController.setFavoriteLoading(true)
+        if didBindOfficialDetailActions == false, let detailVC = officialPlaceDetailViewController {
+            detailVC.favoriteActionRequested
+                .emit(onNext: { [weak detailVC, weak self] action in
+                    guard let detailVC, let self else { return }
+                    detailVC.setFavoriteLoading(true)
 
-                switch action {
-                case .add(let req):
-                    PlaceService.shared.registerFavoritePlace(body: req)
-                        .observe(on: MainScheduler.instance)
-                        .subscribe(onSuccess: { res in
-                            officialPlaceDetailViewController.setFavoriteSelected(true)
-                            officialPlaceDetailViewController.setFavoriteLoading(false)
-                            // 서버가 favoriteId를 반환하면 저장(삭제시 활용)
-                            // panelVC.setFavoriteId(res.favoriteId)
-                        }, onFailure: { _ in
-                            officialPlaceDetailViewController.setFavoriteLoading(false)
-                            // 토스트 등
-                        })
-                        .disposed(by: self.disposeBag)
+                    switch action {
+                    case .add(let req):
+                        PlaceService.shared.registerFavoritePlace(body: req)
+                            .observe(on: MainScheduler.instance)
+                            .subscribe(onSuccess: { _ in
+                                detailVC.setFavoriteSelected(true)
+                                detailVC.setFavoriteLoading(false)
+                            }, onFailure: { _ in
+                                detailVC.setFavoriteLoading(false)
+                            })
+                            .disposed(by: self.officialDetailBindingsBag)
 
-                case .remove(let req):
-                    PlaceService.shared.removeFavoritePlace(body: req)
-                        .observe(on: MainScheduler.instance)
-                        .subscribe(onSuccess: { _ in
-                            officialPlaceDetailViewController.setFavoriteSelected(false)
-                            officialPlaceDetailViewController.setFavoriteLoading(false)
-                            officialPlaceDetailViewController.setFavoriteId(nil)
-                        }, onFailure: { _ in
-                            officialPlaceDetailViewController.setFavoriteLoading(false)
-                        })
-                        .disposed(by: self.disposeBag)
-                }
-            })
-            .disposed(by: disposeBag)
+                    case .remove(let req):
+                        PlaceService.shared.removeFavoritePlace(body: req)
+                            .observe(on: MainScheduler.instance)
+                            .subscribe(onSuccess: { _ in
+                                detailVC.setFavoriteSelected(false)
+                                detailVC.setFavoriteLoading(false)
+                                detailVC.setFavoriteId(nil)
+                            }, onFailure: { _ in
+                                detailVC.setFavoriteLoading(false)
+                            })
+                            .disposed(by: self.officialDetailBindingsBag)
+                    }
+                })
+                .disposed(by: officialDetailBindingsBag)
+
+            didBindOfficialDetailActions = true
+        }
        
         if floatingPanel.contentViewController !== officialPlaceDetailViewController {
             floatingPanel.delegate = self
@@ -776,9 +814,13 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private func showUserListPanel(with places: [UserPlaceItem]) {
         if userPlaceListViewController == nil {
             userPlaceListViewController = UserPlaceListViewController()
-            bindUserListFavoriteActions()
+            listBindingsBag = DisposeBag()
+            if didBindUserListActions == false {
+                bindUserListFavoriteActions()
+                didBindUserListActions = true
+            }
         }
-        userPlaceListViewController?.updateHeader(title: "내 주변 여유로운 장소에요!")
+//        userPlaceListViewController?.updateHeader(title: "내 주변 여유로운 장소에요!")
         userPlaceListViewController?.apply(places: places)
         
         if floatingPanel.contentViewController !== userPlaceListViewController {
@@ -822,43 +864,47 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     }
     
     private func showUserDetailPanel(with places: UserPlaceDetailInfo) {
-        if userPlaceDetailViewController == nil { userPlaceDetailViewController = UserPlaceDetailViewController() }
+        if userPlaceDetailViewController == nil {
+            userPlaceDetailViewController = UserPlaceDetailViewController()
+            userDetailBindingsBag = DisposeBag()
+        }
         userPlaceDetailViewController?.configure(data: places)
         
-        userPlaceDetailViewController?.favoriteActionRequested
-            .emit(onNext: { [weak userPlaceDetailViewController] action in
-                guard let userPlaceDetailViewController else { return }
-                userPlaceDetailViewController.setFavoriteLoading(true)
+        if didBindUserDetailActions == false, let detailVC = userPlaceDetailViewController {
+            detailVC.favoriteActionRequested
+                .emit(onNext: { [weak detailVC, weak self] action in
+                    guard let detailVC, let self else { return }
+                    detailVC.setFavoriteLoading(true)
 
-                switch action {
-                case .add(let req):
-                    PlaceService.shared.registerFavoritePlace(body: req)
-                        .observe(on: MainScheduler.instance)
-                        .subscribe(onSuccess: { res in
-                            userPlaceDetailViewController.setFavoriteSelected(true)
-                            userPlaceDetailViewController.setFavoriteLoading(false)
-                            // 서버가 favoriteId를 반환하면 저장(삭제시 활용)
-                            // panelVC.setFavoriteId(res.favoriteId)
-                        }, onFailure: { _ in
-                            userPlaceDetailViewController.setFavoriteLoading(false)
-                            // 토스트 등
-                        })
-                        .disposed(by: self.disposeBag)
+                    switch action {
+                    case .add(let req):
+                        PlaceService.shared.registerFavoritePlace(body: req)
+                            .observe(on: MainScheduler.instance)
+                            .subscribe(onSuccess: { _ in
+                                detailVC.setFavoriteSelected(true)
+                                detailVC.setFavoriteLoading(false)
+                            }, onFailure: { _ in
+                                detailVC.setFavoriteLoading(false)
+                            })
+                            .disposed(by: self.userDetailBindingsBag)
 
-                case .remove(let req):
-                    PlaceService.shared.removeFavoritePlace(body: req)
-                        .observe(on: MainScheduler.instance)
-                        .subscribe(onSuccess: { _ in
-                            userPlaceDetailViewController.setFavoriteSelected(false)
-                            userPlaceDetailViewController.setFavoriteLoading(false)
-                            userPlaceDetailViewController.setFavoriteId(nil)
-                        }, onFailure: { _ in
-                            userPlaceDetailViewController.setFavoriteLoading(false)
-                        })
-                        .disposed(by: self.disposeBag)
-                }
-            })
-            .disposed(by: disposeBag)
+                    case .remove(let req):
+                        PlaceService.shared.removeFavoritePlace(body: req)
+                            .observe(on: MainScheduler.instance)
+                            .subscribe(onSuccess: { _ in
+                                detailVC.setFavoriteSelected(false)
+                                detailVC.setFavoriteLoading(false)
+                                detailVC.setFavoriteId(nil)
+                            }, onFailure: { _ in
+                                detailVC.setFavoriteLoading(false)
+                            })
+                            .disposed(by: self.userDetailBindingsBag)
+                    }
+                })
+                .disposed(by: userDetailBindingsBag)
+
+            didBindUserDetailActions = true
+        }
         
         if floatingPanel.contentViewController !== userPlaceDetailViewController {
             floatingPanel.delegate = self
@@ -982,3 +1028,4 @@ extension MapViewController: KakaoMapEventDelegate {
         zoomLevelSubject.onNext(Int(zoom))
     }
 }
+

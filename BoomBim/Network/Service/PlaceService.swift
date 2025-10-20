@@ -27,6 +27,7 @@ struct OfficialPlaceRequest: Encodable {
 struct OfficialPlaceItem: Decodable {
     let officialPlaceId: Int
     let officialPlaceName: String
+    let legalDong: String
     let placeType: String
     let imageUrl: String
     let coordinate: Coord
@@ -44,18 +45,6 @@ struct OfficialPlaceListResponse: Decodable {
 }
 
 typealias UserPlaceRequest = OfficialPlaceRequest
-
-//struct UserPlaceItem: Decodable {
-//    let type: String
-//    let memberPlaceId: Int
-//    let name: String
-//    let coordinate: Coord
-//    let distance: Double
-//    let congestionLevelName: String
-//    let congestionMessage: String
-//    let createdAt: String
-//    var isFavorite: Bool
-//}
 
 // PLACE 전용
 struct UserPlaceItem: Decodable {

@@ -15,6 +15,15 @@ final class UserPlaceInfoCell: UITableViewCell {
 
     // Container
     private let card = UIView()
+    
+    private let textStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.alignment = .leading
+        stackView.distribution = .fill
+        
+        return stackView
+    }()
 
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -24,13 +33,39 @@ final class UserPlaceInfoCell: UITableViewCell {
         return label
     }()
     
-//    private let addressLabel: UILabel = {
-//        let label = UILabel()
-//        label.font = Typography.Caption.regular.font
-//        label.textColor = .grayScale8
-//
-//        return label
-//    }()
+    private let addressLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Caption.regular.font
+        label.textColor = .grayScale8
+
+        return label
+    }()
+    
+    private let updateStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .fill
+        stackView.distribution = .fill
+        stackView.spacing = 4
+        
+        return stackView
+    }()
+    
+    private let timeImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.image = .iconRecycleTime
+        
+        return imageView
+    }()
+    
+    private let updateLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Caption.regular.font
+        label.textColor = .grayScale9
+        
+        return label
+    }()
     
     private let congestionImageView: UIImageView = {
         let imageView = UIImageView()
@@ -47,8 +82,6 @@ final class UserPlaceInfoCell: UITableViewCell {
 //
 //        return imageView
 //    }()
-
-//    private let favoriteBadge = UIImageView()
     
     private let favoriteButton: UIButton = {
         let button = UIButton()
@@ -79,7 +112,11 @@ final class UserPlaceInfoCell: UITableViewCell {
     }
     
     func configure(with item: UserPlaceItem) {
-        titleLabel.text = item.name
+        titleLabel.setText(item.name, style: Typography.Body02.semiBold)
+        addressLabel.isHidden = true
+        
+        updateLabel.setText(DateHelper.displayString(from: item.createdAt), style: Typography.Caption.regular)
+        
         congestionImageView.image = CongestionLevel(ko: item.congestionLevelName)?.badge
         favoriteButton.isSelected = item.isFavorite
         
@@ -107,51 +144,19 @@ final class UserPlaceInfoCell: UITableViewCell {
         card.layer.shadowOpacity = 0.06
         card.layer.shadowRadius = 8
         card.layer.shadowOffset = CGSize(width: 0, height: 2)
-
-        // Title
-        titleLabel.font = Typography.Body02.semiBold.font
-        titleLabel.adjustsFontForContentSizeCategory = true
-        titleLabel.textColor = .grayScale10
-
-        // Meta
-//        metaIcon.tintColor = .secondaryLabel
-//        metaIcon.contentMode = .scaleAspectFit
-//        metaLabel.font = UIFont.preferredFont(forTextStyle: .subheadline)
-//        metaLabel.textColor = .secondaryLabel
-//        metaLabel.adjustsFontForContentSizeCategory = true
-
-        // Images
-//        imagesStack.axis = .horizontal
-//        imagesStack.alignment = .fill
-//        imagesStack.distribution = .fillEqually
-//        imagesStack.spacing = 8
-//
-//        for _ in 0..<3 {
-//            let iv = UIImageView()
-//            iv.clipsToBounds = true
-//            iv.layer.cornerRadius = 12
-//            iv.contentMode = .scaleAspectFill
-//            iv.backgroundColor = UIColor.secondarySystemFill
-//            imageViews.append(iv)
-//            imagesStack.addArrangedSubview(iv)
-//        }
-
-        // Favorite badge on the last image
-//        if let last = placeImageView.last {
-//            favoriteBadge.translatesAutoresizingMaskIntoConstraints = false
-//            favoriteBadge.image = starBadgeImage()
-//            favoriteBadge.contentMode = .scaleAspectFit
-//            last.addSubview(favoriteBadge)
-//            NSLayoutConstraint.activate([
-//                favoriteBadge.trailingAnchor.constraint(equalTo: last.trailingAnchor, constant: -6),
-//                favoriteBadge.bottomAnchor.constraint(equalTo: last.bottomAnchor, constant: -6),
-//                favoriteBadge.widthAnchor.constraint(equalToConstant: 28),
-//                favoriteBadge.heightAnchor.constraint(equalTo: favoriteBadge.widthAnchor)
-//            ])
-//        }
+        
+        [titleLabel, addressLabel].forEach { label in
+            label.translatesAutoresizingMaskIntoConstraints = false
+            textStackView.addArrangedSubview(label)
+        }
+        
+        [timeImageView, updateLabel].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            updateStackView.addArrangedSubview($0)
+        }
 
         // Add subviews to card
-        [titleLabel, congestionImageView, favoriteButton].forEach { v in
+        [textStackView, congestionImageView, updateStackView, favoriteButton].forEach { v in
             v.translatesAutoresizingMaskIntoConstraints = false
             card.addSubview(v)
         }
@@ -169,8 +174,12 @@ final class UserPlaceInfoCell: UITableViewCell {
 
         // Title + badge
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 12),
-            titleLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12),
+            textStackView.topAnchor.constraint(equalTo: card.topAnchor, constant: 12),
+            textStackView.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12),
+            
+            updateStackView.topAnchor.constraint(equalTo: card.topAnchor, constant: 12),
+            updateStackView.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12),
+            
             congestionImageView.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -12),
             congestionImageView.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12)
         ])

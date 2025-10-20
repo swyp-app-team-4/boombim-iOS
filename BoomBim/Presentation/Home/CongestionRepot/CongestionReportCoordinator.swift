@@ -69,17 +69,25 @@ final class CongestionReportCoordinator: Coordinator {
         // 결과 전달
         childCoordinator.onPlaceComplete = { [weak self, weak childCoordinator] place, id in
             guard let self else { return }
-            // 필요 시 pop 완료 후 루트에 전달
-            CATransaction.begin()
-            CATransaction.setCompletionBlock {
-                self.rootViewModel?.setSelectedPlace(place: place, id: id)
-            }
-            self.navigationController.popToRootViewController(animated: true)
-            CATransaction.commit()
-            
-            // child 정리
+
+            // 먼저 child coordinator 정리 (추가 콜백 방지)
             if let childCoordinator {
                 self.childCoordinators.removeAll { $0 === childCoordinator }
+            }
+
+            // 루트로 복귀
+            self.navigationController.popToRootViewController(animated: true)
+
+            // 전환 완료 후 루트 뷰모델에 값 전달
+            if let coordinator = self.navigationController.transitionCoordinator {
+                coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+                    self?.rootViewModel?.setSelectedPlace(place: place, id: id)
+                }
+            } else {
+                // 애니메이션이 없거나 transitionCoordinator가 없는 경우 안전하게 메인 큐에서 전달
+                DispatchQueue.main.async { [weak self] in
+                    self?.rootViewModel?.setSelectedPlace(place: place, id: id)
+                }
             }
         }
         

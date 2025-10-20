@@ -6,7 +6,7 @@
 //
 
 enum NetworkDefine {
-    static let apiHost = "https://api.boombim.p-e.kr/"
+    static let apiHost = "https://boombim.co.kr/"
     static let apiKakao = "https://dapi.kakao.com/"
     
     enum Auth {
@@ -16,16 +16,16 @@ enum NetworkDefine {
             case apple = "apple"
         }
         
-        static let login = "api/oauth2/login/"
-        static let refresh = "api/reissue"
-        static let logout = "api/oauth2/logout"
-        static let withdraw = "api/member"
+        static let login = "api/app/oauth2/login/"
+        static let refresh = "api/app/reissue"
+        static let logout = "api/app/oauth2/logout"
+        static let withdraw = "api/app/member"
     }
     
     enum Profile {
-        static let nickname = "api/member/name"
-        static let image = "api/member/profile"
-        static let profile = "api/member"
+        static let nickname = "api/app/member/name"
+        static let image = "api/app/member/profile"
+        static let profile = "api/app/member"
         static let favorite = "api/member/favorite"
         static let answer = "api/member/my-answer"
         static let question = "api/member/my-question"
@@ -68,29 +68,29 @@ enum NetworkDefine {
             case .regionNews:
                 return "api/region"
             case .nearByOfficialPlace:
-                return "official-place/nearby-non-congested"
+                return "api/app/official-place/nearby-non-congested"
             case .rankByOfficialPlace:
-                return "official-place/top-congested"
+                return "api/app/official-place/top-congested"
             case .favoritePlace:
-                return "favorite"
+                return "api/app/favorite"
             case .officialPlace:
-                return "official-place"
+                return "api/app/official-place"
             case .userPlace:
-                return "member-place"
+                return "api/app/member-place"
             case .registerPostPlace:
-                return "member-place/resolve"
+                return "api/app/member-place/resolve"
             case .postPlace:
-                return "member-congestion/create"
+                return "api/app/member-congestion/create"
             case .officialPlaceDetail(let id):
-                return "official-place/\(id)/overview"
+                return "api/app/official-place/\(id)/overview"
             case .userPlaceDetail(let id):
-                return "member-place/\(id)"
+                return "api/app/member-place/\(id)"
             case .registerFavoritePlace:
-                return "favorite"
+                return "api/app/favorite"
             case .deleteFavoritePlace(let type, let id):
-                return "favorite?placeId=\(id)&placeType=\(type)"
+                return "api/app/favorite?placeId=\(id)&placeType=\(type)"
             case .aiRequest:
-                return "clova/congestion-message"
+                return "api/app/clova/congestion-message"
             }
         }
     }

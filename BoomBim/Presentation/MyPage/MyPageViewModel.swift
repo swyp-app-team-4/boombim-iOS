@@ -80,26 +80,26 @@ final class MyPageViewModel {
             })
             .disposed(by: disposeBag)
         
-        AuthService.shared.getMyAnswer()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onSuccess: { [weak self] p in
-                self?.loading.accept(false)
-                self?.answerRelay.accept(p)
-            }, onFailure: { [weak self] err in
-                self?.loading.accept(false)
-                self?.errorRelay.accept(err.localizedDescription)
-            })
-            .disposed(by: disposeBag)
-        
-        AuthService.shared.getMyQuestion()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onSuccess: { [weak self] p in
-                self?.loading.accept(false)
-                self?.questionRelay.accept(p)
-            }, onFailure: { [weak self] err in
-                self?.loading.accept(false)
-                self?.errorRelay.accept(err.localizedDescription)
-            })
-            .disposed(by: disposeBag)
+//        AuthService.shared.getMyAnswer()
+//            .observe(on: MainScheduler.instance)
+//            .subscribe(onSuccess: { [weak self] p in
+//                self?.loading.accept(false)
+//                self?.answerRelay.accept(p)
+//            }, onFailure: { [weak self] err in
+//                self?.loading.accept(false)
+//                self?.errorRelay.accept(err.localizedDescription)
+//            })
+//            .disposed(by: disposeBag)
+//        
+//        AuthService.shared.getMyQuestion()
+//            .observe(on: MainScheduler.instance)
+//            .subscribe(onSuccess: { [weak self] p in
+//                self?.loading.accept(false)
+//                self?.questionRelay.accept(p)
+//            }, onFailure: { [weak self] err in
+//                self?.loading.accept(false)
+//                self?.errorRelay.accept(err.localizedDescription)
+//            })
+//            .disposed(by: disposeBag)
     }
 }

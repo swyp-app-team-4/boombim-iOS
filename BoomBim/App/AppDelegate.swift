@@ -21,6 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         // Override point for customization after application launch.
         
         // Keychain Token Manager
+        FirstLaunchGuard.handleFirstLaunchAndWipeKeychainIfNeeded() // keychain에 있는 데이터를 비운다.
         TokenManager.configure(store: KeychainTokenStore(key: KeychainIDs.backendTokenPair(env: AppEnvironment.current)))
         
         // Kakao
@@ -40,7 +41,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         
         // Firebase
         FirebaseApp.configure()
-        // 알림 권한
+        
+        // 알림 권한 팝업
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
             print("Notification permission:", granted)
@@ -59,7 +61,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     }
     
     // MARK: UISceneSession Lifecycle
-
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
         // Called when a new scene session is being created.
         // Use this method to select a configuration to create the new scene with.

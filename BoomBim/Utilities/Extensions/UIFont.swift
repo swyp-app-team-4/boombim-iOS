@@ -22,4 +22,12 @@ extension UIFont {
     static func taebaek(size: CGFloat = UIFont.systemFontSize) -> UIFont {
         return UIFont(name: "TAEBAEK-font", size: size)!
     }
+    
+    public enum NotoSansType: String {
+        case semiBold = "-SemiBold"
+    }
+    
+    static func notoSans(_ type: NotoSansType, size: CGFloat = UIFont.systemFontSize) -> UIFont {
+        return UIFont(name: "NotoSansKR\(type.rawValue)", size: size)!
+    }
 }

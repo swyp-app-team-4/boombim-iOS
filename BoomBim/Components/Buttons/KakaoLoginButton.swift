@@ -20,11 +20,14 @@ final class KakaoLoginButton: UIButton {
     
     private func setupButton() {
         backgroundColor = UIColor(hex: "#FEE500")  // 공식 카카오 노란색
-        setTitle("login.button.kakao".localized(), for: .normal)
         setTitleColor(.black, for: .normal)
-        titleLabel?.font = Typography.Body01.medium.font
         
-        setImage(UIImage(named: "kakao_logo"), for: .normal)
+        setTitle("login.button.kakao".localized(), style: Typography.NotoSans.semiBold, for: .normal)
+        
+        var logoImage = UIImage(named: "kakao_logo")
+        logoImage = logoImage?.resized(to: CGSize(width: 20, height: 20))
+        
+        setImage(logoImage, for: .normal)
         imageView?.contentMode = .scaleAspectFit
         
         semanticContentAttribute = .forceLeftToRight
