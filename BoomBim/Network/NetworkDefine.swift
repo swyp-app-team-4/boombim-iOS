@@ -80,7 +80,7 @@ enum NetworkDefine {
             case .registerPostPlace:
                 return "api/app/member-place/resolve"
             case .postPlace:
-                return "api/app/member-congestion/create"
+                return "api/app/member-congestion"
             case .officialPlaceDetail(let id):
                 return "api/app/official-place/\(id)/overview"
             case .userPlaceDetail(let id):
