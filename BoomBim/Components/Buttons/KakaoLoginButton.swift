@@ -19,8 +19,22 @@ final class KakaoLoginButton: UIButton {
     }
     
     private func setupButton() {
-        let image = UIImage.kakaoLoginLargeWide
-        self.setBackgroundImage(image, for: .normal)
-        self.adjustsImageWhenHighlighted = false // 눌렸을 때 흐려지는 효과 제거
+        backgroundColor = UIColor(hex: "#FEE500")  // 공식 카카오 노란색
+        setTitleColor(.black, for: .normal)
+        
+        setTitle("login.button.kakao".localized(), style: Typography.NotoSans.semiBold, for: .normal)
+        
+        var logoImage = UIImage(named: "kakao_logo")
+        logoImage = logoImage?.resized(to: CGSize(width: 20, height: 20))
+        
+        setImage(logoImage, for: .normal)
+        imageView?.contentMode = .scaleAspectFit
+        
+        semanticContentAttribute = .forceLeftToRight
+        contentEdgeInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 0)
+        
+        layer.cornerRadius = 12
+        clipsToBounds = true
     }
 }

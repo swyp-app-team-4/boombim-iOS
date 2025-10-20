@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -11,7 +13,7 @@
 			<string>KakaoLogin</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>kakaob9ee6084b39af730b1819a79e3e29d65</string>
+				<string>kakao15beddeb998ebfb5407b1501bf0b2259</string>
 			</array>
 		</dict>
 		<dict>
@@ -21,10 +23,14 @@
 			<string>NaverLogin</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>naveroMBxvM7HKGBkm4HwW2c3</string>
+				<string>naverWFRKsx3t7gMMESxx7Vth</string>
 			</array>
 		</dict>
 	</array>
+	<key>KakaoAppKey</key>
+	<string>15beddeb998ebfb5407b1501bf0b2259</string>
+	<key>KakaoRestApiKey</key>
+	<string>e22ae8cd18b014bbeb1096fb69741bbf</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>kakaokompassauth</string>
@@ -32,13 +38,27 @@
 		<string>naversearchthirdlogin</string>
 	</array>
 	<key>NidAppName</key>
-	<string>붐빔</string>
+	<string>Boombim</string>
 	<key>NidClientID</key>
-	<string>oMBxvM7HKGBkm4HwW2c3</string>
+	<string>WFRKsx3t7gMMESxx7Vth</string>
 	<key>NidClientSecret</key>
-	<string>quwJ8JKqPT</string>
+	<string>T3SCqoevVy</string>
 	<key>NidUrlScheme</key>
-	<string>naveroMBxvM7HKGBkm4HwW2c3</string>
+	<string>naverWFRKsx3t7gMMESxx7Vth</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Pretendard-Black.ttf</string>
+		<string>Pretendard-Bold.ttf</string>
+		<string>Pretendard-ExtraBold.ttf</string>
+		<string>Pretendard-ExtraLight.ttf</string>
+		<string>Pretendard-Light.ttf</string>
+		<string>Pretendard-Medium.ttf</string>
+		<string>Pretendard-Regular.ttf</string>
+		<string>Pretendard-SemiBold.ttf</string>
+		<string>Pretendard-Thin.ttf</string>
+		<string>TAEBAEK.otf</string>
+		<string>NotoSansKR-SemiBold.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -56,5 +76,9 @@
 			</array>
 		</dict>
 	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

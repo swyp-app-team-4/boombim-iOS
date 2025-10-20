@@ -1,0 +1,104 @@
+//
+//  CongestionReportCoordinator.swift
+//  BoomBim
+//
+//  Created by 조영현 on 8/12/25.
+//
+
+import UIKit
+import CoreLocation
+
+final class CongestionReportCoordinator: Coordinator {
+    var navigationController: UINavigationController
+    
+    var onFinish: (() -> Void)?
+    
+    var childCoordinators: [Coordinator] = []
+    
+    var service: KakaoLocalService?
+    var locationRepo: LocationRepository?
+    
+    private var rootViewModel: CongestionReportViewModel?
+    
+    init(navigationController: UINavigationController) {
+        self.navigationController = navigationController
+    }
+    
+    func start() {
+        print("CongestionReportCoordinator start")
+        guard let service = self.service else { return }
+        let viewModel = CongestionReportViewModel(service: service)
+        let viewController = CongestionReportViewController(viewModel: viewModel)
+        rootViewModel = viewModel
+        
+        viewModel.goToMapPickerView = { [weak self] location in
+            print("goToMapPickerView")
+            self?.showMapPicker(location)
+        }
+        
+        viewModel.backToHome = { [weak self] in
+            print("backToHome")
+            self?.onFinish?()
+        }
+        
+        viewModel.goToSearchPlaceView = { [weak self] in
+            print("goToSearchPlaceView")
+            self?.showSearchPlace()
+        }
+        
+        navigationController.setViewControllers([viewController], animated: false)
+        debugPrint(navigationController)
+    }
+    
+    func showMapPicker(_ currentLocation: CLLocationCoordinate2D) {
+        print("showMapPicker")
+        let viewModel = MapPickerViewModel(currentLocation: currentLocation)
+        let viewController = MapPickerViewController(viewModel: viewModel)
+        
+        navigationController.pushViewController(viewController, animated: true)
+    }
+    
+    func showSearchPlace() {
+        print("showSearchPlace")
+        guard let service = self.service, let locationRepo = self.locationRepo else { return }
+        
+        let childCoordinator = SearchPlaceCoordinator(navigationController: navigationController)
+        childCoordinator.service = service
+        childCoordinator.locationRepo = locationRepo
+        
+        // 결과 전달
+        childCoordinator.onPlaceComplete = { [weak self, weak childCoordinator] place, id in
+            guard let self else { return }
+
+            // 먼저 child coordinator 정리 (추가 콜백 방지)
+            if let childCoordinator {
+                self.childCoordinators.removeAll { $0 === childCoordinator }
+            }
+
+            // 루트로 복귀
+            self.navigationController.popToRootViewController(animated: true)
+
+            // 전환 완료 후 루트 뷰모델에 값 전달
+            if let coordinator = self.navigationController.transitionCoordinator {
+                coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+                    self?.rootViewModel?.setSelectedPlace(place: place, id: id)
+                }
+            } else {
+                // 애니메이션이 없거나 transitionCoordinator가 없는 경우 안전하게 메인 큐에서 전달
+                DispatchQueue.main.async { [weak self] in
+                    self?.rootViewModel?.setSelectedPlace(place: place, id: id)
+                }
+            }
+        }
+        
+        // child 종료 시 정리
+        childCoordinator.onFinish = { [weak self, weak childCoordinator] in
+            guard let self, let childCoordinator else { return }
+            self.childCoordinators.removeAll { $0 === childCoordinator }
+        }
+        
+        childCoordinators.append(childCoordinator)
+        
+        childCoordinator.start()
+    }
+}

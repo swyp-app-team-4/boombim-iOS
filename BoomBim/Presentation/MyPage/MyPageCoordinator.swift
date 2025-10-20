@@ -9,6 +9,7 @@ import UIKit
 
 final class MyPageCoordinator: Coordinator {
     var navigationController: UINavigationController
+    var settingsCoordinator: SettingCoordinator?
 
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -17,6 +18,31 @@ final class MyPageCoordinator: Coordinator {
     func start() {
         let viewModel = MyPageViewModel()
         let viewController = MyPageViewController(viewModel: viewModel)
+        
+        viewModel.goToSettingsView = { [weak self] in
+            self?.showSettings()
+        }
+        viewModel.goToProfileView = { [weak self] in
+            self?.showProfile()
+        }
+        
         navigationController.setViewControllers([viewController], animated: false)
+    }
+    
+    private func showSettings() {
+        let viewModel = SettingsViewModel()
+        let viewController = SettingsViewController(viewModel: viewModel)
+        let coordinator = SettingCoordinator(navigationController: navigationController)
+        
+        self.settingsCoordinator = coordinator
+        coordinator.start()
+        
+//        navigationController.pushViewController(viewController, animated: true)
+    }
+    
+    private func showProfile() {
+        let viewModel = ProfileViewModel()
+        let viewController = ProfileViewController(viewModel: viewModel)
+        navigationController.pushViewController(viewController, animated: true)
     }
 }
