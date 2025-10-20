@@ -21,9 +21,11 @@ final class OnboardingPageViewController: UIViewController {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .grayScale10
+        label.font = Typography.Heading01.semiBold.font
+        label.textColor = .grayScale9
         label.numberOfLines = 0
         label.textAlignment = .center
+        label.adjustsFontForContentSizeCategory = true
         
         return label
     }()
@@ -33,6 +35,7 @@ final class OnboardingPageViewController: UIViewController {
         label.textColor = .grayScale8
         label.textAlignment = .center
         label.numberOfLines = 0
+        label.adjustsFontForContentSizeCategory = true
         
         return label
     }()
@@ -58,6 +61,8 @@ final class OnboardingPageViewController: UIViewController {
         }
         
         self.imageView.image = image
+        
+        self.subTitleLabel.isHidden = (subTitle == nil)
     }
     
     required init?(coder: NSCoder) { fatalError() }
@@ -81,13 +86,15 @@ final class OnboardingPageViewController: UIViewController {
             titleStackView.addArrangedSubview(label)
         }
         
+        titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        
         titleStackView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(titleStackView)
         
         NSLayoutConstraint.activate([
-            titleStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 6),
-            titleStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            titleStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            titleStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 22),
+            titleStackView.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
+            titleStackView.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor)
         ])
     }
     
@@ -96,7 +103,7 @@ final class OnboardingPageViewController: UIViewController {
         view.addSubview(imageView)
         
         NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: titleStackView.bottomAnchor, constant: 6),
+            imageView.topAnchor.constraint(equalTo: titleStackView.bottomAnchor, constant: 14),
             imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
             imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
             imageView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
