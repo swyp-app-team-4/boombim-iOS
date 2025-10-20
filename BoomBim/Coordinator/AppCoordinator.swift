@@ -24,8 +24,7 @@ final class AppCoordinator: Coordinator {
     
     // 👇 추가
     private let splashVC = SplashViewController()
-    // ✅ “스플래시가 최소로 보여질 시간”
-    private let splashMinDuration: RxTimeInterval = .milliseconds(700)
+    private let splashMinDuration: RxTimeInterval = .milliseconds(1000)
     
     // ✅ 온보딩 1회 여부
     private enum Keys { static let hasSeenOnboarding = "hasSeenOnboarding" }

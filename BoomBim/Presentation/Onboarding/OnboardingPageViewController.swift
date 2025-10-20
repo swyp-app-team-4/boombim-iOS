@@ -22,9 +22,10 @@ final class OnboardingPageViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.font = Typography.Heading01.semiBold.font
-        label.textColor = .grayScale10
+        label.textColor = .grayScale9
         label.numberOfLines = 0
         label.textAlignment = .center
+        label.adjustsFontForContentSizeCategory = true
         
         return label
     }()
@@ -35,6 +36,7 @@ final class OnboardingPageViewController: UIViewController {
         label.textColor = .grayScale8
         label.textAlignment = .center
         label.numberOfLines = 0
+        label.adjustsFontForContentSizeCategory = true
         
         return label
     }()
@@ -53,6 +55,8 @@ final class OnboardingPageViewController: UIViewController {
         self.titleLabel.text = title
         self.subTitleLabel.text = subTitle
         self.imageView.image = image
+        
+        self.subTitleLabel.isHidden = (subTitle == nil)
     }
     
     required init?(coder: NSCoder) { fatalError() }
@@ -75,6 +79,8 @@ final class OnboardingPageViewController: UIViewController {
             label.translatesAutoresizingMaskIntoConstraints = false
             titleStackView.addArrangedSubview(label)
         }
+        
+        titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         
         titleStackView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(titleStackView)

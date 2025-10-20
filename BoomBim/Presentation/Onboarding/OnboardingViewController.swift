@@ -6,16 +6,23 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class OnboardingViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate {
-    private let pages: [UIViewController] = [
-        OnboardingPageViewController(title: "onboarding.label.title.first".localized(), subTitle: nil, image: .onboarding1),
-        OnboardingPageViewController(title: "onboarding.label.title.second".localized(), subTitle: "onboarding.label.subtitle.second".localized(), image: .onboarding2),
-        OnboardingPageViewController(title: "onboarding.label.title.third".localized(), subTitle: "onboarding.label.subtitle.third".localized(), image: .onboarding3),
-        OnboardingPageViewController(title: "onboarding.label.title.fourth".localized(), subTitle: "onboarding.label.subtitle.fourth".localized(), image: .onboarding4),
-        OnboardingPageViewController(title: "onboarding.label.title.fifth".localized(), subTitle: "onboarding.label.subtitle.fifth".localized(), image: .onboarding5),
-        OnboardingPageViewController(title: "onboarding.label.title.sixth".localized(), subTitle: "onboarding.label.subtitle.sixth".localized(), image: .onboarding6)
-    ]
+    private let models: [OnboardingPageModel]
+    private let pageFactory: OnboardingPageFactory
+    private let viewModel: OnboardingViewModel
+    
+    private lazy var pages: [UIViewController] = models.map { pageFactory.make(from: $0) }
+    
+    private let disposeBag = DisposeBag()
+    
+    // MARK: Inputs to ViewModel
+    private let tapNext = PublishRelay<Void>()
+    private let tapSkip = PublishRelay<Void>()
+    private let tapStart = PublishRelay<Void>()
+    private let swipedTo = PublishRelay<Int>()
     
     var onFinish: (() -> Void)?
 
@@ -43,18 +50,67 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         button.titleLabel?.font = Typography.Body02.medium.font
         button.setTitleColor(.grayScale7, for: .normal)
         button.backgroundColor = .grayScale4
-//        button.setTitleColor(.grayScale1, for: .normal)
-//        button.backgroundColor = .main
         button.layer.cornerRadius = 10
         button.isEnabled = false
         
         return button
     }()
-
+    
+    init(models: [OnboardingPageModel], pageFactory: OnboardingPageFactory, viewModel: OnboardingViewModel) {
+        self.models = models
+        self.pageFactory = pageFactory
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupView()
+    }
+    
+    private func bind() {
+        // 버튼 → 입력
+        startButton.rx.tap.bind(to: tapStart).disposed(by: disposeBag)
+        skipButton.rx.tap.bind(to: tapSkip).disposed(by: disposeBag)
+        
+        // 입력/출력 연결
+        let input = OnboardingViewModel.Input(
+            tapNext: tapNext.asObservable(),
+            tapSkip: tapSkip.asObservable(),
+            tapStart: tapStart.asObservable(),
+            swipedTo: swipedTo.asObservable()
+        )
+        let output = viewModel.transform(input)
+        
+        
+        // 현재 페이지 지시자 & 버튼 상태
+        output.pageIndex
+            .drive(onNext: { [weak self] idx in
+                guard let self = self else { return }
+                self.currentIndex = idx
+                self.pageControl.currentPage = idx
+                self.updatePageControlAppearance(current: idx)
+            })
+            .disposed(by: disposeBag)
+        
+        
+        output.isLastPage
+            .drive(onNext: { [weak self] isLast in
+                guard let self = self else { return }
+                self.startButton.isEnabled = isLast
+                self.startButton.alpha = isLast ? 1.0 : 0.5
+            })
+            .disposed(by: disposeBag)
+        
+        
+        output.finish
+            .emit(onNext: { [weak self] in self?.onFinish?() })
+            .disposed(by: disposeBag)
     }
     
     private func setupView() {
@@ -93,10 +149,11 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         pageViewController.view.translatesAutoresizingMaskIntoConstraints = false
         
         view.addSubview(pageControl)
-        view.addSubview(pageViewController.view)
-        addChild(pageViewController)
         
+        addChild(pageViewController)
+        view.addSubview(pageViewController.view)
         pageViewController.didMove(toParent: self)
+        
         pageViewController.dataSource = self
         pageViewController.delegate = self
         pageViewController.setViewControllers([pages[0]], direction: .forward, animated: false)
@@ -143,6 +200,8 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
     }
     
     private func goTo(index: Int) {
+        guard (0..<pages.count).contains(index) else { return }
+        
         let direction: UIPageViewController.NavigationDirection = index > currentIndex ? .forward : .reverse
         pageViewController.setViewControllers([pages[index]], direction: direction, animated: true) { [weak self] _ in
             
@@ -156,9 +215,6 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         updatePageControlAppearance(current: currentIndex)
         
         let isLast = (currentIndex == pages.count - 1)
-        print("isLast : \(isLast)")
-        print("currentIndex : \(currentIndex)")
-        print("page.count : \(pages.count)")
         
         startButton.isEnabled = isLast
         startButton.backgroundColor = isLast ? .main : .grayScale4
@@ -210,4 +266,3 @@ final class OnboardingViewController: UIViewController, UIPageViewControllerData
         updateUI() // ✅ 알약 + 버튼/시작하기 상태 한 번에 갱신
     }
 }
-
