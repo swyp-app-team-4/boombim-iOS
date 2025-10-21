@@ -551,6 +551,17 @@
         }
       }
     },
+    "personalInfo.label.connection" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "연결 계정"
+          }
+        }
+      }
+    },
     "place.detail.label.live.title" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -66,10 +66,14 @@ final class MyProfileView: UIView {
     private let voteView = CountView()
     private let questionView = CountView()
     
+    var onTapEdit: (() -> Void)?
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
         setupView()
+        
+        setEditAction()
     }
     
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -122,11 +126,15 @@ final class MyProfileView: UIView {
         ])
     }
     
+    private func setEditAction() {
+        editButton.addTarget(self, action: #selector(didTapEdit), for: .touchUpInside)
+    }
+    
+    @objc private func didTapEdit() {
+        onTapEdit?()
+    }
+    
     func configure(name: String, profile: String?, email: String, socialProvider: String, vote: Int, question: Int) {
-        print("profile : \(profile)")
-        print("vote : \(vote)")
-        print("question : \(question)")
-        
         nameLabel.text = name
         
         profieImageView.setImage(from: profile)

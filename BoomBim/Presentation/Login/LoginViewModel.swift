@@ -58,20 +58,20 @@ final class LoginViewModel {
         // Kakao
         input.kakaoTap
             .flatMapLatest { [unowned self] in
-                self.runLoginFlow { self.kakaoService.loginAndIssueBackendToken() }
+                self.runLoginFlow(provider: .kakao) { self.kakaoService.loginAndIssueBackendToken() }
             }
             .subscribe()
             .disposed(by: disposeBag)
         
          input.naverTap
             .flatMapLatest { [unowned self] in
-                self.runLoginFlow { self.naverService.loginAndIssueBackendToken() }
+                self.runLoginFlow(provider: .naver) { self.naverService.loginAndIssueBackendToken() }
             }
          .subscribe().disposed(by: disposeBag)
          
          input.appleTap
             .flatMapLatest { [unowned self] in
-                self.runLoginFlow { self.appleService.loginAndIssueBackendToken() }
+                self.runLoginFlow(provider: .apple) { self.appleService.loginAndIssueBackendToken() }
             }
          .subscribe().disposed(by: disposeBag)
         
@@ -87,16 +87,18 @@ final class LoginViewModel {
     }
     
     /// 공통 로그인 흐름: 서비스에서 TokenPair 받고 저장 + 라우트
-    private func runLoginFlow(_ issue: @escaping () -> Single<LoginResponse>) -> Observable<Void> {
+    private func runLoginFlow(provider: SocialProvider, _ issue: @escaping () -> Single<LoginResponse>) -> Observable<Void> {
         loadingRelay.accept(true)
         return issue()
             .observe(on: MainScheduler.instance) // UI 업데이트는 메인 스레드
             .do(onSuccess: { resp in
-                print("resp : \(resp)")
                 // Keychain 저장 + 상태 전이(.loggedIn)
                 // 1) 토큰 저장
                 let pair = TokenPair(accessToken: resp.accessToken, refreshToken: resp.refreshToken)
                 TokenManager.shared.set(pair: pair)
+                
+                // 항상 최신 로그인 타입으로 저장 (덮어쓰기)
+                LoginProviderStore.shared.setCurrentLoginProvider(provider)
                 
                 // 2) nameFlag로 분기
                 if resp.nameFlag {
@@ -114,70 +116,3 @@ final class LoginViewModel {
     }
 }
 
-
-//final class LoginViewModel {
-//    enum LoginRoute {
-//        case nickname
-//        case mainTab
-//    }
-//    
-//    struct Input {
-//        let kakaoTap: Observable<Void>
-//        let naverTap: Observable<Void>
-//        let appleTap: Observable<Void>
-//        let withoutLoginTap: Signal<Void>
-//    }
-//
-//    struct Output {
-//        let loginResult: Observable<Result<TokenResponse, Error>>
-////        let continueWithoutLogin: Observable<Void>
-//        let route: Signal<LoginRoute>
-//    }
-//    
-//    private let routeRelay = PublishRelay<LoginRoute>()
-//    var route: Signal<LoginRoute> {
-//        routeRelay.asSignal()
-//    }
-//
-//    private let disposeBag = DisposeBag()
-//
-//    func transform(input: Input) -> Output {
-//        let kakao = input.kakaoTap
-//            .flatMapLatest {
-//                KakaoLoginService().login()
-//                    .flatMapLatest({ tokenInfo in
-//                        AuthService.shared.requestLogin(type: .kakao, tokenInfo: tokenInfo)
-//                    })
-//                    .do(onNext: { _ in
-//                        self.routeRelay.accept(.nickname)
-//                    })
-//                .catch { .just(.failure($0)) } }
-//        
-//        let naver = input.naverTap
-//            .flatMapLatest {
-//                NaverLoginService().login()
-//                    .flatMapLatest({ tokenInfo in
-//                        AuthService.shared.requestLogin(type: .naver, tokenInfo: tokenInfo)
-//                    })
-//                .catch { .just(.failure($0)) } }
-//        
-//        let apple = input.appleTap
-//            .flatMapLatest {
-//                AppleLoginService().login()
-//                    .flatMapLatest({ tokenInfo in
-//                        AuthService.shared.requestLogin(type: .apple, tokenInfo: tokenInfo)
-//                    })
-//                .catch { .just(.failure($0)) } }
-//
-//        let merged = Observable.merge(kakao, naver, apple)
-//        
-//        input.withoutLoginTap
-//            .emit(onNext: { [routeRelay] in
-//                routeRelay.accept(.mainTab)
-//            })
-//            .disposed(by: disposeBag)
-//
-//        return Output(loginResult: merged,
-//                      route: routeRelay.asSignal())
-//    }
-//}

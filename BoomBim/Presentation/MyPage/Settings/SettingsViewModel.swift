@@ -30,6 +30,7 @@ final class SettingsViewModel {
         let error: Signal<String>
     }
     
+    var goToPersonalInfoView: (() -> Void)?
     var goToFeedbackView: (() -> Void)?
     
     func didTapWithdraw() {
