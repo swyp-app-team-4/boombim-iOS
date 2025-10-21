@@ -66,7 +66,7 @@ final class MyPageViewController: BaseViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureProfileView()
         configureHeaderView()

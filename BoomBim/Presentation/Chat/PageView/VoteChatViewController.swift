@@ -54,7 +54,7 @@ final class VoteChatViewController: BaseViewController {
     private let voteTableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
         tableView.separatorStyle = .none
-        tableView.backgroundColor = .tableViewBackground
+        tableView.backgroundColor = .background
         
         return tableView
     }()
@@ -89,7 +89,7 @@ final class VoteChatViewController: BaseViewController {
 //    }
     
     private func setupView() {
-        view.backgroundColor = .tableViewBackground
+        view.backgroundColor = .background
         
         configureEmptyStackView()
         configureTableView()

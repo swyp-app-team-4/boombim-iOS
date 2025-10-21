@@ -65,7 +65,7 @@ final class QuestionChatViewController: UIViewController {
     private let questionTableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
         tableView.separatorStyle = .none
-        tableView.backgroundColor = .tableViewBackground
+        tableView.backgroundColor = .background
         
         return tableView
     }()
@@ -93,7 +93,7 @@ final class QuestionChatViewController: UIViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .tableViewBackground
+        view.backgroundColor = .background
         
         configureEmptyStackView()
         configureTableView()

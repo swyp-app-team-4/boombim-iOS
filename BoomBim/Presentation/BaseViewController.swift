@@ -42,7 +42,7 @@ class BaseViewController: UIViewController {
     private func setupNavigationBar() {
         let navigationAppearance = UINavigationBarAppearance()
         navigationAppearance.configureWithOpaqueBackground()
-        navigationAppearance.backgroundColor = .white
+        navigationAppearance.backgroundColor = .background
         navigationAppearance.titleTextAttributes = [.foregroundColor: UIColor.grayScale10, .font: Typography.Body02.semiBold.font]
         
         navigationController?.navigationBar.standardAppearance = navigationAppearance

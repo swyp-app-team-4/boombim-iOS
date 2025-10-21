@@ -119,9 +119,7 @@ final class FeedbackViewController: BaseViewController {
     }
     
     private func setupNavigationBar() {
-        navigationController?.navigationBar.backgroundColor = .background
-//        navigationController?.navigationBar.tintColor = .grayScale9
-//        navigationController?.navigationBar.topItem?.title = ""
+        navigationController?.view.backgroundColor = .background
     }
     
     private func setupTitle() {
@@ -151,7 +149,7 @@ final class FeedbackViewController: BaseViewController {
         tableView.keyboardDismissMode = .interactive
         tableView.register(ReasonCell.self, forCellReuseIdentifier: "ReasonCell")
         
-        tableView.backgroundColor = .tableViewBackground
+        tableView.backgroundColor = .background
         
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false

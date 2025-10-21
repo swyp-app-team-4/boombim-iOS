@@ -20,7 +20,7 @@ final class SettingsViewController: BaseViewController {
     
     private let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
-        tableView.backgroundColor = .white
+        tableView.backgroundColor = .clear
         
         return tableView
     }()
@@ -46,7 +46,7 @@ final class SettingsViewController: BaseViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         setupNavigationBar()
         configureTableView()
@@ -54,7 +54,6 @@ final class SettingsViewController: BaseViewController {
     
     private func setupNavigationBar() {
         navigationController?.navigationBar.tintColor = .grayScale9
-        navigationController?.navigationBar.topItem?.title = ""
     }
     
     private func configureTableView() {
