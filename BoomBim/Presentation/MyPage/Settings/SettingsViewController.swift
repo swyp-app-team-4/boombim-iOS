@@ -203,7 +203,7 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
         case .support:
             openSafariView(url: "https://awesome-captain-026.notion.site/25b9598992b0804fb058d1310b6ecdf0")
         case .faq:
-            return
+            openSafariView(url: "https://naver.me/5jBB5pIh")
         }
     }
 }
