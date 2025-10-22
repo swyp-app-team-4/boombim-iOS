@@ -31,6 +31,7 @@ final class SettingsViewModel {
     }
     
     var goToPersonalInfoView: (() -> Void)?
+    var goToAlarmSettingView: (() -> Void)?
     var goToFeedbackView: (() -> Void)?
     
     func didTapWithdraw() {

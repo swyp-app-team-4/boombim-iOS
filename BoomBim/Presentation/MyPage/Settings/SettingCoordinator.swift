@@ -25,6 +25,10 @@ final class SettingCoordinator: Coordinator {
             self?.pushPersonalnfo()
         }
         
+        viewModel.goToAlarmSettingView = { [weak self] in
+            self?.pushAlarmSetting()
+        }
+        
         viewModel.goToFeedbackView = { [weak self] in
             self?.pushFeedback()
         }
@@ -35,6 +39,13 @@ final class SettingCoordinator: Coordinator {
     private func pushPersonalnfo() {
         let viewModel = PersonalInfoViewModel()
         let viewController = PersonalInfoViewController(viewModel: viewModel)
+        
+        navigationController.pushViewController(viewController, animated: true)
+    }
+    
+    private func pushAlarmSetting() {
+        let viewModel = AlarmSettingViewModel()
+        let viewController = AlarmSettingViewController(viewModel: viewModel)
         
         navigationController.pushViewController(viewController, animated: true)
     }

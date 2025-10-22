@@ -47,6 +47,23 @@ class Service {
         }
     }
     
+    func requestPatch(_ url: String, header: HTTPHeaders) -> Single<Void> {
+        return Single.create { single in
+            let req = AF.request(url,
+                                 method: .patch,
+                                 headers: header)
+                .validate()
+                .response { resp in
+                    debugPrint(resp)
+                    switch resp.result {
+                    case .success: single(.success(()))
+                    case .failure(let error): single(.failure(error))
+                    }
+                }
+            return Disposables.create { req.cancel() }
+        }
+    }
+    
     func requestMultipartFormData<T: Decodable>(_ url: String, data: Data, fileName: String, method: HTTPMethod, header: HTTPHeaders) -> Single<T> {
         return Single.create { single in
             let req = AF.upload(
@@ -59,11 +76,21 @@ class Service {
                 method: method,
                 headers: header)
                 .validate()
-                .responseString { resp in
+                .responseData { resp in
                     debugPrint(resp)
                     switch resp.result {
-                    case .success(let pathString):
-                        single(.success(pathString as! T))
+                    case .success(let data):
+                        if T.self == String.self, let string = String(data: data, encoding: .utf8) {
+                            // Safe force-cast because we checked the type above
+                            single(.success(string as! T))
+                        } else {
+                            do {
+                                let decoded = try JSONDecoder().decode(T.self, from: data)
+                                single(.success(decoded))
+                            } catch {
+                                single(.failure(error))
+                            }
+                        }
                     case .failure(let error):
                         single(.failure(error))
                     }

@@ -54,7 +54,7 @@ class BaseViewController: UIViewController {
     private func setupTabBar() {
         let tabAppearance = UITabBarAppearance()
         tabAppearance.configureWithOpaqueBackground()
-        tabAppearance.backgroundColor = .white
+        tabAppearance.backgroundColor = .background
         
         tabBarController?.tabBar.standardAppearance = tabAppearance
         tabBarController?.tabBar.scrollEdgeAppearance = tabAppearance

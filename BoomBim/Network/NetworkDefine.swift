@@ -29,6 +29,7 @@ enum NetworkDefine {
         static let favorite = "api/member/favorite"
         static let answer = "api/member/my-answer"
         static let question = "api/member/my-question"
+        static let alarm = "api/alarm/status"
     }
     
     enum Vote {

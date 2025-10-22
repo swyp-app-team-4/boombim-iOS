@@ -14,6 +14,11 @@ enum UserDefaultsKeys {
         static let loginProvider = "loginProvider"
     }
     
+    enum Alarm {
+        static let alarm = "alarm"
+        static let pendingEnableAfterPermission = "pendingEnableAfterPermission"
+    }
+    
     enum Fcm {
         static let fcmToken = "fcmToken"
         static let fcmTokenUpdate = "fcmTokenUpdate"

@@ -193,7 +193,7 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
         case .profile:
             viewModel.goToPersonalInfoView?()
         case .push:
-            break
+            viewModel.goToAlarmSettingView?()
         case .terms:
             openSafariView(url: "https://awesome-captain-026.notion.site/2529598992b080119479fef036d96aba")
         case .privacy:

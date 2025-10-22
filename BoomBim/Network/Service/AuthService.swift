@@ -96,6 +96,9 @@ final class AuthService: Service {
         // (b) 서버 호출 끝나면 로컬 정리 & (선택) 소셜 SDK 로그아웃
         return serverCall.do(onSuccess: { _ in
             TokenManager.shared.clear(type: .loggedOut)
+            
+            // UserDefaults 값 초기화
+            AlarmStore.shared.resetAlarmState()
             LoginProviderStore.shared.resetLoginProvider()
         })
     }
@@ -113,6 +116,9 @@ final class AuthService: Service {
 
         return serverCall.do(onSuccess: { _ in
             TokenManager.shared.clear(type: .withdraw)
+            
+            // UserDefaults 값 초기화
+            AlarmStore.shared.resetAlarmState()
             LoginProviderStore.shared.resetLoginProvider()
         })
     }
@@ -180,5 +186,18 @@ final class AuthService: Service {
         }
         
         return requestGet(url, method: .get, header: headers)
+    }
+    
+    // MARK: - Alarm
+    func setAlarm() -> Single<Void> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Profile.alarm
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestPatch(url, header: headers)
     }
 }

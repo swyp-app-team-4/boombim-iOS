@@ -1,6 +1,17 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "alarmSetting.label.state" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알람 on/off"
+          }
+        }
+      }
+    },
     "base.congestion.busy" : {
       "extractionState" : "manual",
       "localizations" : {
