@@ -19,6 +19,22 @@ final class FavoritePlaceCell: UICollectionViewCell {
         return imageView
     }()
     
+    private let colorOverlay: UIView = {
+        let view = UIView()
+        view.backgroundColor = .imageOverlay
+        
+        return view
+    }()
+    
+    private let imageGradient: CAGradientLayer = {
+        let gradient = CAGradientLayer()
+        gradient.colors = [UIColor.clear.cgColor, UIColor.black.cgColor]
+        gradient.locations = [0.8, 1]
+        gradient.opacity = 0.2
+        
+        return gradient
+    }()
+    
     private let congestionImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
@@ -40,6 +56,8 @@ final class FavoritePlaceCell: UICollectionViewCell {
         let label = UILabel()
         label.font = Typography.Body02.semiBold.font
         label.textColor = .grayScale1
+        label.numberOfLines = 1
+        label.lineBreakMode = .byTruncatingTail
         
         return label
     }()
@@ -69,6 +87,12 @@ final class FavoritePlaceCell: UICollectionViewCell {
         
         return label
     }()
+    
+    private let spacerView: UIView = {
+        let view = UIView()
+        
+        return view
+    }()
 
     private let favoriteImageView: UIImageView = {
         let imageView = UIImageView()
@@ -83,6 +107,13 @@ final class FavoritePlaceCell: UICollectionViewCell {
         setupView()
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        imageGradient.frame = imageView.bounds
+        imageGradient.startPoint = CGPoint(x: 0.5, y: 0.0)
+        imageGradient.endPoint   = CGPoint(x: 0.5, y: 1.0)
+    }
+    
     private func setupView() {
         contentView.backgroundColor = .white
         
@@ -94,7 +125,7 @@ final class FavoritePlaceCell: UICollectionViewCell {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(imageView)
         
-        [congestionImageView, textStackView, favoriteImageView].forEach { view in
+        [colorOverlay, congestionImageView, textStackView, favoriteImageView].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             imageView.addSubview(view)
         }
@@ -104,6 +135,11 @@ final class FavoritePlaceCell: UICollectionViewCell {
             imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
             imageView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            
+            colorOverlay.topAnchor.constraint(equalTo: imageView.topAnchor),
+            colorOverlay.leadingAnchor.constraint(equalTo: imageView.leadingAnchor),
+            colorOverlay.trailingAnchor.constraint(equalTo: imageView.trailingAnchor),
+            colorOverlay.bottomAnchor.constraint(equalTo: imageView.bottomAnchor),
             
             congestionImageView.topAnchor.constraint(equalTo: imageView.topAnchor, constant: 10),
             congestionImageView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: -10),
@@ -116,10 +152,19 @@ final class FavoritePlaceCell: UICollectionViewCell {
             favoriteImageView.heightAnchor.constraint(equalToConstant: 34),
             favoriteImageView.widthAnchor.constraint(equalToConstant: 34)
         ])
+        
+        imageView.layer.insertSublayer(imageGradient, above: colorOverlay.layer)
+        
+        // zPosition으로 계층 고정
+        colorOverlay.layer.zPosition = 0         // 이미지 바로 위
+        imageGradient.zPosition = 1              // 오버레이 위
+        congestionImageView.layer.zPosition = 2  // 컨트롤들 맨 위
+        textStackView.layer.zPosition = 2
+        favoriteImageView.layer.zPosition = 2
     }
     
     private func configureTextStackView() {
-        [timeImageView, update].forEach { view in
+        [timeImageView, update, spacerView].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             updateStackView.addArrangedSubview(view)
         }
