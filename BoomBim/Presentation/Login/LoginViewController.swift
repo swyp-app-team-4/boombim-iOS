@@ -16,6 +16,29 @@ final class LoginViewController: BaseViewController {
 
     // MARK: - UI
     private let activityIndicator = UIActivityIndicatorView(style: .large)
+    
+    private let containerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        
+        return view
+    }()
+    
+    private let totalStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.alignment = .fill
+//        stackView.spacing = 44
+        
+        return stackView
+    }()
+    
+    private let spacerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        
+        return view
+    }()
 
     private let titleStackView: UIStackView = {
         let stackView = UIStackView()
@@ -49,6 +72,12 @@ final class LoginViewController: BaseViewController {
         imageView.contentMode = .scaleAspectFit
         
         return imageView
+    }()
+    
+    private let buttonContainerView: UIView = {
+        let view = UIView()
+        
+        return view
     }()
     
     private let buttonStackView: UIStackView = {
@@ -117,57 +146,50 @@ final class LoginViewController: BaseViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureButton()
         configureTitle()
         configureActivityIndicator()
+        
+        setupLayout()
     }
     
     private func configureTitle() {
-        titleStackView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(titleStackView)
-        
         [loginTitleLabel, loginTitleImageView].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             titleStackView.addArrangedSubview(view)
         }
         
         NSLayoutConstraint.activate([
-            titleStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 114),
-            titleStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            titleStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            
             loginTitleImageView.widthAnchor.constraint(equalToConstant: 240),
         ])
     }
     
     private func configureButton() {
-        [bubbleImageView, buttonStackView].forEach { view in
-            view.translatesAutoresizingMaskIntoConstraints = false
-            self.view.addSubview(view)
-        }
-        
-        [kakaoButton, naverButton, appleButton/*, testButton*/].forEach { button in
+        [bubbleImageView, kakaoButton, naverButton, appleButton/*, testButton*/].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             
             buttonStackView.addArrangedSubview(button)
         }
         
-//        testButton.addTarget(self, action: #selector(presentTerms), for: .touchUpInside)
-        
         NSLayoutConstraint.activate([
             kakaoButton.heightAnchor.constraint(equalToConstant: 54),
             naverButton.heightAnchor.constraint(equalToConstant: 54),
             appleButton.heightAnchor.constraint(equalToConstant: 54),
-            testButton.heightAnchor.constraint(equalToConstant: 54),
-            
-            buttonStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -84),
-            buttonStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            buttonStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            
-            bubbleImageView.bottomAnchor.constraint(equalTo: buttonStackView.topAnchor, constant: -20),
-            bubbleImageView.centerXAnchor.constraint(equalTo: buttonStackView.centerXAnchor)
+//            testButton.heightAnchor.constraint(equalToConstant: 54),
+        ])
+        
+        buttonStackView.setCustomSpacing(12, after: bubbleImageView)
+        
+        buttonContainerView.addSubview(buttonStackView)
+        buttonStackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            buttonStackView.topAnchor.constraint(equalTo: buttonContainerView.topAnchor),
+            buttonStackView.leadingAnchor.constraint(equalTo: buttonContainerView.leadingAnchor),
+            buttonStackView.trailingAnchor.constraint(equalTo: buttonContainerView.trailingAnchor),
+            buttonStackView.bottomAnchor.constraint(equalTo: buttonContainerView.bottomAnchor)
         ])
     }
     
@@ -180,6 +202,55 @@ final class LoginViewController: BaseViewController {
         NSLayoutConstraint.activate([
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
+    
+    private func setupLayout() {
+        view.addSubview(containerView)
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
+            containerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            containerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            containerView.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            containerView.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+        ])
+        
+        containerView.addSubview(totalStackView)
+        totalStackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            totalStackView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            totalStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            totalStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            totalStackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
+        ])
+        
+        spacerView.setContentHuggingPriority(.defaultLow, for: .vertical)
+        spacerView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        
+        [titleStackView, spacerView, buttonContainerView].forEach { view in
+            totalStackView.addArrangedSubview(view)
+            view.translatesAutoresizingMaskIntoConstraints = false
+        }
+        
+        // Spacer View 가 먼저 늘고(=여유 흡수), 먼저 줄도록(=작은 화면 보호)
+        spacerView.setContentHuggingPriority(.defaultLow, for: .vertical)
+        spacerView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+
+        let spacerPreferred = spacerView.heightAnchor.constraint(equalToConstant: 44)
+        spacerPreferred.priority = .defaultHigh  // 750
+        spacerPreferred.isActive = true
+
+        let spacerMin = spacerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 12)
+        spacerMin.priority = .required
+        spacerMin.isActive = true
+        
+        NSLayoutConstraint.activate([
+            buttonContainerView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
         ])
     }
     
