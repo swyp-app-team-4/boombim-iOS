@@ -339,28 +339,71 @@ final class NicknameViewController: BaseViewController {
 
 // MARK: - 카메라 사용 및 앨범 접근
 extension NicknameViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
-    // Camera 사용
+    
+    // MARK: - Public Entrypoints
     func showCamera() {
         guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-            showPhotoPicker()
+            presentSimpleAlert(title: "카메라 사용 불가",
+                               message: "이 기기에서는 카메라를 사용할 수 없습니다.")
             return
         }
-        
+        checkCameraPermission { [weak self] granted in
+            guard let self else { return }
+            granted ? self.presentCamera() :
+                      self.presentSettingsAlert(title: "카메라 권한 필요",
+                                               message: "설정 > 개인정보 보호 > 카메라에서 권한을 허용해 주세요.")
+        }
+    }
+
+    func showPhotoPicker(selectionLimit: Int = 1) {
+        checkPhotoPermission { [weak self] granted in
+            guard let self else { return }
+            if granted {
+                var config = PHPickerConfiguration(photoLibrary: .shared())
+                config.filter = .images
+                config.selectionLimit = selectionLimit // 1: 단일, 0: 무제한
+                let picker = PHPickerViewController(configuration: config)
+                picker.delegate = self
+                self.present(picker, animated: true)
+            } else {
+                self.presentSettingsAlert(title: "앨범 접근 권한 필요",
+                                          message: "설정 > 개인정보 보호 > 사진에서 권한을 허용해 주세요.")
+            }
+        }
+    }
+
+    // MARK: - Permission Checks
+    private func checkCameraPermission(_ completion: @escaping (Bool) -> Void) {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         switch status {
         case .authorized:
-            presentCamera()
+            completion(true)
         case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async { completion(granted) }
+            }
+        default:
+            completion(false)
+        }
+    }
+
+    private func checkPhotoPermission(_ completion: @escaping (Bool) -> Void) {
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        switch status {
+        case .authorized, .limited:
+            completion(true)
+        case .notDetermined:
+            PHPhotoLibrary.requestAuthorization(for: .readWrite) { newStatus in
                 DispatchQueue.main.async {
-                    granted ? self?.presentCamera() : self?.showPermissionAlert()
+                    completion(newStatus == .authorized || newStatus == .limited)
                 }
             }
         default:
-            showPermissionAlert()
+            completion(false)
         }
     }
-    
+
+    // MARK: - Presenters
     private func presentCamera() {
         let picker = UIImagePickerController()
         picker.sourceType = .camera
@@ -369,74 +412,48 @@ extension NicknameViewController: UIImagePickerControllerDelegate, UINavigationC
         picker.delegate = self
         present(picker, animated: true)
     }
-    
-    private func showPermissionAlert() {
-        let alert = UIAlertController(
-            title: "카메라 권한 필요",
-            message: "설정 > 개인정보 보호 > 카메라에서 권한을 허용해 주세요.",
-            preferredStyle: .alert
-        )
+
+    // MARK: - Alerts
+    private func presentSettingsAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default, handler: { _ in
+            guard let url = URL(string: UIApplication.openSettingsURLString),
+                  UIApplication.shared.canOpenURL(url) else { return }
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        }))
+        present(alert, animated: true)
+    }
+
+    private func presentSimpleAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
     }
-    
+
+    // MARK: - UIImagePickerControllerDelegate
     func imagePickerController(_ picker: UIImagePickerController,
-                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         let image = (info[.editedImage] ?? info[.originalImage]) as? UIImage
-        picker.dismiss(animated: true) {
-            guard let image else { return }
-            
+        picker.dismiss(animated: true) { [weak self] in
+            guard let self, let image else { return }
             self.profileImageView.image = image
             self.pickedImageRelay.accept(image)
         }
     }
-    
+
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         picker.dismiss(animated: true)
     }
-    
-    // 앨범 접근
-    func showPhotoPicker(selectionLimit: Int = 1) {
-        var config = PHPickerConfiguration(photoLibrary: .shared())
-        config.filter = .images
-        config.selectionLimit = selectionLimit  // 1 = 단일 선택, 0 = 무제한
-        
-        let status = AVCaptureDevice.authorizationStatus(for: .video)
-        switch status {
-        case .authorized:
-            let picker = PHPickerViewController(configuration: config)
-            picker.delegate = self
-            present(picker, animated: true)
-            
-        case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-                DispatchQueue.main.async {
-                    granted ? self?.presentCamera() : self?.showPhotoLibraryPermissionAlert()
-                }
-            }
-        default:
-            showPhotoLibraryPermissionAlert()
-        }
-    }
-    
-    private func showPhotoLibraryPermissionAlert() {
-        let alert = UIAlertController(
-            title: "앨범 접근 권한 필요",
-            message: "설정 > 개인정보 보호 > 사진에서 권한을 허용해 주세요.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        present(alert, animated: true)
-    }
-    
+
+    // MARK: - PHPickerViewControllerDelegate
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         picker.dismiss(animated: true)
-        
-        guard let itemProvider = results.first?.itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
-        
-        itemProvider.loadObject(ofClass: UIImage.self) { [weak self] obj, error in
+        guard let itemProvider = results.first?.itemProvider,
+              itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
+
+        itemProvider.loadObject(ofClass: UIImage.self) { [weak self] obj, _ in
             guard let image = obj as? UIImage else { return }
-            
             DispatchQueue.main.async {
                 self?.profileImageView.image = image
                 self?.pickedImageRelay.accept(image)
@@ -444,4 +461,3 @@ extension NicknameViewController: UIImagePickerControllerDelegate, UINavigationC
         }
     }
 }
-

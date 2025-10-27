@@ -80,5 +80,6 @@ extension AppDelegate: MessagingDelegate {
         print("FCM token:", token)
         
         TokenManager.shared.fcmToken = token
+        AlarmStore.shared.setCurrentAlarmState(true)
     }
 }

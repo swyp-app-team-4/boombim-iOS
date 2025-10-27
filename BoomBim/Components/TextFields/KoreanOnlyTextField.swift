@@ -10,9 +10,9 @@ import UIKit
 final class KoreanOnlyTextField: InsetTextField {
 
     /// 허용 최대 글자 수 (완성형 기준)
-    var maxLength: Int = 10
+    var maxLength: Int = 20
 
-    private let koreanOnlyRegex = try! NSRegularExpression(pattern: "[^가-힣ㄱ-ㅎㅏ-ㅣA-Za-z]")
+    private let koreanOnlyRegex = try! NSRegularExpression(pattern: "[^0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ]")
 
     override init(frame: CGRect) {
         super.init(frame: frame)

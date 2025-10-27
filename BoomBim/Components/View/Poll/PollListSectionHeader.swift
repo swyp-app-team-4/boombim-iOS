@@ -15,7 +15,7 @@ final class PollListSectionHeader: UITableViewHeaderFooterView {
 
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
-        contentView.backgroundColor = .tableViewBackground
+        contentView.backgroundColor = .background
         contentView.addSubview(header)
         header.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([

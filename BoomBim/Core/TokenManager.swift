@@ -86,7 +86,7 @@ public final class TokenManager {
 
     /// 로그아웃/만료 시 호출: 메모리+Keychain 모두 정리
     public func clear(type: AuthState) {
-        print("TokenManager Clear 실행")
+        print("TokenManager Clear 실행 \(type)")
         lock.lock(); defer { lock.unlock() }
         pair = nil
         store.clear()
@@ -174,62 +174,3 @@ public final class TokenManager {
         set { defaults.setValue(newValue, forKey: UserDefaultsKeys.Fcm.fcmTokenUpdate) }
     }
 }
-
-
-//final class TokenManager {
-//    static let shared = TokenManager()
-//    
-//    private let defaults = UserDefaults.standard
-//    
-//    // MARK: - Login
-//    var accessToken: String? {
-//        get { defaults.string(forKey: UserDefaultsKeys.Auth.accessToken) }
-//        set { defaults.setValue(newValue, forKey: UserDefaultsKeys.Auth.accessToken) }
-//    }
-//    
-//    var refreshToken: String? {
-//        get { defaults.string(forKey: UserDefaultsKeys.Auth.refreshToken) }
-//        set { defaults.setValue(newValue, forKey: UserDefaultsKeys.Auth.refreshToken) }
-//    }
-//
-////    var expiresIn: Int? {
-////        get { defaults.integer(forKey: UserDefaultsKeys.Auth.expiresIn) }
-////        set { defaults.setValue(newValue, forKey: UserDefaultsKeys.Auth.expiresIn) }
-////    }
-////
-////    var idToken: String? {
-////        get { defaults.string(forKey: UserDefaultsKeys.Auth.idToken) }
-////        set { defaults.setValue(newValue, forKey: UserDefaultsKeys.Auth.idToken) }
-////    }
-//    
-//    var isLoggedIn: Bool {
-//        guard let token = accessToken, !token.isEmpty else { return false }
-//        return true
-//    }
-//
-//    func save(tokenInfo: TokenResponse) {
-//        accessToken = tokenInfo.accessToken
-//        refreshToken = tokenInfo.refreshToken
-////        expiresIn = tokenInfo.expiresIn
-////        idToken = tokenInfo.idToken
-//    }
-//
-//    // 추후 로그아웃 적용하고 UserDefaults 해제할 때 사용
-//    func logout() {
-//        defaults.removeObject(forKey: UserDefaultsKeys.Auth.accessToken)
-//        defaults.removeObject(forKey: UserDefaultsKeys.Auth.refreshToken)
-////        defaults.removeObject(forKey: UserDefaultsKeys.Auth.expiresIn)
-////        defaults.removeObject(forKey: UserDefaultsKeys.Auth.idToken)
-//    }
-//    
-//    // MARK: - FCM
-//    var fcmToken: String? {
-//        get { defaults.string(forKey: UserDefaultsKeys.Fcm.fcmToken) }
-//        set { defaults.setValue(newValue, forKey: UserDefaultsKeys.Fcm.fcmToken) }
-//    }
-//    
-//    var fcmTokenUploadState: Bool? {
-//        get { defaults.bool(forKey: UserDefaultsKeys.Fcm.fcmTokenUpdate) }
-//        set { defaults.setValue(newValue, forKey: UserDefaultsKeys.Fcm.fcmTokenUpdate) }
-//    }
-//}

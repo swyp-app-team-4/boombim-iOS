@@ -16,7 +16,6 @@ extension AuthService: AuthServicing {}   // AuthService.shared 그대로 사용
 final class FeedbackViewModel {
 
     struct Input {
-        let keepTap: Signal<Void>
         let withdrawTap: Signal<Void>
         let selectedReasons: Driver<Set<WithdrawReason>>
         let otherText: Driver<String>
@@ -26,7 +25,6 @@ final class FeedbackViewModel {
         let isWithdrawEnabled: Driver<Bool>
         let isLoading: Driver<Bool>
         let error: Signal<String>
-        let dismiss: Signal<Void>          // "계속 이용하기" → 뒤로가기
         let withdrawSuccess: Signal<Void>  // 탈퇴 성공
     }
 
@@ -74,7 +72,6 @@ final class FeedbackViewModel {
             isWithdrawEnabled: isEnabled,
             isLoading: loadingRelay.asDriver(),
             error: errorRelay.asSignal(),
-            dismiss: input.keepTap,                 // keepTap == 바로 뒤로가기
             withdrawSuccess: successRelay.asSignal()
         )
     }

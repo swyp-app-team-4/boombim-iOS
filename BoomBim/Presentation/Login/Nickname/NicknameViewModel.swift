@@ -34,12 +34,10 @@ final class NicknameViewModel {
     private let disposeBag = DisposeBag()
     
     private func validate(_ text: String) -> Bool {
-        print("text: \(text)")
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard (2...12).contains(trimmed.count) else { return false }
-        // 한글/영문/숫자/밑줄만 허용 예시
-        let regex = "^[0-9A-Za-z가-힣_]+$"
-        return NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: trimmed)
+        // 2~20자, 한글(가-힣) / 영문 / 숫자만 허용
+        let pattern = "^[0-9A-Za-z가-힣]{2,20}$"
+        return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: trimmed)
     }
     
     func transform(input: Input) -> Output {
@@ -52,18 +50,9 @@ final class NicknameViewModel {
         input.signupTap
             .withLatestFrom(latest)
             .emit(onNext: { [weak self] (name, image) in
-                print("프로필 설정 버튼 tap!")
-                print("image : \(image)")
                 self?.submit(name: name, image: image)
             })
             .disposed(by: disposeBag)
-        
-//        input.signupTap
-//            .emit(onNext: { [weak self] _ in
-//                print("프로필 설정 버튼 tap!")
-//                self?.submit(name: name, image: image)
-//            })
-//            .disposed(by: disposeBag)
         
         return Output(
             isLoading: loadingRelay.asDriver(),
@@ -74,7 +63,6 @@ final class NicknameViewModel {
     
     private func submit(name: String, image: UIImage?) {
         loadingRelay.accept(true)
-        print("submit image : \(image)")
         // (1) 닉네임 저장 (필수)
         let nickCall: Single<Void> = AuthService.shared.setNickname(name)
         
@@ -85,19 +73,13 @@ final class NicknameViewModel {
                 return .just(()) // 이미지 없으면 스킵
             }
             
-            print("upload size: \(Double(data.data.count)/1024/1024) MB")
-            print("profile : \(data.data)")
-            
             return AuthService.shared.setProfileImage(data.data)
                 .do(onSuccess: { savedPath in
-                    print("savePath : \(savedPath)")
                     // 필요 시 로컬 캐시/모델 반영
                     UserDefaults.standard.set(savedPath, forKey: "profileImagePath")
                 })
                 .map { _ in () }
         }()
-        
-        print("photoCall : \(photoCall)")
         
         // (3) 병렬 실행 후 완료
         Single.zip(nickCall, photoCall)

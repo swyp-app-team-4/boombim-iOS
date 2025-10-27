@@ -285,9 +285,7 @@ final class LoginViewController: BaseViewController {
             .disposed(by: disposeBag)
     }
     
-    // 약관 바텀시트 표시 → 필수 동의 확인 → 실제 가입 진행 트리거
     @objc private func presentTerms() {
-        // TODO: 서버/설정에서 내려준 실제 URL로 교체
         let items: [TermsModel] = [
             .init(title: "이용약관 동의",
                   url: URL(string:"https://awesome-captain-026.notion.site/2529598992b080119479fef036d96aba")!,

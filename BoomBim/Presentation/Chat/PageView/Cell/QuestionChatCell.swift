@@ -111,7 +111,7 @@ final class QuestionChatCell: UITableViewCell {
     }
     
     private func setupView() {
-        contentView.backgroundColor = .tableViewBackground
+        contentView.backgroundColor = .background
         
         configureView()
         configureCardView()

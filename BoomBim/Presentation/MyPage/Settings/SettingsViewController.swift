@@ -7,11 +7,15 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 import SafariServices
 
 final class SettingsViewController: BaseViewController {
     private let viewModel: SettingsViewModel
     private let disposeBag = DisposeBag()
+    
+    // “예” 신호를 ViewModel로 보낼 릴레이
+    private let logoutConfirmedRelay = PublishRelay<Void>()
 
     private let rows = SettingsRow.allCases
     
@@ -20,7 +24,7 @@ final class SettingsViewController: BaseViewController {
     
     private let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .grouped)
-        tableView.backgroundColor = .white
+        tableView.backgroundColor = .clear
         
         return tableView
     }()
@@ -46,7 +50,7 @@ final class SettingsViewController: BaseViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         setupNavigationBar()
         configureTableView()
@@ -54,7 +58,6 @@ final class SettingsViewController: BaseViewController {
     
     private func setupNavigationBar() {
         navigationController?.navigationBar.tintColor = .grayScale9
-        navigationController?.navigationBar.topItem?.title = ""
     }
     
     private func configureTableView() {
@@ -110,7 +113,8 @@ final class SettingsViewController: BaseViewController {
         // 1) Input
         let input = SettingsViewModel.Input(
             logoutTap: tableFooterView.logoutButton.rx.tap.asSignal(),
-            withdrawTap: tableFooterView.withdrawButton.rx.tap.asSignal()
+            withdrawTap: tableFooterView.withdrawButton.rx.tap.asSignal(),
+            logoutConfirmTap: logoutConfirmedRelay.asSignal()
         )
         
         // 2) Transform
@@ -134,12 +138,30 @@ final class SettingsViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
         
+        output.showLogoutConfirmAlert
+            .emit(with: self) { owner, _ in
+                owner.presentLogout()
+            }
+        
         // ✅ 피드백에서 사유가 도착하면 알럿 표시
         viewModel.reasonSelected
             .emit(onNext: { [weak self] reason in
                 self?.presentWithdrawConfirm(reason: reason)
             })
             .disposed(by: disposeBag)
+    }
+    
+    private func presentLogout() {
+        AppDialogController.showYesNo(
+            on: self,
+            title: "로그아웃 하시겠습니까?",
+            message: "재인증 후 다시 이용 가능합니다.",
+            onYes: { [weak self] in
+                print("Yes")
+                self?.logoutConfirmedRelay.accept(()) },
+            onNo: {
+                print("No")
+                self.dismiss(animated: true) })
     }
     
     private func presentWithdrawConfirm(reason: String) {
@@ -192,9 +214,9 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
         
         switch row {
         case .profile:
-            return
+            viewModel.goToPersonalInfoView?()
         case .push:
-            return
+            viewModel.goToAlarmSettingView?()
         case .terms:
             openSafariView(url: "https://awesome-captain-026.notion.site/2529598992b080119479fef036d96aba")
         case .privacy:
@@ -204,7 +226,7 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
         case .support:
             openSafariView(url: "https://awesome-captain-026.notion.site/25b9598992b0804fb058d1310b6ecdf0")
         case .faq:
-            return
+            openSafariView(url: "https://naver.me/5jBB5pIh")
         }
     }
 }

@@ -66,7 +66,7 @@ final class MyPageViewController: BaseViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureProfileView()
         configureHeaderView()
@@ -115,6 +115,9 @@ final class MyPageViewController: BaseViewController {
     
     private func setProfile() {
         profileView.configure(name: "닉네임", profile: nil, email: "123", socialProvider: "dfd", vote: 0, question: 0)
+        profileView.onTapEdit = { [weak self] in
+            self?.viewModel.didTapProfile()
+        }
     }
     
     // MARK: Action
@@ -214,3 +217,4 @@ extension MyPageViewController: UIPageViewControllerDataSource, UIPageViewContro
         headerView.updateSelection(index: idx, animated: true)
     }
 }
+

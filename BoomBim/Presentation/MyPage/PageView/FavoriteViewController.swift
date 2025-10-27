@@ -37,7 +37,7 @@ final class FavoriteViewController: UIViewController {
         label.textColor = .grayScale10
         label.textAlignment = .center
         label.numberOfLines = 0
-        label.text = "질문이 없습니다"
+        label.text = "관심장소를 등록하여\n실시간 혼잡도를 받아보세요"
         
         return label
     }()
