@@ -86,7 +86,7 @@ public final class TokenManager {
 
     /// 로그아웃/만료 시 호출: 메모리+Keychain 모두 정리
     public func clear(type: AuthState) {
-        print("TokenManager Clear 실행")
+        print("TokenManager Clear 실행 \(type)")
         lock.lock(); defer { lock.unlock() }
         pair = nil
         store.clear()

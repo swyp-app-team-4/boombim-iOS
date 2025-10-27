@@ -185,7 +185,6 @@ final class FeedbackViewController: BaseViewController {
     private func bind() {
         // ViewModel 바인딩
         let input = FeedbackViewModel.Input(
-            keepTap: keepButton.rx.tap.asSignal(),
             withdrawTap: withdrawButton.rx.tap.asSignal(),
             selectedReasons: selectedReasonsRelay.asDriver(),
             otherText: otherTextRelay.asDriver()
@@ -205,13 +204,6 @@ final class FeedbackViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
         
-        // 뒤로가기
-        output.dismiss
-            .emit(onNext: { [weak self] in
-                self?.navigationController?.popViewController(animated: true)
-            })
-            .disposed(by: disposeBag)
-        
         // 성공 토스트/알럿
         output.withdrawSuccess
             .emit(onNext: { [weak self] in
@@ -226,6 +218,13 @@ final class FeedbackViewController: BaseViewController {
             .emit(onNext: { [weak self] msg in
                 print("에러")
             })
+            .disposed(by: disposeBag)
+        
+        keepButton.rx.tap
+            .asSignal()
+            .emit(with: self) { owner, _ in
+                owner.navigationController?.popViewController(animated: true)
+            }
             .disposed(by: disposeBag)
     }
     
@@ -257,18 +256,12 @@ final class FeedbackViewController: BaseViewController {
     }
     
     private func presentWithdrawDone() {
-        AppDialogController.show(
+        AppDialogController.showOK(
             on: self,
-            config: .init(
-                title: "탈퇴가 완료되었습니다",
-                message: nil,
-                actions: [
-                    .init("확인", style: .primary) {
-                    }
-                ],
-                dismissOnBackgroundTap: false
-            )
-        )
+            title: "탈퇴가 완료되었습니다",
+            onOK: {
+                TokenManager.shared.clear(type: .withdraw)
+            })
     }
 }
 

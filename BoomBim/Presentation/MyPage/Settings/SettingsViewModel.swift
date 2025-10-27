@@ -23,11 +23,13 @@ final class SettingsViewModel {
     struct Input {
         let logoutTap: Signal<Void>
         let withdrawTap: Signal<Void>
+        let logoutConfirmTap: Signal<Void>
     }
     
     struct Output {
         let isLoading: Driver<Bool>
         let error: Signal<String>
+        let showLogoutConfirmAlert: Signal<Void>
     }
     
     var goToPersonalInfoView: (() -> Void)?
@@ -49,7 +51,10 @@ final class SettingsViewModel {
     }
     
     func transform(_ input: Input) -> Output {
-        input.logoutTap
+        
+        let showLogoutConfirm = input.logoutTap
+        
+        input.logoutConfirmTap
             .emit(onNext: { [weak self] in self?.performLogout() })
             .disposed(by: disposeBag)
         
@@ -62,7 +67,8 @@ final class SettingsViewModel {
         
         return Output(
             isLoading: loading.asDriver(),
-            error: error.asSignal()
+            error: error.asSignal(),
+            showLogoutConfirmAlert: showLogoutConfirm
         )
     }
     

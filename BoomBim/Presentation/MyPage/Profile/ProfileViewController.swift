@@ -110,6 +110,7 @@ final class ProfileViewController: BaseViewController {
     init(viewModel: ProfileViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        self.title = "프로필 관리"
     }
 
     required init?(coder: NSCoder) {
@@ -143,7 +144,7 @@ final class ProfileViewController: BaseViewController {
     
     private func setupNavigationBar() {
         navigationController?.navigationBar.tintColor = .grayScale9
-        navigationController?.navigationBar.topItem?.title = ""
+//        navigationController?.navigationBar.topItem?.title = ""
     }
     
     private func configureImageView() {

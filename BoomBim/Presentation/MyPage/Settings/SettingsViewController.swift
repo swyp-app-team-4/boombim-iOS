@@ -7,11 +7,15 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 import SafariServices
 
 final class SettingsViewController: BaseViewController {
     private let viewModel: SettingsViewModel
     private let disposeBag = DisposeBag()
+    
+    // “예” 신호를 ViewModel로 보낼 릴레이
+    private let logoutConfirmedRelay = PublishRelay<Void>()
 
     private let rows = SettingsRow.allCases
     
@@ -109,7 +113,8 @@ final class SettingsViewController: BaseViewController {
         // 1) Input
         let input = SettingsViewModel.Input(
             logoutTap: tableFooterView.logoutButton.rx.tap.asSignal(),
-            withdrawTap: tableFooterView.withdrawButton.rx.tap.asSignal()
+            withdrawTap: tableFooterView.withdrawButton.rx.tap.asSignal(),
+            logoutConfirmTap: logoutConfirmedRelay.asSignal()
         )
         
         // 2) Transform
@@ -133,12 +138,30 @@ final class SettingsViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
         
+        output.showLogoutConfirmAlert
+            .emit(with: self) { owner, _ in
+                owner.presentLogout()
+            }
+        
         // ✅ 피드백에서 사유가 도착하면 알럿 표시
         viewModel.reasonSelected
             .emit(onNext: { [weak self] reason in
                 self?.presentWithdrawConfirm(reason: reason)
             })
             .disposed(by: disposeBag)
+    }
+    
+    private func presentLogout() {
+        AppDialogController.showYesNo(
+            on: self,
+            title: "로그아웃 하시겠습니까?",
+            message: "재인증 후 다시 이용 가능합니다.",
+            onYes: { [weak self] in
+                print("Yes")
+                self?.logoutConfirmedRelay.accept(()) },
+            onNo: {
+                print("No")
+                self.dismiss(animated: true) })
     }
     
     private func presentWithdrawConfirm(reason: String) {

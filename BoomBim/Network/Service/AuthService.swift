@@ -115,7 +115,7 @@ final class AuthService: Service {
         }
 
         return serverCall.do(onSuccess: { _ in
-            TokenManager.shared.clear(type: .withdraw)
+//            TokenManager.shared.clear(type: .withdraw)
             
             // UserDefaults 값 초기화
             AlarmStore.shared.resetAlarmState()
