@@ -683,6 +683,50 @@
         }
       }
     },
+    "profile.label.register" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "등록하기"
+          }
+        }
+      }
+    },
+    "profile.label.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 한글, 영문, 숫자 (공백포함 20자)"
+          }
+        }
+      }
+    },
+    "profile.label.validate.fail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 이모지, 특수문자 사용이 불가능합니다\n• 공백 포함 최대 20자까지 입력 가능합니다"
+          }
+        }
+      }
+    },
+    "profile.label.validate.success" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 확인되었습니다"
+          }
+        }
+      }
+    },
     "report.button.post" : {
       "extractionState" : "manual",
       "localizations" : {
