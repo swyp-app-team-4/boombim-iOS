@@ -46,10 +46,9 @@ final class CongestionRankCell: UICollectionViewCell {
     
     private let infoStackView: UIStackView = {
         let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.alignment = .fill
-        stackView.distribution = .fill
-        stackView.spacing = 14
+        stackView.axis = .horizontal
+        stackView.alignment = .center
+        stackView.distribution = .equalSpacing
         
         return stackView
     }()
@@ -59,7 +58,7 @@ final class CongestionRankCell: UICollectionViewCell {
         stackView.axis = .vertical
         stackView.alignment = .fill
         stackView.distribution = .fill
-        stackView.spacing = 2
+//        stackView.spacing = 2
         
         return stackView
     }()
@@ -80,15 +79,6 @@ final class CongestionRankCell: UICollectionViewCell {
         return label
     }()
     
-    private let congestionStackView: UIStackView = {
-        let stackView = UIStackView()
-        stackView.axis = .horizontal
-        stackView.alignment = .fill
-        stackView.distribution = .fill
-        
-        return stackView
-    }()
-    
     private let congestionImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
@@ -96,16 +86,15 @@ final class CongestionRankCell: UICollectionViewCell {
         return imageView
     }()
     
-    private let spacer = UIView()
-    
-    private let update: UILabel = {
-        let label = UILabel()
-        label.font = Typography.Caption.regular.font
-        label.textColor = .grayScale7
-        label.textAlignment = .right
-        
-        return label
-    }()
+    /// 업데이트 시간이 모두 동일하게 적용되어 해당 부분 제거
+//    private let update: UILabel = {
+//        let label = UILabel()
+//        label.font = Typography.Caption.regular.font
+//        label.textColor = .grayScale7
+//        label.textAlignment = .right
+//        
+//        return label
+//    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -156,7 +145,7 @@ final class CongestionRankCell: UICollectionViewCell {
     }
     
     private func configureTextStackView() {
-        [textStackView, congestionStackView].forEach { view in
+        [textStackView, congestionImageView].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             infoStackView.addArrangedSubview(view)
         }
@@ -165,21 +154,6 @@ final class CongestionRankCell: UICollectionViewCell {
             view.translatesAutoresizingMaskIntoConstraints = false
             textStackView.addArrangedSubview(view)
         }
-        
-        [congestionImageView, spacer, update].forEach { view in
-            view.translatesAutoresizingMaskIntoConstraints = false
-            congestionStackView.addArrangedSubview(view)
-        }
-        
-        // 스페이서가 남는 공간을 다 먹도록
-        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        spacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        
-        // 아이콘/라벨은 위치 고정(늘지/줄지 않게)
-        congestionImageView.setContentHuggingPriority(.required, for: .horizontal)
-        congestionImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
-        update.setContentHuggingPriority(.required, for: .horizontal)
-        update.setContentCompressionResistancePriority(.required, for: .horizontal)
     }
 
     func configure(_ item: CongestionRankPlaceItem) {
@@ -193,8 +167,10 @@ final class CongestionRankCell: UICollectionViewCell {
         }
         
         congestionImageView.image = item.congestion.badge
-        title.text = item.title
-        address.text = item.address
-        update.text = item.update
+//        title.text = item.title
+//        address.text = item.address
+        
+        title.setText(item.title, style: Typography.Body02.semiBold)
+        address.setText(item.address, style: Typography.Caption.regular)
     }
 }
