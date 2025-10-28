@@ -153,6 +153,9 @@
         }
       }
     },
+    "hour" : {
+
+    },
     "login.button.kakao" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -944,6 +947,9 @@
           }
         }
       }
+    },
+    "value" : {
+
     },
     "yEnd" : {
 

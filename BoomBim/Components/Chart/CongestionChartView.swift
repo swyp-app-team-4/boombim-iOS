@@ -12,75 +12,143 @@ final class ChartViewModel: ObservableObject {
     @Published var data: [HourPoint] = []
     @Published var selectedHour: Int? = nil
     
+    var values: [Double] { data.map { $0.value }}
     var hours: [Int] { data.map { $0.hour } }
-    var minHour: Int { hours.min() ?? 6 }
-    var maxHour: Int { hours.max() ?? 24 }
+    var minHour: Int { hours.min() ?? 0 }
+    var maxHour: Int { hours.max() ?? 23 }
 }
 
 struct CongestionChartView: View {
     @ObservedObject var viewModel: ChartViewModel
-//    let data: [HourPoint]                    // 시간별 데이터
-//    @State private var selectedHour: Int?    // 탭/드래그로 선택
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 20) {
             header
-            legend
-            chart
+            VStack(alignment: .leading, spacing: 6) {
+                legend
+                chart
+            }
         }
-        .padding(16)
     }
 
     @ViewBuilder
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             Text("시간별 혼잡도 예측")
-                .font(.system(size: 24, weight: .bold))
+                .font(Font(Typography.Body01.semiBold.font))
+                .foregroundColor(.grayScale10)
+                .frame(height: Typography.Body01.semiBold.lineHeight)
             Text("1시간 간격 예측")
-                .foregroundColor(.secondary)
-                .font(.system(size: 16, weight: .semibold))
+                .font(Font(Typography.Body03.regular.font))
+                .foregroundColor(.grayScale8)
+                .frame(height: Typography.Body03.regular.lineHeight)
         }
     }
 
     @ViewBuilder
     private var legend: some View {
         HStack(spacing: 16) {
-            legendDot(.relaxed,  color: Color(hex: 0xD4EDC9))
-            legendDot(.normal,   color: Color(hex: 0xCFE1FF))
-            legendDot(.crowdedLite, color: Color(hex: 0xFFE49A))
-            legendDot(.crowded,  color: Color(hex: 0xFFB0AC))
+            legendDot(.relaxed,  color: .chartRelaxed)
+            legendDot(.normal,   color: .chartNormal)
+            legendDot(.busy, color: .chartBusy)
+            legendDot(.crowded,  color: .chartCrowded)
         }
     }
+    
+    private let bandColors: [Color] = [
+        Color(.chartRelaxed), // relaxed
+        Color(.chartNormal), // normal
+        Color(.chartBusy), // busy
+        Color(.chartCrowded)  // crowded
+    ]
 
     @ViewBuilder
     private var chart: some View {
-        Chart {
-            bandsLayer()          // 배경 밴드
-            lineAndPoints()       // 라인+포인트
-            selectionLayer()      // 선택 점선/말풍선
+        let bandWidth: CGFloat = 24      // 왼쪽 색 띠 너비
+        let bandGap:   CGFloat = 8           // 띠와 데이터 사이 여백
+        
+        
+        var axisHours: [Int] {
+            Array(Set(viewModel.data.map { $0.hour })).sorted()
         }
-        .chartXAxis { xAxis() }
-        .chartYAxis { yAxis() }
-        .chartXScale(domain: viewModel.minHour...viewModel.maxHour)
-        .chartYScale(domain: 0.0...4.0)            // Double로 명시
-        .frame(height: 280)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.06), radius: 10, y: 4)
+
+        Chart {
+            lineAndPoints()              // 기존 라인/포인트
+//            selectionLayer()             // 선택 점선/말풍선(있다면)
+        }
+        .chartXScale(
+            domain: viewModel.minHour...viewModel.maxHour,
+            range: .plotDimension(padding: 0)   // 좌우 여백 제거 → 색띠 끝에서 시작/끝
         )
-        .chartOverlay { proxy in overlay(proxy: proxy) }
+        .chartYScale(
+            domain: 0.0...100.0,
+            range: .plotDimension(padding: 0)   // 위아래 여백 제거(선택)
+        )
+
+        // 1) 플롯 배경은 흰색, 2) 왼쪽에 내부 패딩을 줘서 색띠 공간 확보
+        // 3) 그 패딩 공간(leading)에 색띠를 배경으로 깔기
+        .chartPlotStyle { plot in
+            plot
+                .background(Color.white)
+                .padding(.leading, bandWidth + bandGap)
+                .background(alignment: .leading) {
+                    let w = bandWidth + 0.5
+                    VStack(spacing: 0) {
+                        // 레벨 수(4)만큼 균등한 높이의 색 블록
+                        Color(.chartRelaxed)   // 여유
+                        Color(.chartNormal)   // 보통
+                        Color(.chartBusy)   // 약간 붐빔
+                        Color(.chartCrowded)   // 붐빔
+                    }
+                    .frame(width: w)
+                    .mask( // 플롯 높이에 정확히 4등분
+                        VStack(spacing: 0) {
+                            ForEach(0..<4) { _ in Rectangle() }
+                        }
+                    )
+                }
+        }
+
+        // X축 눈금을 '실제 데이터 시간'으로 지정 → 포인트와 정확히 수직 정렬
+        .chartXAxis(.hidden)     // 내장 X축 숨김
+        .padding(.bottom, Typography.Caption.regular.lineHeight)
+        .chartOverlay { proxy in
+            GeometryReader { geo in
+                let plotFrame = geo[proxy.plotAreaFrame]
+                
+                // hours는 표시할 정수 시간 배열
+                ForEach( Array(stride(from: viewModel.minHour, through: viewModel.maxHour, by: 2)), id: \.self) { h in
+                    if let x = proxy.position(forX: h) {
+                        // 라벨을 플롯 하단에 정렬
+                        Text("\(h)")
+                            .font(Font(Typography.Caption.regular.font))
+                            .foregroundStyle(Color(.grayScale7))
+                            .position(x: x + plotFrame.minX,
+                                      y: plotFrame.maxY + Typography.Caption.regular.lineHeight/2) // 하단 오프셋 -> 왜 나누기 2했는지
+                    }
+                }
+            }
+        }
+
+        // Y축: 가로 그리드 라인만 보이게
+        .chartYAxis {
+            AxisMarks(values: [0,1,2,3,4]) { _ in
+                AxisGridLine()
+                AxisTick().foregroundStyle(.clear)
+                AxisValueLabel().foregroundStyle(.clear)
+            }
+        }
     }
+
 
     @ChartContentBuilder
     private func bandsLayer() -> some ChartContent {
-        ForEach(CrowdLevel.allCases, id: \.self) { level in
+        ForEach(CongestionLevel.allCases, id: \.self) { level in
             RectangleMark(
                 xStart: .value("시작", viewModel.minHour),
                 xEnd:   .value("끝", viewModel.maxHour),
-                yStart: .value("yStart", Double(level.rawValue)),
-                yEnd:   .value("yEnd", Double(level.rawValue + 1))
+                yStart: .value("yStart", Double(level.bandIndex)),
+                yEnd:   .value("yEnd", Double(level.bandIndex + 1))
             )
             .foregroundStyle(level.bandColor)
         }
@@ -90,18 +158,25 @@ struct CongestionChartView: View {
     private func lineAndPoints() -> some ChartContent {
         ForEach(viewModel.data) { item in
             LineMark(
-                x: .value("시", item.hour),
-                y: .value("레벨", Double(item.level.rawValue) + 0.5)
+                x: .value("hour", item.hour),
+                y: .value("value", item.value)
             )
-            .lineStyle(.init(lineWidth: 2))
-            .foregroundStyle(Color.orange)
+            .lineStyle(.init(lineWidth: 1))
+            .foregroundStyle(Color(.main))
 
             PointMark(
-                x: .value("시", item.hour),
-                y: .value("레벨", Double(item.level.rawValue) + 0.5)
+                x: .value("hour", item.hour),
+                y: .value("value", item.value)
             )
-            .symbolSize(30)
-            .foregroundStyle(Color.orange)
+            .symbol(.circle)
+            .symbolSize(28)
+            .foregroundStyle(.white)                   // 채움 = 흰색
+            .annotation(position: .overlay) {          // 테두리 = 메인컬러 1pt
+                Circle()
+                    .stroke(Color(UIColor.main), lineWidth: 1)
+                    .frame(width: 6, height: 6)
+                    .allowsHitTesting(false)
+            }
         }
     }
 
@@ -137,9 +212,9 @@ struct CongestionChartView: View {
     }
 
     @ViewBuilder
-    private func selectionCallout(level: CrowdLevel, value: Int) -> some View {
+    private func selectionCallout(level: CongestionLevel, value: Int) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(level.name).font(.caption).bold()
+            Text(level.description).font(.caption).bold()
             Text("예측 \(value)").font(.caption2).foregroundStyle(.secondary)
         }
         .padding(8)
@@ -163,7 +238,7 @@ struct CongestionChartView: View {
 
     @AxisContentBuilder
     private func yAxis() -> some AxisContent {
-        let ticks: [Double] = CrowdLevel.allCases.map { Double($0.rawValue) + 0.5 } // 타입 명시
+        let ticks: [Double] = CongestionLevel.allCases.map { Double($0.rawValue) + 0.5 } // 타입 명시
         AxisMarks(values: ticks) { _ in
             AxisGridLine().foregroundStyle(.clear)
             AxisTick().foregroundStyle(.clear)
@@ -194,10 +269,13 @@ struct CongestionChartView: View {
         return nearest
     }
     
-    private func legendDot(_ level: CrowdLevel, color: Color) -> some View {
-        HStack(spacing: 6) {
-            Circle().fill(color).frame(width: 12, height: 12)
-            Text(level.name).font(.footnote)
+    private func legendDot(_ level: CongestionLevel, color: Color) -> some View {
+        HStack(spacing: 8) {
+            Circle().fill(color).frame(width: 8, height: 8)
+            Text(level.description)
+                .font(Font(Typography.Caption.regular.font))
+                .foregroundColor(.grayScale9)
+                .frame(height: Typography.Caption.regular.lineHeight)
         }
     }
 }

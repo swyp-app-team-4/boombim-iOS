@@ -248,8 +248,8 @@ final class OfficialPlaceDetailViewController: UIViewController {
         
         configureChart()
         
-//        configurePeople()
-//        configureAge()
+        configurePeople()
+        configureAge()
     }
     
     private func configureScrollView() {
@@ -327,7 +327,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
     private func configureChart() {
         let chartView = CongestionChartView(viewModel: chartViewModel)
         let host = UIHostingController(rootView: chartView)
-        host.view.backgroundColor = .clear
+        host.view.backgroundColor = .grayScale1
         
         self.addChild(host)
         
@@ -372,7 +372,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
         contentView.addSubview(peopleContatiner)
         
         NSLayoutConstraint.activate([
-            peopleContatiner.topAnchor.constraint(equalTo: spacingView.bottomAnchor, constant: 16),
+            peopleContatiner.topAnchor.constraint(equalTo: chartContatiner.bottomAnchor, constant: 18),
             peopleContatiner.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             peopleContatiner.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
@@ -462,16 +462,16 @@ final class OfficialPlaceDetailViewController: UIViewController {
         setAgeStackView(percent: ageRateArray)
         
         let sample: [HourPoint] = [
-            .init(hour: 6, level: .relaxed, value: 10),
+            .init(hour: 6, level: .relaxed, value: 1),
             .init(hour: 7, level: .relaxed, value: 12),
             .init(hour: 8, level: .crowded, value: 59),
             .init(hour: 9, level: .relaxed, value: 10),
             .init(hour: 10, level: .relaxed, value: 15),
-            .init(hour: 11, level: .crowdedLite, value: 30),
+            .init(hour: 11, level: .busy, value: 30),
             .init(hour: 12, level: .crowded, value: 68),
             .init(hour: 13, level: .crowded, value: 74),
             .init(hour: 14, level: .crowded, value: 79),
-            .init(hour: 15, level: .crowdedLite, value: 36),
+            .init(hour: 15, level: .busy, value: 36),
             .init(hour: 16, level: .normal, value: 28),
             .init(hour: 17, level: .normal, value: 21),
             .init(hour: 18, level: .normal, value: 20),
@@ -480,6 +480,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
             .init(hour: 21, level: .crowded, value: 60),
             .init(hour: 22, level: .relaxed, value: 3),
             .init(hour: 23, level: .relaxed, value: 1),
+            .init(hour: 24, level: .relaxed, value: 1),
         ]
         
         updateChart(data: sample)
