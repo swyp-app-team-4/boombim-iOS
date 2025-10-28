@@ -11,6 +11,9 @@ import RxCocoa
 import CoreLocation
 
 final class HomeViewModel {
+    private let error = PublishRelay<String>()
+    private let loading = BehaviorRelay<Bool>(value: false)
+    
     var goToCongestionReportView: (() -> Void)?
     var goToSearchView: (() -> Void)?
     var goToNotificationView: (() -> Void)?
@@ -35,12 +38,8 @@ final class HomeViewModel {
     
     struct Input {
         let appear: Observable<Void>        // 최초 1회
+        let refreshFavorite: Observable<Void>
         let refreshRank: Observable<Void>   // 랭킹 새로고침 버튼 탭
-        
-        init(appear: Observable<Void>, refreshRank: Observable<Void> = .empty()) {
-            self.appear = appear
-            self.refreshRank = refreshRank
-        }
     }
     
     struct Output {
@@ -99,20 +98,23 @@ final class HomeViewModel {
         
         let trigger = input.appear.share()
         
-        let rankTrigger = Observable.merge(trigger, input.refreshRank).share()
+        let favoriteTrigger = Observable.merge(
+            trigger,
+            input.refreshFavorite).share()
         
-        let loading = BehaviorRelay<Bool>(value: false)
-        let errorRelay = PublishRelay<String>()
+        let rankTrigger = Observable.merge(
+            trigger,
+            input.refreshRank).share()
         
         let response = trigger
             .flatMapLatest {  _ -> Observable<Event<[RegionNewsResponse]>> in
                 PlaceService.shared.getRegionNews()
                     .asObservable()
-                    .do(onSubscribe: { loading.accept(true) })
+                    .do(onSubscribe: { self.loading.accept(true) })
                     .materialize()
             }
-            .do(onNext: { _ in loading.accept(false) },
-                onError: { _ in loading.accept(false) })
+            .do(onNext: { _ in self.loading.accept(false) },
+                onError: { _ in self.loading.accept(false) })
             .share()
         
         let values = response.compactMap { $0.element }
@@ -120,7 +122,7 @@ final class HomeViewModel {
         
         errors
             .map { $0.localizedDescription }
-            .bind(to: errorRelay)
+            .bind(to: error)
             .disposed(by: disposeBag)
         
         // 5) UI 아이템 매핑
@@ -149,16 +151,16 @@ final class HomeViewModel {
             }
             .asDriver(onErrorJustReturn: [RecommendPlaceItem]())
         
-        let favoritePlace: Driver<[FavoritePlaceItem]> = trigger
+        let favoritePlace: Driver<[FavoritePlaceItem]> = favoriteTrigger
             .flatMapLatest {  _ in
                 PlaceService.shared.getFavoritePlace()
                     .map { $0.data.map(Self.makeItem(_:)) }
                     .asObservable()
-                    .do(onSubscribe: { loading.accept(true) })
+                    .do(onSubscribe: { self.loading.accept(true) })
                     .materialize()
             }
-            .do(onNext: { _ in loading.accept(false) },
-                onError: { _ in loading.accept(false) })
+            .do(onNext: { _ in self.loading.accept(false) },
+                onError: { _ in self.loading.accept(false) })
             .compactMap { $0.element }
             .asDriver(onErrorJustReturn: [])
         
@@ -169,11 +171,11 @@ final class HomeViewModel {
                         Self.makeItem(place, rank: index)
                     } }
                     .asObservable()
-                    .do(onSubscribe: { loading.accept(true) })
+                    .do(onSubscribe: { self.loading.accept(true) })
                     .materialize()
             }
-            .do(onNext: { _ in loading.accept(false) },
-                onError: { _ in loading.accept(false) })
+            .do(onNext: { _ in self.loading.accept(false) },
+                onError: { _ in self.loading.accept(false) })
             .compactMap { $0.element }
             .asDriver(onErrorJustReturn: [])
         
@@ -186,7 +188,7 @@ final class HomeViewModel {
             isLoading: loading.asDriver(),
             isRegionNewsEmpty: isRegionNewsEmpty,
             isEmpty: isRegionNewsEmpty,
-            errorMessage: errorRelay.asSignal()
+            errorMessage: error.asSignal()
         )
     }
     
@@ -225,12 +227,16 @@ final class HomeViewModel {
         
         if let congestion = r.congestionLevelName {
             return FavoritePlaceItem(
+                placeId: r.placeId,
+                placeType: r.placeType,
                 image: r.imageUrl ?? "",
                 title: r.name,
                 update: DateHelper.displayString(from: r.observedAt ?? ""),
                 congestion: CongestionLevel.init(ko: congestion))
         } else {
             return FavoritePlaceItem(
+                placeId: r.placeId,
+                placeType: r.placeType,
                 image: r.imageUrl ?? "",
                 title: r.name,
                 update: DateHelper.displayString(from: r.observedAt ?? ""),
@@ -247,6 +253,25 @@ final class HomeViewModel {
             address: r.legalDong,
             update: DateHelper.displayString(from: r.observedAt),
             congestion: CongestionLevel.init(ko: r.congestionLevelName) ?? .relaxed)
+    }
+    
+    func removeFavoritePlace(_ r: FavoritePlaceItem) -> Signal<Void> {
+        let request: RemoveFavoritePlaceRequest = .init(
+            placeType: r.placeType,
+            placeId: r.placeId)
+        
+        loading.accept(true)
+        
+        return PlaceService.shared.removeFavoritePlace(body: request)
+            .observe(on: MainScheduler.instance)
+            .do(onSuccess: { _ in
+                self.loading.accept(false)
+            }, onError: { [weak self] err in
+                self?.loading.accept(false)
+                self?.error.accept(err.localizedDescription)
+            })
+            .map { _ in () }                      // 성공만 Void로 변환
+            .asSignal(onErrorRecover: { _ in .empty() }) // 에러 시 Signal은 종료되지 않게 빈 스트림
     }
     
     private static func parse(_ format: String, _ str: String) -> Date? {

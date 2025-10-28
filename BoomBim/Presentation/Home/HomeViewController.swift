@@ -12,6 +12,7 @@ import RxCocoa
 final class HomeViewController: BaseViewController {
     private let viewModel: HomeViewModel
     private let disposeBag = DisposeBag()
+    private let refreshFavoriteRelay = PublishRelay<Void>()
     private let refreshRankRelay = PublishRelay<Void>()
     
     private var dataSource: UICollectionViewDiffableDataSource<HomeSection, HomeItem>!
@@ -61,6 +62,7 @@ final class HomeViewController: BaseViewController {
         let output = viewModel.transform(.init(
             appear: rx.methodInvoked(#selector(UIViewController.viewWillAppear(_:)))
                 .map { _ in () },
+            refreshFavorite: refreshFavoriteRelay.asObservable(),
             refreshRank: refreshRankRelay.asObservable()
         ))
         
@@ -195,6 +197,15 @@ final class HomeViewController: BaseViewController {
         
         let favoriteRegistration = UICollectionView.CellRegistration<FavoriteCell, FavoritePlaceItem> { cell, _, item in
             cell.configure(item)
+            cell.onTapFavorite = { [weak self] in
+                guard let self else { return }
+                
+                self.viewModel.removeFavoritePlace(item)
+                    .emit(with: self) { owner, _ in
+                        print("삭제")
+                        self.refreshFavoriteRelay.accept(())
+                    }.disposed(by: disposeBag)
+            }
         }
         
         let favoriteEmptyRegistration = UICollectionView.CellRegistration<FavoriteEmptyCell, String> { cell, _, _ in }

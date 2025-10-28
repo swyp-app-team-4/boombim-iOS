@@ -89,12 +89,16 @@ final class FavoriteViewController: UIViewController {
     private static func makeItem(_ f: MyFavorite) -> FavoritePlaceItem {
         if let congestion = f.congestionLevelName {
             return FavoritePlaceItem(
+                placeId: f.placeId,
+                placeType: f.placeType,
                 image: f.imageUrl ?? "",
                 title: f.name,
                 update: DateHelper.displayString(from: f.observedAt ?? ""),
                 congestion: CongestionLevel.init(ko: congestion))
         } else {
             return FavoritePlaceItem(
+                placeId: f.placeId,
+                placeType: f.placeType,
                 image: f.imageUrl ?? "",
                 title: f.name,
                 update: DateHelper.displayString(from: f.observedAt ?? ""),

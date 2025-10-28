@@ -295,7 +295,7 @@ struct FavoritePlaceResponse: Decodable {
 struct FavoritePlaceInfo: Decodable {
     let favoriteId: Int
     let placeId: Int
-    let placeType: String
+    let placeType: FavoritePlaceType
     let name: String
     let imageUrl: String?
     let congestionLevelName: String?
@@ -321,7 +321,7 @@ struct RankOfficialPlaceInfo: Decodable {
     let observedAt: String
 }
 
-enum FavoritePlaceType: String, Encodable {
+enum FavoritePlaceType: String, Encodable, Decodable {
     case OFFICIAL_PLACE = "OFFICIAL_PLACE"
     case MEMBER_PLACE = "MEMBER_PLACE"
 }

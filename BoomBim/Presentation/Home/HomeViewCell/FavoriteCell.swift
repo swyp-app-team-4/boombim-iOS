@@ -8,6 +8,9 @@
 import UIKit
 
 final class FavoriteCell: UICollectionViewCell {
+    // MVVM: Output event callback to be assigned by the ViewModel/Controller
+    var onTapFavorite: (() -> Void)?
+    
     static let identifier = "FavoriteCell"
     
     private let stackView: UIStackView = {
@@ -100,6 +103,7 @@ final class FavoriteCell: UICollectionViewCell {
         super.init(frame: frame)
         
         setupView()
+        setupAction()
     }
     
     private func setupView() {
@@ -161,6 +165,14 @@ final class FavoriteCell: UICollectionViewCell {
             favoriteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])
     }
+    
+    private func setupAction() {
+        favoriteButton.addTarget(self, action: #selector(didTapFavorite), for: .touchUpInside)
+    }
+    
+    @objc private func didTapFavorite() {
+        onTapFavorite?()
+    }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
@@ -170,9 +182,11 @@ final class FavoriteCell: UICollectionViewCell {
         if let congestionImageName = item.congestion {
             congestionImageView.image = congestionImageName.badge
         }
-        favoriteButton.isSelected = true
+        
+        favoriteButton.isSelected = true /// Home에서 사용하는 관심장소 cell은 애초에 관심장소만 조회
         
         title.text = item.title
         update.text = item.update
     }
 }
+

@@ -758,6 +758,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         }
         officialPlaceDetailViewController?.configure(data: places)
         
+        // TODO: 서버 통신 부분도 나중에 ViewModel로 옮기기
         if didBindOfficialDetailActions == false, let detailVC = officialPlaceDetailViewController {
             detailVC.favoriteActionRequested
                 .emit(onNext: { [weak detailVC, weak self] action in

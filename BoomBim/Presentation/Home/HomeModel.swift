@@ -25,7 +25,8 @@ struct RecommendPlaceItem: Hashable {
 }
 
 struct FavoritePlaceItem: Hashable {
-    let id = UUID()
+    let placeId: Int
+    let placeType: FavoritePlaceType
     let image: String
     let title: String
     let update: String
