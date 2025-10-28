@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import SwiftUI
+
 import RxSwift
 import RxCocoa
 
@@ -44,6 +46,9 @@ final class OfficialPlaceDetailViewController: UIViewController {
             }
             .asSignal(onErrorSignalWith: .empty())
     }
+    
+    // SwiftUI Chart용 viewModel
+    private let chartViewModel = ChartViewModel()
     
     let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -115,6 +120,19 @@ final class OfficialPlaceDetailViewController: UIViewController {
         
         return view
     }()
+    
+    private lazy var chartContatiner: UIView = {
+        let view = UIView()
+        view.backgroundColor = .grayScale1
+        view.layer.cornerRadius = 12
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.grayScale3.cgColor
+        view.clipsToBounds = true
+        
+        return view
+    }()
+    
+    private var chartHost: UIHostingController<CongestionChartView>?
     
     private lazy var peopleContatiner: UIView = {
         let view = UIView()
@@ -228,8 +246,10 @@ final class OfficialPlaceDetailViewController: UIViewController {
         configureText()
         configurePlaceInfo()
         
-        configurePeople()
-        configureAge()
+        configureChart()
+        
+//        configurePeople()
+//        configureAge()
     }
     
     private func configureScrollView() {
@@ -301,6 +321,41 @@ final class OfficialPlaceDetailViewController: UIViewController {
         [titleLabel, addressLabel].forEach { label in
             label.translatesAutoresizingMaskIntoConstraints = false
             textStackView.addArrangedSubview(label)
+        }
+    }
+    
+    private func configureChart() {
+        let chartView = CongestionChartView(viewModel: chartViewModel)
+        let host = UIHostingController(rootView: chartView)
+        host.view.backgroundColor = .clear
+        
+        self.addChild(host)
+        
+        host.view.translatesAutoresizingMaskIntoConstraints = false
+        chartContatiner.addSubview(host.view)
+        
+        chartContatiner.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(chartContatiner)
+        
+        NSLayoutConstraint.activate([
+            chartContatiner.topAnchor.constraint(equalTo: spacingView.bottomAnchor, constant: 16),
+            chartContatiner.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            chartContatiner.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            
+            host.view.topAnchor.constraint(equalTo: chartContatiner.topAnchor, constant: 20),
+            host.view.bottomAnchor.constraint(equalTo: chartContatiner.bottomAnchor, constant: -20),
+            host.view.leadingAnchor.constraint(equalTo: chartContatiner.leadingAnchor, constant: 16),
+            host.view.trailingAnchor.constraint(equalTo: chartContatiner.trailingAnchor, constant: -16),
+        ])
+        
+        host.didMove(toParent: self)
+        chartHost = host
+    }
+    
+    func updateChart(data: [HourPoint]) {
+        DispatchQueue.main.async {
+            self.chartViewModel.data = data
+            self.chartViewModel.selectedHour = 16 // 현재 시간
         }
     }
     
@@ -405,6 +460,29 @@ final class OfficialPlaceDetailViewController: UIViewController {
         liveGaugeView.update(residePercent: residePercent, nonresidePercent: nonresidePercent)
         
         setAgeStackView(percent: ageRateArray)
+        
+        let sample: [HourPoint] = [
+            .init(hour: 6, level: .relaxed, value: 10),
+            .init(hour: 7, level: .relaxed, value: 12),
+            .init(hour: 8, level: .crowded, value: 59),
+            .init(hour: 9, level: .relaxed, value: 10),
+            .init(hour: 10, level: .relaxed, value: 15),
+            .init(hour: 11, level: .crowdedLite, value: 30),
+            .init(hour: 12, level: .crowded, value: 68),
+            .init(hour: 13, level: .crowded, value: 74),
+            .init(hour: 14, level: .crowded, value: 79),
+            .init(hour: 15, level: .crowdedLite, value: 36),
+            .init(hour: 16, level: .normal, value: 28),
+            .init(hour: 17, level: .normal, value: 21),
+            .init(hour: 18, level: .normal, value: 20),
+            .init(hour: 19, level: .relaxed, value: 10),
+            .init(hour: 20, level: .crowded, value: 58),
+            .init(hour: 21, level: .crowded, value: 60),
+            .init(hour: 22, level: .relaxed, value: 3),
+            .init(hour: 23, level: .relaxed, value: 1),
+        ]
+        
+        updateChart(data: sample)
     }
     
     func ageRatesDict(data: [Demographic]) -> [AgeCategory: Double] {

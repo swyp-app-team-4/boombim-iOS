@@ -1,6 +1,15 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "%lld" : {
+
+    },
+    "%lld시" : {
+
+    },
+    "1시간 간격 예측" : {
+
+    },
     "alarmSetting.label.state" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -935,6 +944,33 @@
           }
         }
       }
+    },
+    "yEnd" : {
+
+    },
+    "yStart" : {
+
+    },
+    "끝" : {
+
+    },
+    "레벨" : {
+
+    },
+    "선택 시" : {
+
+    },
+    "시" : {
+
+    },
+    "시간별 혼잡도 예측" : {
+
+    },
+    "시작" : {
+
+    },
+    "예측 %lld" : {
+
     }
   },
   "version" : "1.0"
