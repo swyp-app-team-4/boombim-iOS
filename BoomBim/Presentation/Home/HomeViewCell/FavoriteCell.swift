@@ -107,7 +107,7 @@ final class FavoriteCell: UICollectionViewCell {
     }
     
     private func setupView() {
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = .clear
         
         configureStackView()
         configureImageView()

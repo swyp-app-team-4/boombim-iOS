@@ -84,7 +84,7 @@ final class SearchPlaceViewController: BaseViewController {
     
     // MARK: - Setup UI
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         configureNavigationBar()
         configureView()
     }

@@ -63,7 +63,7 @@ final class SearchViewController: BaseViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         configureNavigationBar()
         configureView()
     }

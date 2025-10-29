@@ -21,7 +21,7 @@ final class ChatViewController: BaseViewController {
     private let headerView = TwoTitleHeaderView()
     private let pageViewController: UIPageViewController = {
         let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal, options: nil)
-        pageViewController.view.backgroundColor = .white
+        pageViewController.view.backgroundColor = .background
         
         return pageViewController
     }()

@@ -48,7 +48,7 @@ final class NotificationViewController: BaseViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureHeaderView()
         configurePageViewController()

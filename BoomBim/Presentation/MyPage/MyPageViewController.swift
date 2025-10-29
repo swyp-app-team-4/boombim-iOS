@@ -18,7 +18,7 @@ final class MyPageViewController: BaseViewController {
     private let headerView = MyHeaderView()
     private let pageViewController: UIPageViewController = {
         let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal, options: nil)
-        pageViewController.view.backgroundColor = .white
+        pageViewController.view.backgroundColor = .background
         
         return pageViewController
     }()

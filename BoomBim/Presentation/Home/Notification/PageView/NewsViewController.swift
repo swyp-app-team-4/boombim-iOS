@@ -88,7 +88,7 @@ final class NewsViewController: UIViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureEmptyStackView()
         configureTableView()

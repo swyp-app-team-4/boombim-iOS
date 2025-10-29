@@ -19,7 +19,7 @@ final class HomeViewController: BaseViewController {
     
     private lazy var collectionView: UICollectionView = {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
-        collectionView.backgroundColor = .white
+        collectionView.backgroundColor = .background
         collectionView.directionalLayoutMargins = .init(top: 0, leading: 16, bottom: 0, trailing: 16)
         collectionView.contentInset.top = 22 // 최상단 간격
         
@@ -117,7 +117,7 @@ final class HomeViewController: BaseViewController {
     
     // MARK: Setup UI
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         setupNavigationBar()
         

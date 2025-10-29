@@ -504,7 +504,7 @@ final class CongestionReportViewController: BaseViewController {
     
     // MARK: Setup UI
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureNavigationBar()
         
