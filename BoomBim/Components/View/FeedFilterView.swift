@@ -30,7 +30,7 @@ final class FilterBarView: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = .white
+        backgroundColor = .clear
 
         // 1) ScrollView
         scroll.showsHorizontalScrollIndicator = false

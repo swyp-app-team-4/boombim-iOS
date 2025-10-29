@@ -101,7 +101,7 @@ final class UserPlaceListViewController: UIViewController {
 // MARK: - Configure & Layout
 private extension UserPlaceListViewController {
     func configure() {
-        view.backgroundColor = .clear
+        view.backgroundColor = .background
 
         // TableView
         tableView.backgroundColor = .clear

@@ -42,7 +42,7 @@ final class PlaceHeaderView: UIView {
     
     init(title: String, update: String, address: String, currentLevel: CongestionLevel) {
         super.init(frame: .zero)
-        backgroundColor = .white
+        backgroundColor = .clear
         
         titleLabel.text = title
         titleLabel.font = Typography.Body02.semiBold.font
