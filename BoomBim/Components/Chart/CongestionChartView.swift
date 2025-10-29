@@ -65,20 +65,21 @@ struct CongestionChartView: View {
     @ViewBuilder
     private var chart: some View {
         let bandWidth: CGFloat = 24      // 왼쪽 색 띠 너비
-        let bandGap:   CGFloat = 8           // 띠와 데이터 사이 여백
-        
+        let chartHeight: CGFloat = 150
+        let innerPad: CGFloat = 6 // pt 단위, 원하는 만큼
         
         var axisHours: [Int] {
             Array(Set(viewModel.data.map { $0.hour })).sorted()
         }
 
         Chart {
+            gridRules()
             lineAndPoints()              // 기존 라인/포인트
 //            selectionLayer()             // 선택 점선/말풍선(있다면)
         }
         .chartXScale(
             domain: viewModel.minHour...viewModel.maxHour,
-            range: .plotDimension(padding: 0)   // 좌우 여백 제거 → 색띠 끝에서 시작/끝
+            range: .plotDimension(padding: innerPad)   // 좌우 여백 제거 → 색띠 끝에서 시작/끝
         )
         .chartYScale(
             domain: 0.0...100.0,
@@ -90,7 +91,7 @@ struct CongestionChartView: View {
         .chartPlotStyle { plot in
             plot
                 .background(Color.white)
-                .padding(.leading, bandWidth + bandGap)
+                .padding(.leading, bandWidth)
                 .background(alignment: .leading) {
                     let w = bandWidth + 0.5
                     VStack(spacing: 0) {
@@ -138,6 +139,7 @@ struct CongestionChartView: View {
                 AxisValueLabel().foregroundStyle(.clear)
             }
         }
+        .frame(height: chartHeight)
     }
 
 
@@ -151,6 +153,17 @@ struct CongestionChartView: View {
                 yEnd:   .value("yEnd", Double(level.bandIndex + 1))
             )
             .foregroundStyle(level.bandColor)
+        }
+    }
+    
+    @ChartContentBuilder
+    private func gridRules() -> some ChartContent {
+        // y 도메인이 0...100이므로 0,25,50,75,100에 5개 선
+        ForEach([0, 25, 50, 75, 100], id: \.self) { y in
+            RuleMark(y: .value("grid", y))
+                .foregroundStyle(Color(.grayScale3))
+                .lineStyle(StrokeStyle(lineWidth: 1))
+                .zIndex(0) // 데이터(라인/포인트) 뒤
         }
     }
 
