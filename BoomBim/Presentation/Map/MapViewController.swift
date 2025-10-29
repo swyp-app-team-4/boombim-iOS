@@ -71,18 +71,19 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         return view
     }()
 
-    private let favoriteButton: UIButton = {
-        let button = UIButton(type: .custom)
-        button.setImage(.buttonUnselectedFavorite, for: .normal)
-        button.setImage(.buttonSelectedFavorite,  for: .selected)
-        return button
-    }()
-
-    private let dividerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .grayScale6
-        return view
-    }()
+    /// 해당 기능은 제거
+//    private let favoriteButton: UIButton = {
+//        let button = UIButton(type: .custom)
+//        button.setImage(.buttonUnselectedFavorite, for: .normal)
+//        button.setImage(.buttonSelectedFavorite,  for: .selected)
+//        return button
+//    }()
+//
+//    private let dividerView: UIView = {
+//        let view = UIView()
+//        view.backgroundColor = .grayScale6
+//        return view
+//    }()
 
     private lazy var publicButton: UIButton = {
         let button = UIButton()
@@ -244,29 +245,15 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         ])
 
         // 내부 구성
-        favoriteButton.translatesAutoresizingMaskIntoConstraints = false
-        dividerView.translatesAutoresizingMaskIntoConstraints = false
         let segmentStack = UIStackView(arrangedSubviews: [publicButton, realtimeButton])
         segmentStack.axis = .horizontal
         segmentStack.spacing = 8
         segmentStack.translatesAutoresizingMaskIntoConstraints = false
 
-        buttonsContainer.addSubview(favoriteButton)
-        buttonsContainer.addSubview(dividerView)
         buttonsContainer.addSubview(segmentStack)
 
         NSLayoutConstraint.activate([
-            favoriteButton.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
-            favoriteButton.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-            favoriteButton.widthAnchor.constraint(equalToConstant: 34),
-            favoriteButton.heightAnchor.constraint(equalToConstant: 34),
-
-            dividerView.leadingAnchor.constraint(equalTo: favoriteButton.trailingAnchor, constant: 10),
-            dividerView.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-            dividerView.widthAnchor.constraint(equalToConstant: 2),
-            dividerView.heightAnchor.constraint(equalToConstant: 15),
-
-            segmentStack.leadingAnchor.constraint(equalTo: dividerView.trailingAnchor, constant: 4),
+            segmentStack.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
             segmentStack.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
             segmentStack.trailingAnchor.constraint(lessThanOrEqualTo: buttonsContainer.trailingAnchor),
             segmentStack.heightAnchor.constraint(equalToConstant: 34)
@@ -327,20 +314,6 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
             .disposed(by: disposeBag)
         realtimeButton.rx.tap
             .bind(onNext: { [weak self] in self?.selectMode(.realtime) })
-            .disposed(by: disposeBag)
-
-        // 즐겨찾기 토글(보이기/숨기기)
-        favoriteButton.rx.tap
-            .bind(onNext: { [weak self] in
-                guard let self else { return }
-                favoriteButton.isSelected.toggle()
-                if favoriteButton.isSelected {
-                    overlay.show(.favorite)
-                } else {
-                    overlay.hide(.favorite)
-                }
-//                kakaoMap?.commit()
-            })
             .disposed(by: disposeBag)
 
         // 현재 위치
@@ -484,19 +457,6 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                     self.floatingPanel.move(to: .tip, animated: true)
                 } else {
                     self.showOfficialListPanel(with: official) // 아래 함수
-                }
-            })
-            .disposed(by: disposeBag)
-        
-        favoriteButton.rx.tap
-            .bind(onNext: { [weak self] in
-                guard let self else { return }
-                favoriteButton.isSelected.toggle()
-                
-                if favoriteButton.isSelected {
-                    self.overlay.show(.favorite)
-                } else {
-                    self.overlay.hide(.favorite)
                 }
             })
             .disposed(by: disposeBag)
