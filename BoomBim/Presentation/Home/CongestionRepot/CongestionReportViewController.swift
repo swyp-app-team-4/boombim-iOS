@@ -487,7 +487,10 @@ final class CongestionReportViewController: BaseViewController {
         
         output.completed
             .emit(onNext: { [weak self] in
-                self?.viewModel.didTapPost() // 라우팅/닫기 등
+                guard let self else { return }
+                // self?.viewModel.didTapPost() // 라우팅/닫기 등
+                print("self.locationTextField.text : \(self.locationTextField.text)")
+                self.presentRegisterDialog(on: self, place: self.locationTextField.text ?? "")
             })
             .disposed(by: disposeBag)
         
@@ -793,6 +796,17 @@ final class CongestionReportViewController: BaseViewController {
     
     @objc private func didTapClose() {
         dismiss(animated: true)
+    }
+    
+    private func presentRegisterDialog(on host: UIViewController, place: String) {
+        let alert = RegisterDialogController(place: place)
+        alert.onConfirm = { [weak self] in
+            self?.viewModel.didTapPost() // 라우팅/닫기 등
+        }
+        
+        DispatchQueue.main.async {
+            host.present(alert, animated: true)
+        }
     }
 }
 

@@ -78,7 +78,7 @@ final class ChatCoordinator: Coordinator {
     }
     
     private func presentRegisterDialog(on host: UIViewController, nickname: String) {
-        let alert = RegisterDialogController(nickname: nickname)
+        let alert = RegisterDialogController(place: nickname)
         
         DispatchQueue.main.async {
             host.present(alert, animated: true)

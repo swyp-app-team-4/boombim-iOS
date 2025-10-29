@@ -144,6 +144,39 @@
         }
       }
     },
+    "dialog.button.confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
+          }
+        }
+      }
+    },
+    "dialog.label.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금 바로 지도에서 핀을 확인해보세요"
+          }
+        }
+      }
+    },
+    "dialog.label.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "혼잡도 알리기 완료!"
+          }
+        }
+      }
+    },
     "login.button.kakao" : {
       "extractionState" : "manual",
       "localizations" : {
