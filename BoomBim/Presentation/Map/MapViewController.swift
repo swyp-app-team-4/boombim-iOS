@@ -366,13 +366,13 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
 
                 // ✅ 인덱스도 PLACE만으로
                 self.placeIndex = Dictionary(uniqueKeysWithValues: onlyPlaces.map {
-                    (String($0.memberPlaceId), $0)
+                    (String($0.placeId), $0)
                 })
 
                 // ✅ POI도 PLACE만으로
                 let items: [POIItem] = onlyPlaces.map {
                     .init(
-                        id: String($0.memberPlaceId),
+                        id: String($0.placeId),
                         point: MapPoint(
                             longitude: $0.coordinate.longitude,
                             latitude:  $0.coordinate.latitude

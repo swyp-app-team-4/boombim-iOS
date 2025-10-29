@@ -11,10 +11,10 @@ import RxCocoa
 
 extension UserPlaceItem: Hashable {
     static func == (lhs: UserPlaceItem, rhs: UserPlaceItem) -> Bool {
-        return lhs.memberPlaceId == rhs.memberPlaceId
+        return lhs.placeId == rhs.placeId
     }
     func hash(into hasher: inout Hasher) {
-        hasher.combine(memberPlaceId)
+        hasher.combine(placeId)
     }
 }
 
@@ -58,7 +58,7 @@ final class UserPlaceListViewController: UIViewController {
     
     func applyFavoriteChange(placeId: Int, isFavorite: Bool) {
         // 1) 모델 업데이트
-        guard let idx = userItems.firstIndex(where: { $0.memberPlaceId == placeId }) else { return }
+        guard let idx = userItems.firstIndex(where: { $0.placeId == placeId }) else { return }
         userItems[idx].isFavorite = isFavorite
         let item = userItems[idx]
 
@@ -210,7 +210,7 @@ private extension UserPlaceListViewController {
                 print("이름이 무엇 item : \(item.name)")
                 
                 let payload = FavoriteTapPayload(
-                    placeId: item.memberPlaceId,
+                    placeId: item.placeId,
                     placeType: .MEMBER_PLACE,
                     isFavorite: item.isFavorite,
                     indexPath: indexPath
