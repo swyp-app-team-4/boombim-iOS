@@ -355,7 +355,6 @@ final class OfficialPlaceDetailViewController: UIViewController {
     func updateChart(data: [HourPoint]) {
         DispatchQueue.main.async {
             self.chartViewModel.data = data
-            self.chartViewModel.selectedHour = 16 // 현재 시간
         }
     }
     
@@ -462,25 +461,25 @@ final class OfficialPlaceDetailViewController: UIViewController {
         setAgeStackView(percent: ageRateArray)
         
         let sample: [HourPoint] = [
-            .init(hour: 6, level: .relaxed, value: 1),
-            .init(hour: 7, level: .relaxed, value: 12),
-            .init(hour: 8, level: .crowded, value: 59),
-            .init(hour: 9, level: .relaxed, value: 10),
-            .init(hour: 10, level: .relaxed, value: 15),
-            .init(hour: 11, level: .busy, value: 30),
-            .init(hour: 12, level: .crowded, value: 68),
-            .init(hour: 13, level: .crowded, value: 74),
-            .init(hour: 14, level: .crowded, value: 79),
-            .init(hour: 15, level: .busy, value: 36),
-            .init(hour: 16, level: .normal, value: 28),
-            .init(hour: 17, level: .normal, value: 21),
-            .init(hour: 18, level: .normal, value: 20),
-            .init(hour: 19, level: .relaxed, value: 10),
-            .init(hour: 20, level: .crowded, value: 58),
-            .init(hour: 21, level: .crowded, value: 60),
-            .init(hour: 22, level: .relaxed, value: 3),
-            .init(hour: 23, level: .relaxed, value: 1),
-            .init(hour: 24, level: .relaxed, value: 1),
+            .init(hour: 6, level: .relaxed),
+            .init(hour: 7, level: .relaxed),
+            .init(hour: 8, level: .crowded),
+            .init(hour: 9, level: .relaxed),
+            .init(hour: 10, level: .relaxed),
+            .init(hour: 11, level: .busy),
+            .init(hour: 12, level: .crowded),
+            .init(hour: 13, level: .crowded),
+            .init(hour: 14, level: .crowded),
+            .init(hour: 15, level: .busy),
+            .init(hour: 16, level: .normal),
+            .init(hour: 17, level: .normal),
+            .init(hour: 18, level: .normal),
+            .init(hour: 19, level: .relaxed),
+            .init(hour: 20, level: .crowded),
+            .init(hour: 21, level: .crowded),
+            .init(hour: 22, level: .relaxed),
+            .init(hour: 23, level: .relaxed),
+            .init(hour: 24, level: .relaxed),
         ]
         
         updateChart(data: sample)

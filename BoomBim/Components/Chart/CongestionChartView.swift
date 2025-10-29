@@ -10,12 +10,28 @@ import Charts
 
 final class ChartViewModel: ObservableObject {
     @Published var data: [HourPoint] = []
-    @Published var selectedHour: Int? = nil
     
     var values: [Double] { data.map { $0.value }}
     var hours: [Int] { data.map { $0.hour } }
     var minHour: Int { hours.min() ?? 0 }
     var maxHour: Int { hours.max() ?? 23 }
+    
+    var currentHour: Int {
+        Calendar.current.component(.hour, from: Date())
+    }
+
+    // hour가 정수 단위일 때, 사이값은 선형 보간
+    func interpolatedValue(at hour: Int) -> Double? {
+        let pts = data.sorted { $0.hour < $1.hour }
+        if let exact = pts.first(where: { $0.hour == hour }) { return exact.value }
+        guard
+            let left = pts.last(where: { $0.hour < hour }),
+            let right = pts.first(where: { $0.hour > hour })
+        else { return nil }
+        // hour는 정수라 t는 0~1 사이
+        let t = Double(hour - left.hour) / Double(right.hour - left.hour)
+        return (1 - t) * left.value + t * right.value
+    }
 }
 
 struct CongestionChartView: View {
@@ -74,8 +90,8 @@ struct CongestionChartView: View {
 
         Chart {
             gridRules()
-            lineAndPoints()              // 기존 라인/포인트
-//            selectionLayer()             // 선택 점선/말풍선(있다면)
+            lineAndPoints()
+            currentTimeMark()
         }
         .chartXScale(
             domain: viewModel.minHour...viewModel.maxHour,
@@ -194,92 +210,39 @@ struct CongestionChartView: View {
     }
 
     @ChartContentBuilder
-    private func selectionLayer() -> some ChartContent {
-        if let h = viewModel.selectedHour,
-           let sel = viewModel.data.first(where: { $0.hour == h }) {
-
-            RuleMark(x: .value("선택 시", h))
-                .lineStyle(.init(lineWidth: 1, dash: [4, 4]))
-                .foregroundStyle(Color.orange)
-                .annotation(position: .overlay, alignment: .topLeading) {
-                    Circle()
-                        .strokeBorder(Color.orange, lineWidth: 2)
-                        .background(Circle().fill(Color.yellow.opacity(0.6)))
-                        .frame(width: 18, height: 18)
-                }
-                .annotation(position: .top) {
-                    Text("\(h)시")
-                        .font(.caption2)
-                        .padding(4)
-                        .background(.ultraThinMaterial, in: Capsule())
-                }
-
+    private func currentTimeMark() -> some ChartContent {
+        if let y = viewModel.interpolatedValue(at: viewModel.currentHour) {
+            RuleMark(x: .value("now", viewModel.currentHour),
+                     yStart: .value("bottom", 0),
+                     yEnd:   .value("y", y))
+            .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+            .foregroundStyle(Color(.chartCurrentTimePoint))  // 원하는 컬러
+            .zIndex(0.5) // 라인 뒤(0)와 데이터(1) 사이
+            
             PointMark(
-                x: .value("시", sel.hour),
-                y: .value("레벨", Double(sel.level.rawValue) + 0.5)
+                x: .value("now-x", viewModel.currentHour),
+                y: .value("now-y", y)
             )
-            .annotation(position: .trailing) {
-                selectionCallout(level: sel.level, value: Int(sel.value))
+            .symbol(.circle)
+            .symbolSize(28)                    // 내부 흰 점 기준 면적
+            .foregroundStyle(.clear)           // 흰 채움
+            .annotation(position: .overlay) {
+                ZStack {
+                    // 바깥 노란 하이라이트 링(반투명)
+                    Circle()
+                        .fill(Color(.chartCurrentTimePoint).opacity(0.50))
+                        .frame(width: 14, height: 14)
+                    
+                    // 내부 흰 원 + 노란 테두리(1pt)
+                    Circle()
+                        .fill(Color(.chartCurrentTimePoint))
+                        .stroke(Color(UIColor.grayScale1), lineWidth: 1)
+                        .frame(width: 6, height: 6)
+                }
+                .allowsHitTesting(false)
             }
+            .zIndex(2) // 데이터보다 위
         }
-    }
-
-    @ViewBuilder
-    private func selectionCallout(level: CongestionLevel, value: Int) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(level.description).font(.caption).bold()
-            Text("예측 \(value)").font(.caption2).foregroundStyle(.secondary)
-        }
-        .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(.background))
-                .shadow(radius: 1, y: 1)
-        )
-    }
-
-    @AxisContentBuilder
-    private func xAxis() -> some AxisContent {
-        AxisMarks(values: .stride(by: 2)) { v in
-            AxisGridLine().foregroundStyle(.clear)
-            AxisTick()
-            AxisValueLabel {
-                if let hour: Int = v.as(Int.self) { Text("\(hour)") }
-            }
-        }
-    }
-
-    @AxisContentBuilder
-    private func yAxis() -> some AxisContent {
-        let ticks: [Double] = CongestionLevel.allCases.map { Double($0.rawValue) + 0.5 } // 타입 명시
-        AxisMarks(values: ticks) { _ in
-            AxisGridLine().foregroundStyle(.clear)
-            AxisTick().foregroundStyle(.clear)
-            AxisValueLabel().foregroundStyle(.clear)
-        }
-    }
-
-    @ViewBuilder
-    private func overlay(proxy: ChartProxy) -> some View {
-        GeometryReader { geo in
-            Rectangle().fill(.clear).contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            let origin = geo[proxy.plotAreaFrame].origin
-                            let x = value.location.x - origin.x
-                            if let hourVal: Int = proxy.value(atX: x) {
-                                viewModel.selectedHour = nearestHour(to: hourVal)
-                            }
-                        }
-                )
-        }
-    }
-    
-    private func nearestHour(to x: Int) -> Int {
-        // 데이터에 존재하는 가장 가까운 시간으로 스냅
-        guard let nearest = viewModel.hours.min(by: { abs($0 - x) < abs($1 - x) }) else { return x }
-        return nearest
     }
     
     private func legendDot(_ level: CongestionLevel, color: Color) -> some View {

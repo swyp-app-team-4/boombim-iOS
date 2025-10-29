@@ -11,10 +11,17 @@ struct HourPoint: Identifiable {
     let id = UUID()
     let hour: Int        // 6~24
     let level: CongestionLevel
-    let value: Double    // 0~100 등 상대 지표
+    // level에 의해 자동 계산
+    var value: Double {
+        level.bandCenterValue
+    }
 }
 
 extension CongestionLevel {
+    var bandCenterValue: Double {
+        (Double(rawValue) - 0.5) * 25.0
+    }
+    
     // SwiftUI Color로 노출
     var bandColor: Color { Color(self.color) }
 
