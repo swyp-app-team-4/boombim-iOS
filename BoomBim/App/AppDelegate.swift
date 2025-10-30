@@ -13,12 +13,16 @@ import KakaoMapsSDK
 import NidThirdPartyLogin
 import FirebaseCore
 import FirebaseMessaging
+import GoogleMobileAds
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        
+        // Google AdMob 광고 초기화
+        MobileAds.shared.start(completionHandler: nil)
+        print("Google Mobile Ads SDK version: \(string(for: MobileAds.shared.versionNumber))")
         
         // Keychain Token Manager
         FirstLaunchGuard.handleFirstLaunchAndWipeKeychainIfNeeded() // keychain에 있는 데이터를 비운다.

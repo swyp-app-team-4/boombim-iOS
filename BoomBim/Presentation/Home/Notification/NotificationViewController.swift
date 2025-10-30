@@ -8,6 +8,7 @@
 import UIKit
 import RxSwift
 import RxCocoa
+import GoogleMobileAds
 
 final class NotificationViewController: BaseViewController {
     private let viewModel: NotificationViewModel
@@ -27,6 +28,9 @@ final class NotificationViewController: BaseViewController {
     
     private var currentPageIndex: Int = 0
     
+    private let bannerContainer = UIView()
+    private var bannerView: BannerView?
+    
     init(viewModel: NotificationViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -41,6 +45,7 @@ final class NotificationViewController: BaseViewController {
         
         setupNavigationBar()
         setupView()
+        setupBanner()
         
         bind()
         
@@ -51,6 +56,7 @@ final class NotificationViewController: BaseViewController {
         view.backgroundColor = .background
         
         configureHeaderView()
+        configureBanner()
         configurePageViewController()
     }
     
@@ -88,8 +94,45 @@ final class NotificationViewController: BaseViewController {
             pageViewController.view.topAnchor.constraint(equalTo: headerView.bottomAnchor),
             pageViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            pageViewController.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+//            pageViewController.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            pageViewController.view.bottomAnchor.constraint(equalTo: bannerContainer.topAnchor)
         ])
+    }
+    
+    private func configureBanner() {
+        bannerContainer.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(bannerContainer)
+        
+        NSLayoutConstraint.activate([
+            bannerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bannerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bannerContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+    }
+    
+    private func setupBanner() {
+        // 1) 현재 화면 폭 기준으로 Anchored Adaptive 사이즈 계산
+        let viewWidth = view.bounds.inset(by: view.safeAreaInsets).width
+        let adSize = currentOrientationAnchoredAdaptiveBanner(width: viewWidth) // iOS 권장 배너
+        
+        // 2) 배너 생성 및 루트 설정
+        let banner = BannerView(adSize: adSize)
+        banner.translatesAutoresizingMaskIntoConstraints = false
+        banner.adUnitID = "ca-app-pub-1220293492029262/8295983520"
+        banner.rootViewController = self
+        
+        bannerContainer.addSubview(banner)
+        NSLayoutConstraint.activate([
+            banner.centerXAnchor.constraint(equalTo: bannerContainer.centerXAnchor),
+            banner.topAnchor.constraint(equalTo: bannerContainer.topAnchor),
+            banner.bottomAnchor.constraint(equalTo: bannerContainer.bottomAnchor),
+            banner.widthAnchor.constraint(equalToConstant: adSize.size.width),
+            banner.heightAnchor.constraint(equalToConstant: adSize.size.height)
+        ])
+        self.bannerView = banner
+        
+        // 3) 로드
+        banner.load(Request())
     }
     
     // MARK: - bind
