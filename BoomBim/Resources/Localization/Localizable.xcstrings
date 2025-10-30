@@ -782,6 +782,17 @@
         }
       }
     },
+    "report.button.vote.dialog" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "혼잡도 기준 안내"
+          }
+        }
+      }
+    },
     "report.label.placeholder" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -832,7 +843,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "혼잡도를 투표해주세요"
+            "value" : "혼잡도를 선택해주세요"
           }
         }
       }
