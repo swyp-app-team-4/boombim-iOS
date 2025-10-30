@@ -134,6 +134,106 @@ final class OfficialPlaceDetailViewController: UIViewController {
     
     private var chartHost: UIHostingController<CongestionChartView>?
     
+    private lazy var estimatedPeopleContatiner: UIView = {
+        let view = UIView()
+        view.backgroundColor = .grayScale1
+        view.layer.cornerRadius = 12
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.grayScale3.cgColor
+        view.clipsToBounds = true
+        
+        return view
+    }()
+    
+    private let estimatedPeopleStackView: UIStackView = {
+        let s = UIStackView()
+        s.axis = .vertical
+        s.alignment = .fill
+        s.distribution = .fill
+        s.spacing = 18
+        return s
+    }()
+    
+    // UI
+    private let estimatedPeopleTitleLabel: UILabel = {
+        let label = UILabel()
+        label.setText("추정 인구수", style: Typography.Body01.semiBold)
+        label.textColor = .grayScale9
+        
+        return label
+    }()
+    
+    private let grayPanelView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .grayPanel
+        view.layer.cornerRadius = 8
+        view.clipsToBounds = true
+        return view
+    }()
+    
+    private let minMaxStackView: UIStackView = {
+        let s = UIStackView()
+        s.axis = .vertical
+        s.alignment = .fill
+        s.distribution = .fill
+        s.spacing = 8
+        
+        return s
+    }()
+    
+    // 행(왼쪽 라벨/오른쪽 값) 공통
+    private static func makeRow() -> UIStackView {
+        let s = UIStackView()
+        s.axis = .horizontal
+        s.alignment = .center
+        s.distribution = .fill
+        
+        return s
+    }
+    
+    private let maxRow = makeRow()
+    private let minRow = makeRow()
+    
+    private let maxTitleLabel: UILabel = {
+        let label = UILabel()
+        label.setText("실시간 최대", style: Typography.Body03.regular)
+        label.textColor = .grayScale9
+        label.textAlignment = .left
+        
+        return label
+    }()
+    
+    private let minTitleLabel: UILabel = {
+        let label = UILabel()
+        label.setText("실시간 최소", style: Typography.Body03.regular)
+        label.textColor = .grayScale9
+        label.textAlignment = .left
+        
+        return label
+    }()
+    
+    private let maxValueLabel: UILabel = {
+        let l = UILabel()
+        l.font = Typography.Body01.medium.font
+        l.textColor = .grayScale9
+        l.textAlignment = .right
+        l.setContentHuggingPriority(.required, for: .horizontal)
+        l.setContentCompressionResistancePriority(.required, for: .horizontal)
+        
+        return l
+    }()
+    
+    private let minValueLabel: UILabel = {
+        let l = UILabel()
+        l.font = Typography.Body01.medium.font
+        l.textColor = .grayScale9
+        l.textAlignment = .right
+        l.setContentHuggingPriority(.required, for: .horizontal)
+        l.setContentCompressionResistancePriority(.required, for: .horizontal)
+        
+        return l
+    }()
+    
     private lazy var peopleContatiner: UIView = {
         let view = UIView()
         view.backgroundColor = .grayScale1
@@ -245,9 +345,8 @@ final class OfficialPlaceDetailViewController: UIViewController {
         configureTitle()
         configureText()
         configurePlaceInfo()
-        
         configureChart()
-        
+        configureEstimatedPeople()
         configurePeople()
         configureAge()
     }
@@ -358,6 +457,53 @@ final class OfficialPlaceDetailViewController: UIViewController {
         }
     }
     
+    private func configureEstimatedPeople() {
+        [maxTitleLabel, maxValueLabel].forEach { label in
+            label.translatesAutoresizingMaskIntoConstraints = false
+            maxRow.addArrangedSubview(label)
+        }
+        
+        [minTitleLabel, minValueLabel].forEach { label in
+            label.translatesAutoresizingMaskIntoConstraints = false
+            minRow.addArrangedSubview(label)
+        }
+        
+        [maxRow, minRow].forEach { stackView in
+            stackView.translatesAutoresizingMaskIntoConstraints = false
+            minMaxStackView.addArrangedSubview(stackView)
+        }
+        
+        minMaxStackView.translatesAutoresizingMaskIntoConstraints = false
+        grayPanelView.addSubview(minMaxStackView)
+        
+        [estimatedPeopleTitleLabel, grayPanelView].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            estimatedPeopleStackView.addArrangedSubview($0)
+        }
+        
+        estimatedPeopleStackView.translatesAutoresizingMaskIntoConstraints = false
+        estimatedPeopleContatiner.addSubview(estimatedPeopleStackView)
+        
+        estimatedPeopleContatiner.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(estimatedPeopleContatiner)
+        
+        NSLayoutConstraint.activate([
+            estimatedPeopleContatiner.topAnchor.constraint(equalTo: chartContatiner.bottomAnchor, constant: 18),
+            estimatedPeopleContatiner.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            estimatedPeopleContatiner.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            
+            estimatedPeopleStackView.topAnchor.constraint(equalTo: estimatedPeopleContatiner.topAnchor, constant: 18),
+            estimatedPeopleStackView.bottomAnchor.constraint(equalTo: estimatedPeopleContatiner.bottomAnchor, constant: -18),
+            estimatedPeopleStackView.leadingAnchor.constraint(equalTo: estimatedPeopleContatiner.leadingAnchor, constant: 16),
+            estimatedPeopleStackView.trailingAnchor.constraint(equalTo: estimatedPeopleContatiner.trailingAnchor, constant: -16),
+            
+            minMaxStackView.topAnchor.constraint(equalTo: grayPanelView.topAnchor, constant: 12),
+            minMaxStackView.bottomAnchor.constraint(equalTo: grayPanelView.bottomAnchor, constant: -12),
+            minMaxStackView.leadingAnchor.constraint(equalTo: grayPanelView.leadingAnchor, constant: 14),
+            minMaxStackView.trailingAnchor.constraint(equalTo: grayPanelView.trailingAnchor, constant: -14),
+        ])
+    }
+    
     private func configurePeople() {
         [peopleTitleLabel, peopleGaugeView, liveGaugeView].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
@@ -371,7 +517,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
         contentView.addSubview(peopleContatiner)
         
         NSLayoutConstraint.activate([
-            peopleContatiner.topAnchor.constraint(equalTo: chartContatiner.bottomAnchor, constant: 18),
+            peopleContatiner.topAnchor.constraint(equalTo: estimatedPeopleContatiner.bottomAnchor, constant: 18),
             peopleContatiner.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             peopleContatiner.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
@@ -447,6 +593,23 @@ final class OfficialPlaceDetailViewController: UIViewController {
         congestionImageView.image = CongestionLevel(ko: data.congestionLevelName)?.badge
         placeImageView.setImage(from: data.imageUrl)
         
+        let forecasts: [HourPoint] = data.forecasts.compactMap { f in
+            guard let hour  = DateHelper.getHour(from: f.forecastTime),
+                  let level = CongestionLevel(ko: f.congestionLevelName) else {
+                return nil              // 이 항목만 제외
+            }
+            return HourPoint(hour: hour, level: level)
+        }
+
+        updateChart(data: forecasts)
+        
+        let currentForecast = data.forecasts.first
+        let maxPeople: String = currentForecast?.forecastPopulationMax.asPeopleString() ?? "0명"
+        let minPeople: String = currentForecast?.forecastPopulationMin.asPeopleString() ?? "0명"
+        
+        maxValueLabel.setText(maxPeople, style: Typography.Body01.medium)
+        minValueLabel.setText(minPeople, style: Typography.Body01.medium)
+        
         let manPercent = data.demographics.filter{ $0.category == DemographicCategory.gender }.filter { $0.subCategory == GenderCategory.MALE.rawValue }.first?.rate ?? 0
         let womanPercent = data.demographics.filter{ $0.category == DemographicCategory.gender }.filter { $0.subCategory == GenderCategory.FEMALE.rawValue }.first?.rate ?? 0
         
@@ -459,16 +622,6 @@ final class OfficialPlaceDetailViewController: UIViewController {
         liveGaugeView.update(residePercent: residePercent, nonresidePercent: nonresidePercent)
         
         setAgeStackView(percent: ageRateArray)
-        
-        let forecasts: [HourPoint] = data.forecasts.compactMap { f in
-            guard let hour  = DateHelper.getHour(from: f.forecastTime),
-                  let level = CongestionLevel(ko: f.congestionLevelName) else {
-                return nil              // 이 항목만 제외
-            }
-            return HourPoint(hour: hour, level: level)
-        }
-
-        updateChart(data: forecasts)
     }
     
     func ageRatesDict(data: [Demographic]) -> [AgeCategory: Double] {
