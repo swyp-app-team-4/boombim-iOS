@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "%lld" : {
+
+    },
+    "1시간 간격 예측" : {
+
+    },
     "alarmSetting.label.state" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -55,6 +61,9 @@
           }
         }
       }
+    },
+    "bottom" : {
+
     },
     "chat.button.next" : {
       "extractionState" : "manual",
@@ -143,6 +152,12 @@
           }
         }
       }
+    },
+    "grid" : {
+
+    },
+    "hour" : {
+    
     },
     "dialog.button.confirm" : {
       "extractionState" : "manual",
@@ -451,6 +466,15 @@
           }
         }
       }
+    },
+    "now" : {
+
+    },
+    "now-x" : {
+
+    },
+    "now-y" : {
+
     },
     "onboarding.button.skip" : {
       "extractionState" : "manual",
@@ -979,6 +1003,15 @@
           }
         }
       }
+    },
+    "value" : {
+
+    },
+    "y" : {
+
+    },
+    "시간별 혼잡도 예측" : {
+
     }
   },
   "version" : "1.0"

@@ -19,7 +19,7 @@ final class AgeTileView: UIView {
     required init?(coder: NSCoder) { fatalError() }
 
     private func setup() {
-        percentContainer.backgroundColor = .grayScale1
+        percentContainer.backgroundColor = .grayScale3
         percentContainer.layer.cornerRadius = 12
 
         percentLabel.font = Typography.Heading03.medium.font
@@ -54,7 +54,7 @@ final class AgeTileView: UIView {
     }
 
     func configure(percentText: String, title: String) {
-        percentLabel.text = percentText   // "5%"
-        titleLabel.text = title           // "10대"
+        percentLabel.setText(percentText, style: Typography.Body02.medium)
+        titleLabel.setText(title, style: Typography.Body03.medium)
     }
 }

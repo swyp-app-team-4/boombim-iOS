@@ -11,7 +11,7 @@ final class GaugeView: UIView {
     // MARK: Style
     var trackColor: UIColor = .systemGray6 { didSet { trackLayer.strokeColor = trackColor.cgColor } }
     var fillColor:  UIColor = .systemGreen { didSet { fillLayer.strokeColor  = fillColor.cgColor  } }
-    var lineHeight: CGFloat = 8 { didSet { setNeedsLayout() } }
+    var lineHeight: CGFloat = 10 { didSet { setNeedsLayout() } }
     var showsThumb: Bool = false { didSet { thumbLayer.isHidden = !showsThumb } }
 
     enum AnimationBehavior { case fromPrevious, fromZero }

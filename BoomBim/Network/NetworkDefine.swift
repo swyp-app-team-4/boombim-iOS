@@ -69,13 +69,13 @@ enum NetworkDefine {
             case .regionNews:
                 return "api/region"
             case .nearByOfficialPlace:
-                return "api/app/official-place/nearby-non-congested"
+                return "api/app/public/official-place/nearby-non-congested"
             case .rankByOfficialPlace:
-                return "api/app/official-place/top-congested"
+                return "api/app/public/official-place/top-congested"
             case .favoritePlace:
                 return "api/app/favorite"
             case .officialPlace:
-                return "api/app/official-place"
+                return "api/app/public/official-place"
             case .userPlace:
                 return "api/app/public/member-place"
             case .registerPostPlace:
@@ -83,7 +83,7 @@ enum NetworkDefine {
             case .postPlace:
                 return "api/app/member-congestion"
             case .officialPlaceDetail(let id):
-                return "api/app/official-place/\(id)/overview"
+                return "api/app/public/official-place/\(id)/overview"
             case .userPlaceDetail(let id):
                 return "api/app/public/member-place/\(id)"
             case .registerFavoritePlace:
