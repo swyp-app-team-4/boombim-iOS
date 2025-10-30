@@ -76,4 +76,36 @@ extension UILabel {
         numberOfLines = 0
         attributedText = attr
     }
+    
+    // 특정 문자열에 별도 폰트 적용
+    func setText(_ text: String,
+                 base: TextStyle,
+                 baseColor: UIColor,
+                 highlight substrings: [String],
+                 highlightStyle: TextStyle,
+                 highlightColor: UIColor,
+                 allOccurrences: Bool = true,
+                 options: NSString.CompareOptions = [.caseInsensitive]) {
+        let attr = base.attributed(text, color: baseColor, alignment: self.textAlignment, kern: nil)
+        let m = NSMutableAttributedString(attributedString: attr)
+
+        let hl = highlightStyle.attributed(" ", color: highlightColor, alignment: self.textAlignment, kern: nil)
+            .attributes(at: 0, effectiveRange: nil)
+
+        let ns = text as NSString
+        for s in substrings {
+            var searchRange = NSRange(location: 0, length: ns.length)
+            while true {
+                let r = ns.range(of: s, options: options, range: searchRange)
+                guard r.location != NSNotFound else { break }
+                m.addAttributes(hl, range: r)
+                if !allOccurrences { break }
+                let nextLoc = r.location + r.length
+                if nextLoc >= ns.length { break }
+                searchRange = NSRange(location: nextLoc, length: ns.length - nextLoc)
+            }
+        }
+        numberOfLines = 0
+        attributedText = m
+    }
 }

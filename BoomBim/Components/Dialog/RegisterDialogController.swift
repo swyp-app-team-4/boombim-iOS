@@ -91,9 +91,9 @@ final class RegisterDialogController: UIViewController {
         b.setTitleColor(.white, for: .normal)
         b.titleLabel?.font = Typography.Body02.semiBold.font
         b.backgroundColor = .main
-        b.layer.cornerRadius = 12
+        b.layer.cornerRadius = 22
         b.contentEdgeInsets = .init(top: 12, left: 16, bottom: 12, right: 16)
-        b.heightAnchor.constraint(equalToConstant: 48).isActive = true
+        b.heightAnchor.constraint(equalToConstant: 44).isActive = true
         b.accessibilityLabel = "confirm_button"
         return b
     }()

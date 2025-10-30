@@ -211,7 +211,9 @@ final class HomeViewModel {
         return RegionItem(iconImage: .iconPolice,
                           organization: "서울경찰청 제공",
                           title: title,
-                          description: desc)
+                          description: desc,
+                          time: timeRange,
+                          location: r.posName)
     }
     
     private static func makeItem(_ r: NearbyOfficialPlaceInfo) -> RecommendPlaceItem {

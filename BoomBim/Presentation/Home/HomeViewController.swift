@@ -161,7 +161,7 @@ final class HomeViewController: BaseViewController {
         
         NSLayoutConstraint.activate([
             floatingButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            floatingButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8)
+            floatingButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
         ])
         
         floatingButton.addTarget(self, action: #selector(didTapFloatingButton), for: .touchUpInside)
@@ -322,14 +322,14 @@ final class HomeViewController: BaseViewController {
     }
     
     private static func makeRegionSection(env: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(180))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(200))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(180))
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = .init(top: 14, leading: 16, bottom: 24, trailing: 16)
+        section.contentInsets = .init(top: 10, leading: 16, bottom: 24, trailing: 16)
         
         section.boundarySupplementaryItems = [self.sectionHeader(), self.sectionSpacerFooter()]
         
@@ -344,17 +344,15 @@ final class HomeViewController: BaseViewController {
             layoutSize: .init(widthDimension: .fractionalWidth(1.0),
                               heightDimension: .fractionalHeight(0.5))
         )
-        // 행 간 간격을 주고 싶다면 item에 인셋을 주세요.
-        item.contentInsets = .init(top: 6, leading: 0, bottom: 6, trailing: 0)
         
         // 2) "열(column) 그룹)" = 세로로 2개 아이템을 쌓음
-        let groupHeight: CGFloat = 400        // 전체 높이 (디자인에 맞게 조정)
+        let groupHeight: CGFloat = 380        // 전체 높이 (디자인에 맞게 조정)
         let columnWidthRatio: CGFloat = 0.8   // 화면 폭 대비 열 하나의 너비 비율 (0.45 ~ 0.9 사이로 조절하면 보이는 칼럼 수가 달라짐)
         
         let columnGroup = NSCollectionLayoutGroup.vertical(
             layoutSize: .init(
                 widthDimension: .absolute(env.container.effectiveContentSize.width * columnWidthRatio),
-                heightDimension: .absolute(groupHeight)
+                heightDimension: .estimated(groupHeight)
             ),
             subitem: item,
             count: 2

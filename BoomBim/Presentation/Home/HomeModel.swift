@@ -14,6 +14,8 @@ struct RegionItem: Hashable {
     let organization: String?
     let title: String
     let description: String
+    let time: String
+    let location: String
 }
 
 struct RecommendPlaceItem: Hashable {

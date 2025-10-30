@@ -104,10 +104,14 @@ final class NewsViewController: UIViewController {
         view.addSubview(emptyStackView)
         
         NSLayoutConstraint.activate([
+            emptyButton.widthAnchor.constraint(equalToConstant: 160),
             emptyButton.heightAnchor.constraint(equalToConstant: 44),
             
             emptyStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            emptyStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            emptyIllustrationImageView.heightAnchor.constraint(equalToConstant: 150),
+            emptyIllustrationImageView.widthAnchor.constraint(equalToConstant: 150),
         ])
     }
     

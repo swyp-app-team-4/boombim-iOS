@@ -43,6 +43,7 @@ final class MyPageCoordinator: Coordinator {
     private func showProfile() {
         let viewModel = ProfileViewModel()
         let viewController = ProfileViewController(viewModel: viewModel)
+        viewController.hidesBottomBarWhenPushed = true
         navigationController.pushViewController(viewController, animated: true)
     }
 }

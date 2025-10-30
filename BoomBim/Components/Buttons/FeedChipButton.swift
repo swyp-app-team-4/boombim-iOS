@@ -15,7 +15,7 @@ final class FeedChipButton: UIButton {
         super.init(frame: .zero)
         setTitle(title, for: .normal)
         titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
-        contentEdgeInsets = .init(top: 10, left: 14, bottom: 10, right: 14)
+        contentEdgeInsets = .init(top: 10, left: 16, bottom: 10, right: 16)
         layer.cornerRadius = 20
         layer.borderWidth = 1
         applyStyle()

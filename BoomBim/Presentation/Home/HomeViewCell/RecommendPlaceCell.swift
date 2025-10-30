@@ -14,8 +14,8 @@ final class RecommendPlaceCell: UICollectionViewCell {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.alignment = .fill
-        stackView.distribution = .fillProportionally
-        stackView.spacing = 6
+        stackView.distribution = .fill
+        stackView.spacing = 8
         
         return stackView
     }()
@@ -41,7 +41,7 @@ final class RecommendPlaceCell: UICollectionViewCell {
         stackView.axis = .vertical
         stackView.alignment = .fill
         stackView.distribution = .fill
-        stackView.spacing = 2
+//        stackView.spacing = 2
         
         return stackView
     }()

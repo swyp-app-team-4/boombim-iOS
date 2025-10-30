@@ -19,6 +19,7 @@ final class SettingCoordinator: Coordinator {
     func start() {
         let viewModel = SettingsViewModel()
         let viewController = SettingsViewController(viewModel: viewModel)
+        viewController.hidesBottomBarWhenPushed = true
         self.settingsViewModel = viewModel
         
         viewModel.goToPersonalInfoView = { [weak self] in
