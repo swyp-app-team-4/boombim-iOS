@@ -63,6 +63,7 @@ final class UserPlaceDetailViewController: UIViewController {
         button.setImage(.iconUnselectedFavorite, for: .normal)
         button.setImage(.iconSelectedFavorite, for: .selected)
         button.contentMode = .scaleAspectFit
+        button.imageView?.contentMode = .center
         
         return button
     }()
@@ -170,7 +171,9 @@ final class UserPlaceDetailViewController: UIViewController {
             viewTitleLabel.heightAnchor.constraint(equalToConstant: 46),
             
             favoriteButton.centerYAnchor.constraint(equalTo: viewTitleLabel.centerYAnchor),
-            favoriteButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
+            favoriteButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            favoriteButton.widthAnchor.constraint(equalToConstant: 34),
+            favoriteButton.heightAnchor.constraint(equalToConstant: 34),
         ])
     }
     

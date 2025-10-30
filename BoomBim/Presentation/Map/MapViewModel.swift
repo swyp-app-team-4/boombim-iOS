@@ -18,6 +18,7 @@ final class MapViewModel {
         let didTapMyLocation: Observable<Void> // 현재 위치 버튼
         let officialPoiTap: Signal<Int>
         let userPoiTap: Signal<Int>
+        let reload: Signal<Void>
     }
     struct Output {
         let places: Observable<[UserPlaceEntry]>
@@ -86,14 +87,26 @@ final class MapViewModel {
                 print("😎 zoom")
             })
         
-        // 1) 최신 상태
+        // 최신 상태
         let state = Observable.combineLatest(myCoord, zoom) // (coord, z)
             .share(replay: 1, scope: .whileConnected)
 
-        // 2) rect가 멈췄을 때만 트리거
-        let trigger = rect
+        // rect가 멈췄을 때 트리거 (기존)
+        let rectStopped = rect
             .withLatestFrom(state) { (rect: $0, coord: $1.0, z: $1.1) }
-            .filter { $0.z >= 10 } // 줌 조건
+
+        // reload가 왔을 때도 동일한 형태로 트리거 생성
+        let reloadTrigger = input.reload
+            .asObservable()
+            .withLatestFrom(Observable.combineLatest(rect, state)) { (_, combined) in
+                let (rect, (coord, z)) = combined
+                return (rect: rect, coord: coord, z: z)
+            }
+
+        // 두 트리거를 합치고 줌 조건 필터
+        let trigger = Observable.merge(rectStopped, reloadTrigger)
+            .filter { $0.z >= 10 }
+            .share(replay: 1, scope: .whileConnected)
         
         let officialPlace: Observable<[OfficialPlaceItem]> =
         trigger
