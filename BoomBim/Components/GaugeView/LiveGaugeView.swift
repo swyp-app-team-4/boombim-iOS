@@ -14,7 +14,7 @@ final class LiveGaugeView: UIControl {
         label.font = Typography.Body02.medium.font
         label.textColor = .grayScale9
         label.textAlignment = .left
-        label.text = "place.detail.label.title".localized()
+        label.text = "place.detail.label.live.title".localized()
         
         return label
     }()
@@ -42,7 +42,7 @@ final class LiveGaugeView: UIControl {
     private let resideGauge: GaugeView = {
         let gauge = GaugeView()
         gauge.trackColor = .grayScale3
-        gauge.fillColor = .resideGauge
+        gauge.fillColor = .grayScale6
         
         return gauge
     }()
@@ -79,7 +79,7 @@ final class LiveGaugeView: UIControl {
     private let nonresideGauge: GaugeView = {
         let gauge = GaugeView()
         gauge.trackColor = .grayScale3
-        gauge.fillColor = .nonresideGauge
+        gauge.fillColor = .grayScale6
         
         return gauge
     }()
@@ -140,8 +140,8 @@ final class LiveGaugeView: UIControl {
             resideTitleLabel.widthAnchor.constraint(equalToConstant: 40),
             residePercentLabel.widthAnchor.constraint(equalToConstant: 50),
             
-            resideTitleLabel.widthAnchor.constraint(equalToConstant: 40),
-            residePercentLabel.widthAnchor.constraint(equalToConstant: 50),
+            nonresideTitleLabel.widthAnchor.constraint(equalToConstant: 40),
+            nonresidePercentLabel.widthAnchor.constraint(equalToConstant: 50)
         ])
     }
 

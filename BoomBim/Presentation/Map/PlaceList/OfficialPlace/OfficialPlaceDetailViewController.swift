@@ -83,10 +83,45 @@ final class OfficialPlaceDetailViewController: UIViewController {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = Typography.Body02.semiBold.font
+        label.font = Typography.Body01.semiBold.font
         label.textColor = .grayScale10
         
         return label
+    }()
+    
+    private let subTitleStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .fill
+        stackView.distribution = .fill
+        stackView.spacing = 4
+        
+        return stackView
+    }()
+    
+    private let timeImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.image = .iconRecycleTime.withRenderingMode(.alwaysTemplate)
+        imageView.tintColor = .grayScale9
+        
+        return imageView
+    }()
+    
+    private let updateLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Caption.regular.font
+        label.textColor = .grayScale9
+        
+        return label
+    }()
+    
+    private let bulletImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.image = .iconBullet
+        
+        return imageView
     }()
     
     private let addressLabel: UILabel = {
@@ -95,6 +130,12 @@ final class OfficialPlaceDetailViewController: UIViewController {
         label.textColor = .grayScale8
         
         return label
+    }()
+    
+    private let subTitleSpacerView: UIView = {
+        let view = UIView()
+        
+        return view
     }()
     
     private let congestionImageView: UIImageView = {
@@ -417,7 +458,14 @@ final class OfficialPlaceDetailViewController: UIViewController {
     }
     
     private func configureText() {
-        [titleLabel, addressLabel].forEach { label in
+        [timeImageView, updateLabel, bulletImageView, addressLabel, subTitleSpacerView].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            subTitleStackView.addArrangedSubview($0)
+        }
+        
+        subTitleStackView.setCustomSpacing(7, after: timeImageView)
+        
+        [titleLabel, subTitleStackView].forEach { label in
             label.translatesAutoresizingMaskIntoConstraints = false
             textStackView.addArrangedSubview(label)
         }
@@ -588,8 +636,12 @@ final class OfficialPlaceDetailViewController: UIViewController {
         favoriteState.accept(data.isFavorite)
         
         favoriteButton.isSelected = data.isFavorite
-        titleLabel.text = data.officialPlaceName
-        addressLabel.text = data.legalDong
+        titleLabel.setText(data.officialPlaceName, style: Typography.Body01.semiBold)
+        
+        let updateText = DateHelper.displayString(from: data.observedAt)
+        updateLabel.setText(updateText, style: Typography.Caption.regular)
+        addressLabel.setText(data.legalDong, style: Typography.Caption.regular)
+        
         congestionImageView.image = CongestionLevel(ko: data.congestionLevelName)?.badge
         placeImageView.setImage(from: data.imageUrl)
         

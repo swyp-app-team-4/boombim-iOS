@@ -42,7 +42,7 @@ final class PeopleGaugeView: UIControl {
     private let manGauge: GaugeView = {
         let gauge = GaugeView()
         gauge.trackColor = .grayScale3
-        gauge.fillColor = .manGauge
+        gauge.fillColor = .grayScale6
         
         return gauge
     }()
@@ -79,7 +79,7 @@ final class PeopleGaugeView: UIControl {
     private let womanGauge: GaugeView = {
         let gauge = GaugeView()
         gauge.trackColor = .grayScale3
-        gauge.fillColor = .womanGauge
+        gauge.fillColor = .grayScale6
         
         return gauge
     }()
