@@ -107,7 +107,7 @@ final class FavoriteViewController: UIViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureCollectionView()
         configureDataSource()

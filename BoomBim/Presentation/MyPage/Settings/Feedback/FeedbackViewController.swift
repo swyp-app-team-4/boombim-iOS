@@ -24,8 +24,8 @@ final class FeedbackViewController: BaseViewController {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "정말 탈퇴하시겠어요?"
-        label.font = Typography.Heading02.semiBold.font
+        let text = "정말 탈퇴하시겠어요?"
+        label.setText(text, style: Typography.Heading02.semiBold)
         label.textColor = .grayScale10
         label.textAlignment = .left
         
@@ -34,8 +34,8 @@ final class FeedbackViewController: BaseViewController {
     
     private let subTitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "지금까지 작성한 모든 정보가 사라집니다.\n소중한 의견을 받아 더 나은 서비스를 만들어갈게요."
-        label.font = Typography.Body03.regular.font
+        let text = "지금까지 작성한 모든 정보가 사라집니다.\n소중한 의견을 받아 더 나은 서비스를 만들어갈게요."
+        label.setText(text, style: Typography.Body03.regular)
         label.textColor = .grayScale8
         label.textAlignment = .left
         label.numberOfLines = 2
@@ -46,6 +46,9 @@ final class FeedbackViewController: BaseViewController {
     private let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
         tableView.sectionHeaderTopPadding = 0
+        tableView.separatorStyle = .singleLine
+        tableView.separatorColor = .tableViewDivider
+        tableView.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         
         return tableView
     }()
@@ -100,6 +103,8 @@ final class FeedbackViewController: BaseViewController {
         
         setupView()
         bind()
+        
+        updateWithdrawButtonState()
     }
     
     private func setupView() {
@@ -110,7 +115,7 @@ final class FeedbackViewController: BaseViewController {
         setupNavigationBar()
         setupTitle()
         configureButton()
-        setupTable()
+        setupTableView()
     }
     
     private func setupKeyboardHandling() {
@@ -139,7 +144,7 @@ final class FeedbackViewController: BaseViewController {
         ])
     }
     
-    private func setupTable() {
+    private func setupTableView() {
         tableView.dataSource = self
         tableView.delegate = self
         
@@ -233,6 +238,9 @@ final class FeedbackViewController: BaseViewController {
         let needsOther = selectedReasons.contains(.other)
         let otherOK = !needsOther || !otherText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let enabled = hasReason && otherOK
+        
+        print("enabled: \(enabled)")
+        
         withdrawButton.isEnabled = enabled
         withdrawButton.alpha = enabled ? 1.0 : 0.5
     }

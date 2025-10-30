@@ -39,7 +39,7 @@ final class FeedTableViewCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
-        backgroundColor = .white
+        backgroundColor = .background
         
         avatar.layer.cornerRadius = 20
         avatar.backgroundColor = .lightGray

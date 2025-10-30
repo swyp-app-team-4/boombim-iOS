@@ -14,7 +14,7 @@ final class RegionCell: UICollectionViewCell {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.alignment = .fill
-        stackView.distribution = .fillProportionally
+        stackView.distribution = .fill
         stackView.spacing = 6
         
         return stackView
@@ -23,7 +23,7 @@ final class RegionCell: UICollectionViewCell {
     private let iconStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
-        stackView.alignment = .center
+        stackView.alignment = .fill
         stackView.distribution = .fill
         stackView.spacing = 5
         
@@ -41,6 +41,7 @@ final class RegionCell: UICollectionViewCell {
         let label = UILabel()
         label.font = Typography.Caption.medium.font
         label.textColor = .grayScale8
+        label.numberOfLines = 1
         
         return label
     }()
@@ -83,6 +84,8 @@ final class RegionCell: UICollectionViewCell {
             stackView.addArrangedSubview(view)
         }
         
+        stackView.setCustomSpacing(3, after: title)
+        
         stackView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(stackView)
         
@@ -109,7 +112,13 @@ final class RegionCell: UICollectionViewCell {
     func configure(_ item: RegionItem) {
         icon.image = item.iconImage
         organization.text = item.organization
-        title.text = item.title
-        content.text = item.description
+        
+        title.setText(item.title, style: Typography.Body02.semiBold)
+        content.setText(item.description,
+                        base: Typography.Body03.regular,
+                        baseColor: .grayScale8,
+                        highlight: [item.time, item.location],
+                        highlightStyle: Typography.Body03.medium,
+                        highlightColor: .grayScale9)
     }
 }

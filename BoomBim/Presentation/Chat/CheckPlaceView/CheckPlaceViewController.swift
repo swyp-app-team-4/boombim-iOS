@@ -109,7 +109,7 @@ final class CheckPlaceViewController: BaseViewController {
     
     // MARK: UI
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureNavigationBar()
         

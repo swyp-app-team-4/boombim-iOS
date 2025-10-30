@@ -33,7 +33,7 @@ final class CongestionReportViewController: BaseViewController {
     
     // MARK: - UI Components
     private let scrollView = UIScrollView()
-    private let contentView = UIStackView() // vertical
+    private let contentStackView = UIStackView() // vertical
     
     private let activityIndicator = UIActivityIndicatorView(style: .large)
     
@@ -124,7 +124,7 @@ final class CongestionReportViewController: BaseViewController {
     
     private let voteImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = .iconVote
+        imageView.image = .iconCircleCheck
         imageView.tintColor = .grayScale9
         imageView.contentMode = .scaleAspectFit
         
@@ -142,28 +142,93 @@ final class CongestionReportViewController: BaseViewController {
         return label
     }()
     
+    private let voteDialogButton: UIButton = {
+        let button = UIButton(type: .system)
+        
+        let title = "report.button.vote.dialog".localized()
+        let attr = NSAttributedString(
+            string: title,
+            attributes: [
+                .font: Typography.Body03.regular.font,
+                .foregroundColor: UIColor.grayScale8,
+                .underlineStyle: NSUnderlineStyle.single.rawValue
+            ]
+        )
+        
+        button.setAttributedTitle(attr, for: .normal)
+        
+        return button
+    }()
+    
     private let buttonStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.alignment = .fill
-        stackView.distribution = .equalSpacing
+        stackView.distribution = .fill
+        stackView.spacing = 6
         
         return stackView
     }()
     
-    private let relaxedButton = makeButton(off: .buttonLargeUnselectedRelaxed, on: .buttonLargeSelectedRelaxed, disable: .buttonLargeDefaultRelaxed)
-    private let normalButton  = makeButton(off: .buttonLargeUnselectedNormal, on: .buttonLargeSelectedNormal, disable: .buttonLargeDefaultNormal)
-    private let busyButton   = makeButton(off: .buttonLargeUnselectedBusy, on: .buttonLargeSelectedBusy, disable: .buttonLargeDefaultBusy)
-    private let crowdedButton = makeButton(off: .buttonLargeUnselectedCrowded, on: .buttonLargeSelectedCrowded, disable: .buttonLargeDefaultCrowded)
+    private let relaxedButton = makeButton(
+        style: CongestionButtonStyle(
+            disabledImage: .badgeRelaxedDisable,
+            disabledLayerColor: .grayScale4,
+            disabledBackgroundColor: .grayScale1,
+            normalImage: .badgeRelaxedNormal,
+            normalLayerColor: .grayScale4,
+            normalBackgroundColor: .grayScale1,
+            selectedImage: .badgeRelaxedSelected,
+            selectedLayerColor: .congestionRelaxed,
+            selectedBackgroundColor: .congestionRelaxedBackground,
+            text: "여유")
+    )
+    private let normalButton = makeButton(
+        style: CongestionButtonStyle(
+            disabledImage: .badgeNormalDisable,
+            disabledLayerColor: .grayScale4,
+            disabledBackgroundColor: .grayScale1,
+            normalImage: .badgeNormalNormal,
+            normalLayerColor: .grayScale4,
+            normalBackgroundColor: .grayScale1,
+            selectedImage: .badgeNormalSelected,
+            selectedLayerColor: .congestionNormal,
+            selectedBackgroundColor: .congestionNormalBackground,
+            text: "보통")
+    )
+    private let busyButton = makeButton(
+        style: CongestionButtonStyle(
+            disabledImage: .badgeBusyDisable,
+            disabledLayerColor: .grayScale4,
+            disabledBackgroundColor: .grayScale1,
+            normalImage: .badgeBusyNormal,
+            normalLayerColor: .grayScale4,
+            normalBackgroundColor: .grayScale1,
+            selectedImage: .badgeBusySelected,
+            selectedLayerColor: .congestionBusy,
+            selectedBackgroundColor: .congestionBusyBackground,
+            text: "약간붐빔")
+    )
+    private let crowdedButton = makeButton(
+        style: CongestionButtonStyle(
+            disabledImage: .badgeCrowdedDisable,
+            disabledLayerColor: .grayScale4,
+            disabledBackgroundColor: .grayScale1,
+            normalImage: .badgeCrowdedNormal,
+            normalLayerColor: .grayScale4,
+            normalBackgroundColor: .grayScale1,
+            selectedImage: .badgeCrowdedSelected,
+            selectedLayerColor: .congestionCrowded,
+            selectedBackgroundColor: .congestionCrowdedBackground,
+            text: "붐빔")
+    )
     
     private lazy var buttons: [UIButton] = [relaxedButton, normalButton, busyButton, crowdedButton]
     
-    private static func makeButton(off: UIImage, on: UIImage, disable: UIImage) -> UIButton {
-        let button = UIButton()
-        button.setImage(disable, for: .disabled)
-        button.setImage(off, for: .normal)
-        button.setImage(on,  for: .selected)
-        button.setImage(on,  for: [.selected, .highlighted])
+    private static func makeButton(style: CongestionButtonStyle) -> UIButton {
+        let button = CongestionButton(
+            style: style)
+        
         button.isEnabled = false
         button.isSelected = false
         
@@ -487,7 +552,10 @@ final class CongestionReportViewController: BaseViewController {
         
         output.completed
             .emit(onNext: { [weak self] in
-                self?.viewModel.didTapPost() // 라우팅/닫기 등
+                guard let self else { return }
+                // self?.viewModel.didTapPost() // 라우팅/닫기 등
+                print("self.locationTextField.text : \(self.locationTextField.text)")
+                self.presentRegisterDialog(on: self, place: self.locationTextField.text ?? "")
             })
             .disposed(by: disposeBag)
         
@@ -504,7 +572,7 @@ final class CongestionReportViewController: BaseViewController {
     
     // MARK: Setup UI
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureNavigationBar()
         
@@ -535,16 +603,16 @@ final class CongestionReportViewController: BaseViewController {
         scrollView.contentInset.bottom = baseBottom
         scrollView.scrollIndicatorInsets.bottom = baseBottom
 
-        contentView.axis = .vertical
-        contentView.spacing = 18
-        scrollView.addSubview(contentView)
-        contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentStackView.axis = .vertical
+        contentStackView.spacing = 18
+        scrollView.addSubview(contentStackView)
+        contentStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 20),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 16),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -16),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -32)
+            contentStackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 20),
+            contentStackView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 16),
+            contentStackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -16),
+            contentStackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            contentStackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -32)
         ])
     }
     
@@ -561,7 +629,7 @@ final class CongestionReportViewController: BaseViewController {
     
     private func configureTime() {
         timeContainerView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addArrangedSubview(timeContainerView)
+        contentStackView.addArrangedSubview(timeContainerView)
         
         [timeImageView, timeTitleLabel, timeLabel].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
@@ -591,7 +659,7 @@ final class CongestionReportViewController: BaseViewController {
     
     private func configureLocation() {
         locationContainerView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addArrangedSubview(locationContainerView)
+        contentStackView.addArrangedSubview(locationContainerView)
         
         [locationImageView, locationTitleLabel, locationTextField].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
@@ -622,7 +690,7 @@ final class CongestionReportViewController: BaseViewController {
     private func configureMapUI() {
         mapContainer = KMViewContainer()
         mapContainer.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addArrangedSubview(mapContainer)
+        contentStackView.addArrangedSubview(mapContainer)
         
         mapContainer.layer.cornerRadius = 14
         mapContainer.clipsToBounds = true
@@ -660,31 +728,19 @@ final class CongestionReportViewController: BaseViewController {
     
     private func configureVote() {
         voteContainerView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addArrangedSubview(voteContainerView)
+        contentStackView.addArrangedSubview(voteContainerView)
         
         buttons.forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             buttonStackView.addArrangedSubview(button)
         }
         
-        [voteImageView, voteTitleLabel, buttonStackView].forEach { view in
+        [voteImageView, voteTitleLabel, voteDialogButton, buttonStackView].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             voteContainerView.addSubview(view)
         }
         
-        // vote의 top 제약 두 개를 만들고 보관
-//        voteTopToMap = voteContainerView.topAnchor.constraint(equalTo: mapContainer.bottomAnchor, constant: 18)
-//        voteTopToLocation = voteContainerView.topAnchor.constraint(equalTo: locationContainerView.bottomAnchor, constant: 18)
-//        
-//        voteTopToMap.isActive = false
-//        voteTopToLocation.isActive = true
-        
         NSLayoutConstraint.activate([
-//            voteContainerView.topAnchor.constraint(equalTo: mapContainer.bottomAnchor, constant: 18),
-//            voteContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-//            voteContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-//            voteContainerView.heightAnchor.constraint(equalToConstant: 128),
-            
             voteImageView.centerYAnchor.constraint(equalTo: voteTitleLabel.centerYAnchor),
             voteImageView.leadingAnchor.constraint(equalTo: voteContainerView.leadingAnchor),
             voteImageView.widthAnchor.constraint(equalToConstant: 18),
@@ -693,11 +749,18 @@ final class CongestionReportViewController: BaseViewController {
             voteTitleLabel.topAnchor.constraint(equalTo: voteContainerView.topAnchor),
             voteTitleLabel.leadingAnchor.constraint(equalTo: voteImageView.trailingAnchor, constant: 4),
             
-            buttonStackView.topAnchor.constraint(equalTo: voteTitleLabel.bottomAnchor, constant: 10),
+            voteDialogButton.centerYAnchor.constraint(equalTo: voteTitleLabel.centerYAnchor),
+            voteDialogButton.trailingAnchor.constraint(equalTo: voteContainerView.trailingAnchor),
+            
+            buttonStackView.heightAnchor.constraint(equalToConstant: 96),
+            
+            buttonStackView.topAnchor.constraint(equalTo: voteTitleLabel.bottomAnchor, constant: 8),
             buttonStackView.bottomAnchor.constraint(equalTo: voteContainerView.bottomAnchor),
             buttonStackView.leadingAnchor.constraint(equalTo: voteContainerView.leadingAnchor),
             buttonStackView.trailingAnchor.constraint(equalTo: voteContainerView.trailingAnchor),
         ])
+        
+        contentStackView.setCustomSpacing(16, after: voteContainerView)
         
         buttonSetting()
     }
@@ -710,7 +773,7 @@ final class CongestionReportViewController: BaseViewController {
     
     private func configureTextView() {
         descriptionContainerView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addArrangedSubview(descriptionContainerView)
+        contentStackView.addArrangedSubview(descriptionContainerView)
         
         [descriptionTextView, descriptionPlaceholder, descriptionCount].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
@@ -718,9 +781,6 @@ final class CongestionReportViewController: BaseViewController {
         }
         
         NSLayoutConstraint.activate([
-//            descriptionContainerView.topAnchor.constraint(equalTo: voteContainerView.bottomAnchor, constant: 18),
-//            descriptionContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-//            descriptionContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             descriptionContainerView.heightAnchor.constraint(equalToConstant: 165),
             
             descriptionTextView.topAnchor.constraint(equalTo: descriptionContainerView.topAnchor, constant: 12),
@@ -777,12 +837,9 @@ final class CongestionReportViewController: BaseViewController {
     }
     
     // MARK: Bind Action
-    private func bindAction() {
-        
-    }
-    
     private func setActions() {
         didTapLocation()
+        didTapCongestionButton()
     }
     
     private func didTapLocation() {
@@ -791,8 +848,28 @@ final class CongestionReportViewController: BaseViewController {
         }
     }
     
+    private func didTapCongestionButton() {
+        voteDialogButton.addTarget(self, action: #selector(didTapCongestion), for: .touchUpInside)
+    }
+    
+    @objc private func didTapCongestion() {
+        let viewController = CongestionGuideDialogController()
+        self.present(viewController, animated: true)
+    }
+    
     @objc private func didTapClose() {
         dismiss(animated: true)
+    }
+    
+    private func presentRegisterDialog(on host: UIViewController, place: String) {
+        let alert = RegisterDialogController(place: place)
+        alert.onConfirm = { [weak self] in
+            self?.viewModel.didTapPost() // 라우팅/닫기 등
+        }
+        
+        DispatchQueue.main.async {
+            host.present(alert, animated: true)
+        }
     }
 }
 

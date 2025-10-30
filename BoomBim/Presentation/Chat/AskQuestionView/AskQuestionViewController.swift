@@ -117,7 +117,7 @@ final class AskQuestionViewController: BaseViewController {
     
     // MARK: Setup UI
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureNavigationBar()
         configureView()

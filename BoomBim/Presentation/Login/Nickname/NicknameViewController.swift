@@ -120,7 +120,7 @@ final class NicknameViewController: BaseViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         setupNavigationBar()
         

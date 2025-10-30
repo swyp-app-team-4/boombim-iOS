@@ -157,7 +157,40 @@
 
     },
     "hour" : {
-
+    
+    },
+    "dialog.button.confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
+          }
+        }
+      }
+    },
+    "dialog.label.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금 바로 지도에서 핀을 확인해보세요"
+          }
+        }
+      }
+    },
+    "dialog.label.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "혼잡도 알리기 완료!"
+          }
+        }
+      }
     },
     "login.button.kakao" : {
       "extractionState" : "manual",
@@ -773,6 +806,17 @@
         }
       }
     },
+    "report.button.vote.dialog" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "혼잡도 기준 안내"
+          }
+        }
+      }
+    },
     "report.label.placeholder" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -823,7 +867,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "혼잡도를 투표해주세요"
+            "value" : "혼잡도를 선택해주세요"
           }
         }
       }

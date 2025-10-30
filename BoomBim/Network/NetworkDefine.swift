@@ -77,7 +77,7 @@ enum NetworkDefine {
             case .officialPlace:
                 return "api/app/public/official-place"
             case .userPlace:
-                return "api/app/member-place"
+                return "api/app/public/member-place"
             case .registerPostPlace:
                 return "api/app/member-place/resolve"
             case .postPlace:
@@ -85,7 +85,7 @@ enum NetworkDefine {
             case .officialPlaceDetail(let id):
                 return "api/app/public/official-place/\(id)/overview"
             case .userPlaceDetail(let id):
-                return "api/app/member-place/\(id)"
+                return "api/app/public/member-place/\(id)"
             case .registerFavoritePlace:
                 return "api/app/favorite"
             case .deleteFavoritePlace(let type, let id):

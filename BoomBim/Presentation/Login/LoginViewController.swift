@@ -45,7 +45,7 @@ final class LoginViewController: BaseViewController {
         stackView.axis = .vertical
         stackView.alignment = .center
         stackView.distribution = .fill
-        stackView.spacing = 32
+        stackView.spacing = 65
         
         return stackView
     }()

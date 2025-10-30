@@ -160,7 +160,7 @@ final class QuestionViewController: BaseViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .white
+        view.backgroundColor = .background
         
         configureEmptyStackView()
         configureTableView()

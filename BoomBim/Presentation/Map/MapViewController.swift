@@ -26,6 +26,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     
     private let mapReady = PublishRelay<Void>()
     private let modeRelay = BehaviorRelay<OverlayGroup>(value: .realtime)
+    private let reloadTrigger = PublishRelay<Void>()
     
     private let activityIndicator = UIActivityIndicatorView(style: .large)
 
@@ -71,18 +72,19 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         return view
     }()
 
-    private let favoriteButton: UIButton = {
-        let button = UIButton(type: .custom)
-        button.setImage(.buttonUnselectedFavorite, for: .normal)
-        button.setImage(.buttonSelectedFavorite,  for: .selected)
-        return button
-    }()
-
-    private let dividerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .grayScale6
-        return view
-    }()
+    /// 해당 기능은 제거
+//    private let favoriteButton: UIButton = {
+//        let button = UIButton(type: .custom)
+//        button.setImage(.buttonUnselectedFavorite, for: .normal)
+//        button.setImage(.buttonSelectedFavorite,  for: .selected)
+//        return button
+//    }()
+//
+//    private let dividerView: UIView = {
+//        let view = UIView()
+//        view.backgroundColor = .grayScale6
+//        return view
+//    }()
 
     private lazy var publicButton: UIButton = {
         let button = UIButton()
@@ -244,29 +246,15 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         ])
 
         // 내부 구성
-        favoriteButton.translatesAutoresizingMaskIntoConstraints = false
-        dividerView.translatesAutoresizingMaskIntoConstraints = false
         let segmentStack = UIStackView(arrangedSubviews: [publicButton, realtimeButton])
         segmentStack.axis = .horizontal
         segmentStack.spacing = 8
         segmentStack.translatesAutoresizingMaskIntoConstraints = false
 
-        buttonsContainer.addSubview(favoriteButton)
-        buttonsContainer.addSubview(dividerView)
         buttonsContainer.addSubview(segmentStack)
 
         NSLayoutConstraint.activate([
-            favoriteButton.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
-            favoriteButton.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-            favoriteButton.widthAnchor.constraint(equalToConstant: 34),
-            favoriteButton.heightAnchor.constraint(equalToConstant: 34),
-
-            dividerView.leadingAnchor.constraint(equalTo: favoriteButton.trailingAnchor, constant: 10),
-            dividerView.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
-            dividerView.widthAnchor.constraint(equalToConstant: 2),
-            dividerView.heightAnchor.constraint(equalToConstant: 15),
-
-            segmentStack.leadingAnchor.constraint(equalTo: dividerView.trailingAnchor, constant: 4),
+            segmentStack.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor),
             segmentStack.centerYAnchor.constraint(equalTo: buttonsContainer.centerYAnchor),
             segmentStack.trailingAnchor.constraint(lessThanOrEqualTo: buttonsContainer.trailingAnchor),
             segmentStack.heightAnchor.constraint(equalToConstant: 34)
@@ -323,23 +311,15 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
 
         // 토글 버튼 상태 관리 (공식/실시간은 택1)
         publicButton.rx.tap
-            .bind(onNext: { [weak self] in self?.selectMode(.official) })
+            .bind(onNext: { [weak self] in
+                self?.selectMode(.official)
+                self?.reloadTrigger.accept(())
+            })
             .disposed(by: disposeBag)
         realtimeButton.rx.tap
-            .bind(onNext: { [weak self] in self?.selectMode(.realtime) })
-            .disposed(by: disposeBag)
-
-        // 즐겨찾기 토글(보이기/숨기기)
-        favoriteButton.rx.tap
             .bind(onNext: { [weak self] in
-                guard let self else { return }
-                favoriteButton.isSelected.toggle()
-                if favoriteButton.isSelected {
-                    overlay.show(.favorite)
-                } else {
-                    overlay.hide(.favorite)
-                }
-//                kakaoMap?.commit()
+                self?.selectMode(.realtime)
+                self?.reloadTrigger.accept(())
             })
             .disposed(by: disposeBag)
 
@@ -367,7 +347,8 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
             zoomLevel:  zoomLevelSubject.asObservable(),
             didTapMyLocation: currentLocationButton.rx.tap.asObservable(), // 사용하는 경우
             officialPoiTap: officialPoiTapRelay.asSignal(),
-            userPoiTap: userPoiTapRelay.asSignal()
+            userPoiTap: userPoiTapRelay.asSignal(),
+            reload: reloadTrigger.asSignal()
         )
         let output = viewModel.transform(input: input)
 
@@ -393,13 +374,13 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
 
                 // ✅ 인덱스도 PLACE만으로
                 self.placeIndex = Dictionary(uniqueKeysWithValues: onlyPlaces.map {
-                    (String($0.memberPlaceId), $0)
+                    (String($0.placeId), $0)
                 })
 
                 // ✅ POI도 PLACE만으로
                 let items: [POIItem] = onlyPlaces.map {
                     .init(
-                        id: String($0.memberPlaceId),
+                        id: String($0.placeId),
                         point: MapPoint(
                             longitude: $0.coordinate.longitude,
                             latitude:  $0.coordinate.latitude
@@ -441,7 +422,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
 
                 // ✅ 패널 표시는 PLACE 여부 기반
                 if onlyPlaces.isEmpty {
-                    self.floatingPanel.move(to: .tip, animated: true)
+                    resetPanelToEmptyTip()
                 } else {
                     self.showUserListPanel(with: onlyPlaces)
                 }
@@ -481,22 +462,9 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                 
                 // 결과가 있으면 목록 패널을 .half로 띄움, 없으면 .tip
                 if official.isEmpty {
-                    self.floatingPanel.move(to: .tip, animated: true)
+                    resetPanelToEmptyTip()
                 } else {
                     self.showOfficialListPanel(with: official) // 아래 함수
-                }
-            })
-            .disposed(by: disposeBag)
-        
-        favoriteButton.rx.tap
-            .bind(onNext: { [weak self] in
-                guard let self else { return }
-                favoriteButton.isSelected.toggle()
-                
-                if favoriteButton.isSelected {
-                    self.overlay.show(.favorite)
-                } else {
-                    self.overlay.hide(.favorite)
                 }
             })
             .disposed(by: disposeBag)
@@ -596,6 +564,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
 
         // 오버레이 표시 모드
         modeRelay.accept(group)
+        reloadTrigger.accept(())
         overlay.showOnly(group)
 //        kakaoMap?.commit()
     }
@@ -624,6 +593,26 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                 zPOI: 2400, zShape: 1900
             )
         }
+    }
+    
+    private func resetPanelToEmptyTip() {
+        if let sv = trackedScrollView {
+            floatingPanel.untrack(scrollView: sv)
+        }
+        trackedScrollView = nil
+
+        let placeholder = UIViewController()
+        placeholder.view.backgroundColor = .clear
+        floatingPanel.set(contentViewController: placeholder)
+        floatingPanel.move(to: .tip, animated: true)
+        lockScroll(for: .tip)
+        setMapButtonsHidden(false, animated: true)
+
+        // 필요 시 컨트롤러/바인딩 해제
+        officialPlaceListViewController = nil
+        officialPlaceDetailViewController = nil
+        userPlaceDetailViewController = nil
+        userPlaceListViewController = nil
     }
 
     // MARK: - Actions
@@ -667,7 +656,6 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         // 2b) 즉시 이동하고 싶으면 아래 한 줄로 대체:
         // map.moveCamera(cu)
     }
-
 
     // 현재 뷰포트 계산(델리게이트/헬퍼에서 재사용)
     private func currentViewportRect() -> ViewportRect {
@@ -1029,4 +1017,3 @@ extension MapViewController: KakaoMapEventDelegate {
         zoomLevelSubject.onNext(Int(zoom))
     }
 }
-

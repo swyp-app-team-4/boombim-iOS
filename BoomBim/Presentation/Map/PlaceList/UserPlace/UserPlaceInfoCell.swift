@@ -96,8 +96,8 @@ final class UserPlaceInfoCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
-        backgroundColor = .white
-        contentView.backgroundColor = .white
+        backgroundColor = .background
+        contentView.backgroundColor = .background
         setupViews()
         setupLayout()
     }

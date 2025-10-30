@@ -77,6 +77,7 @@ final class HomeCoordinator: Coordinator {
         let service = FcmService()
         let viewModel = NotificationViewModel(service: service)
         let viewController = NotificationViewController(viewModel: viewModel)
+        viewController.hidesBottomBarWhenPushed = true
         navigationController.pushViewController(viewController, animated: true)
     }
     

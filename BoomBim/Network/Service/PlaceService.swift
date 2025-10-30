@@ -48,8 +48,8 @@ typealias UserPlaceRequest = OfficialPlaceRequest
 
 // PLACE 전용
 struct UserPlaceItem: Decodable {
-    let type: String          // "PLACE"
-    let memberPlaceId: Int
+    let markerType: String          // "PLACE"
+    let placeId: Int
     let name: String
     let placeType: String     // "MEMBER_PLACE" (원하면 유지)
     let coordinate: Coord
@@ -62,7 +62,7 @@ struct UserPlaceItem: Decodable {
 
 // CLUSTER 전용
 struct ClusterItem: Decodable {
-    let type: String          // "CLUSTER"
+    let markerType: String          // "CLUSTER"
     let coordinate: Coord
     let clusterSize: Int
     let congestionLevelCounts: [String:Int]
@@ -73,17 +73,17 @@ enum UserPlaceEntry: Decodable {
     case place(UserPlaceItem)
     case cluster(ClusterItem)
 
-    private enum CodingKeys: String, CodingKey { case type }
+    private enum CodingKeys: String, CodingKey { case markerType }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        switch try c.decode(String.self, forKey: .type) {
+        switch try c.decode(String.self, forKey: .markerType) {
         case "PLACE":
             self = .place(try UserPlaceItem(from: decoder))
         case "CLUSTER":
             self = .cluster(try ClusterItem(from: decoder))
         default:
-            throw DecodingError.dataCorruptedError(forKey: .type, in: c, debugDescription: "Unknown type")
+            throw DecodingError.dataCorruptedError(forKey: .markerType, in: c, debugDescription: "Unknown type")
         }
     }
 }

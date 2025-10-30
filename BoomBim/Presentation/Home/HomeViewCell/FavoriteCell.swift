@@ -17,8 +17,8 @@ final class FavoriteCell: UICollectionViewCell {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.alignment = .leading
-        stackView.distribution = .fillProportionally
-        stackView.spacing = 6
+        stackView.distribution = .fill
+        stackView.spacing = 8
         
         return stackView
     }()
@@ -43,8 +43,8 @@ final class FavoriteCell: UICollectionViewCell {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.alignment = .fill
-        stackView.distribution = .fillProportionally
-        stackView.spacing = 6
+        stackView.distribution = .fill
+//        stackView.spacing = 6
         
         return stackView
     }()
@@ -107,7 +107,7 @@ final class FavoriteCell: UICollectionViewCell {
     }
     
     private func setupView() {
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = .clear
         
         configureStackView()
         configureImageView()
