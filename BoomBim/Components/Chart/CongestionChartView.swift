@@ -10,29 +10,58 @@ import Charts
 
 final class ChartViewModel: ObservableObject {
     @Published var data: [HourPoint] = []
-    
-    var values: [Double] { data.map { $0.value }}
-    var hours: [Int] { data.map { $0.hour } }
-    var minHour: Int { hours.min() ?? 0 }
-    var maxHour: Int { hours.max() ?? 23 }
-    
-    var currentHour: Int {
-        Calendar.current.component(.hour, from: Date())
+
+    var values: [Double] { data.map { $0.value } }
+    var hours:  [Int]    { data.map { $0.hour  } }
+
+    // 시작 시각(언랩 기준점) = 첫 데이터의 시간
+    var startHour: Int { data.first?.hour ?? 0 }
+
+    // 시(hour)를 단조증가로 언랩: 시작보다 작으면 +24
+    func unwrap(_ h: Int) -> Int { h < startHour ? h + 24 : h }
+
+    // 차트에 실제로 쓸 언랩 포인트
+    struct UPoint: Identifiable {
+        let id = UUID()
+        let x: Int          // unwrapped hour (단조 증가)
+        let hour24: Int     // 0~23 라벨 표기용
+        let value: Double
+        let level: CongestionLevel
     }
 
-    // hour가 정수 단위일 때, 사이값은 선형 보간
-    func interpolatedValue(at hour: Int) -> Double? {
-        let pts = data.sorted { $0.hour < $1.hour }
-        if let exact = pts.first(where: { $0.hour == hour }) { return exact.value }
+    // 변환된 포인트 배열 (data 순서를 보존)
+    var unwrappedPoints: [UPoint] {
+        data.map { .init(x: unwrap($0.hour), hour24: $0.hour, value: $0.value, level: $0.level) }
+    }
+
+    // X축 도메인
+    var xMin: Int { unwrappedPoints.first?.x ?? 0 }
+    var xMax: Int { unwrappedPoints.last?.x  ?? 23 }
+
+    // X축 눈금 — 언랩 값으로 생성
+    var axisHours: [Int] {
+        Array(stride(from: xMin, through: xMax, by: 1))
+    }
+
+    // 현재 시(0~23)
+    var currentHour: Int {
+        startHour
+//        Calendar.current.component(.hour, from: Date())
+    }
+
+    // 언랩된 시간축에서 선형 보간
+    func interpolatedValueAtUnwrappedHour(_ ux: Int) -> Double? {
+        let pts = unwrappedPoints
+        if let exact = pts.first(where: { $0.x == ux }) { return exact.value }
         guard
-            let left = pts.last(where: { $0.hour < hour }),
-            let right = pts.first(where: { $0.hour > hour })
+            let left  = pts.last(where: { $0.x < ux }),
+            let right = pts.first(where: { $0.x > ux })
         else { return nil }
-        // hour는 정수라 t는 0~1 사이
-        let t = Double(hour - left.hour) / Double(right.hour - left.hour)
+        let t = Double(ux - left.x) / Double(right.x - left.x)
         return (1 - t) * left.value + t * right.value
     }
 }
+
 
 struct CongestionChartView: View {
     @ObservedObject var viewModel: ChartViewModel
@@ -70,13 +99,6 @@ struct CongestionChartView: View {
             legendDot(.crowded,  color: .chartCrowded)
         }
     }
-    
-    private let bandColors: [Color] = [
-        Color(.chartRelaxed), // relaxed
-        Color(.chartNormal), // normal
-        Color(.chartBusy), // busy
-        Color(.chartCrowded)  // crowded
-    ]
 
     @ViewBuilder
     private var chart: some View {
@@ -87,67 +109,54 @@ struct CongestionChartView: View {
         var axisHours: [Int] {
             Array(Set(viewModel.data.map { $0.hour })).sorted()
         }
-
+        
         Chart {
             gridRules()
-            lineAndPoints()
-            currentTimeMark()
+            lineAndPoints()        // 🔧 내부에서 unwrappedPoints 사용하도록 수정
+            currentTimeMark()      // 🔧 언랩 기준으로 계산하도록 수정
         }
         .chartXScale(
-            domain: viewModel.minHour...viewModel.maxHour,
-            range: .plotDimension(padding: innerPad)   // 좌우 여백 제거 → 색띠 끝에서 시작/끝
+            // 🔧 언랩된 도메인 사용
+            domain: viewModel.xMin...viewModel.xMax,
+            range: .plotDimension(padding: innerPad)
         )
         .chartYScale(
             domain: 0.0...100.0,
-            range: .plotDimension(padding: 0)   // 위아래 여백 제거(선택)
+            range: .plotDimension(padding: 0)
         )
-
-        // 1) 플롯 배경은 흰색, 2) 왼쪽에 내부 패딩을 줘서 색띠 공간 확보
-        // 3) 그 패딩 공간(leading)에 색띠를 배경으로 깔기
         .chartPlotStyle { plot in
             plot
                 .background(Color.white)
                 .padding(.leading, bandWidth)
                 .background(alignment: .leading) {
-                    let w = bandWidth + 0.5
+                    let w: CGFloat = 24 + 0.5
                     VStack(spacing: 0) {
-                        // 레벨 수(4)만큼 균등한 높이의 색 블록
-                        Color(.chartRelaxed)   // 여유
-                        Color(.chartNormal)   // 보통
-                        Color(.chartBusy)   // 약간 붐빔
-                        Color(.chartCrowded)   // 붐빔
+                        Color(.chartCrowded)
+                        Color(.chartBusy)
+                        Color(.chartNormal)
+                        Color(.chartRelaxed)
                     }
                     .frame(width: w)
-                    .mask( // 플롯 높이에 정확히 4등분
-                        VStack(spacing: 0) {
-                            ForEach(0..<4) { _ in Rectangle() }
-                        }
-                    )
+                    .mask(VStack(spacing: 0) { ForEach(0..<4) { _ in Rectangle() } })
                 }
         }
-
-        // X축 눈금을 '실제 데이터 시간'으로 지정 → 포인트와 정확히 수직 정렬
-        .chartXAxis(.hidden)     // 내장 X축 숨김
+        .chartXAxis(.hidden)
         .padding(.bottom, Typography.Caption.regular.lineHeight)
         .chartOverlay { proxy in
             GeometryReader { geo in
-                let plotFrame = geo[proxy.plotAreaFrame]
-                
-                // hours는 표시할 정수 시간 배열
-                ForEach( Array(stride(from: viewModel.minHour, through: viewModel.maxHour, by: 2)), id: \.self) { h in
-                    if let x = proxy.position(forX: h) {
-                        // 라벨을 플롯 하단에 정렬
-                        Text("\(h)")
+                let plot = geo[proxy.plotAreaFrame]
+                // 🔧 언랩된 축 값에 맞춰 레이블, 표시는 %24
+                ForEach(viewModel.axisHours, id: \.self) { ux in
+                    if let x = proxy.position(forX: ux) {
+                        Text("\(ux % 24)")
                             .font(Font(Typography.Caption.regular.font))
                             .foregroundStyle(Color(.grayScale7))
-                            .position(x: x + plotFrame.minX,
-                                      y: plotFrame.maxY + Typography.Caption.regular.lineHeight/2) // 하단 오프셋 -> 왜 나누기 2했는지
+                            .position(x: x + plot.minX,
+                                      y: plot.maxY + Typography.Caption.regular.lineHeight/2)
                     }
                 }
             }
         }
-
-        // Y축: 가로 그리드 라인만 보이게
         .chartYAxis {
             AxisMarks(values: [0,1,2,3,4]) { _ in
                 AxisGridLine()
@@ -156,20 +165,6 @@ struct CongestionChartView: View {
             }
         }
         .frame(height: chartHeight)
-    }
-
-
-    @ChartContentBuilder
-    private func bandsLayer() -> some ChartContent {
-        ForEach(CongestionLevel.allCases, id: \.self) { level in
-            RectangleMark(
-                xStart: .value("시작", viewModel.minHour),
-                xEnd:   .value("끝", viewModel.maxHour),
-                yStart: .value("yStart", Double(level.bandIndex)),
-                yEnd:   .value("yEnd", Double(level.bandIndex + 1))
-            )
-            .foregroundStyle(level.bandColor)
-        }
     }
     
     @ChartContentBuilder
@@ -185,55 +180,57 @@ struct CongestionChartView: View {
 
     @ChartContentBuilder
     private func lineAndPoints() -> some ChartContent {
-        ForEach(viewModel.data) { item in
+        ForEach(viewModel.unwrappedPoints) { p in
             LineMark(
-                x: .value("hour", item.hour),
-                y: .value("value", item.value)
+                x: .value("hour", p.x),
+                y: .value("value", p.value)
             )
             .lineStyle(.init(lineWidth: 1))
             .foregroundStyle(Color(.main))
+            .zIndex(1)
 
             PointMark(
-                x: .value("hour", item.hour),
-                y: .value("value", item.value)
+                x: .value("hour", p.x),
+                y: .value("value", p.value)
             )
             .symbol(.circle)
             .symbolSize(28)
-            .foregroundStyle(.white)                   // 채움 = 흰색
-            .annotation(position: .overlay) {          // 테두리 = 메인컬러 1pt
+            .foregroundStyle(.white)
+            .annotation(position: .overlay) {
                 Circle()
                     .stroke(Color(UIColor.main), lineWidth: 1)
                     .frame(width: 6, height: 6)
                     .allowsHitTesting(false)
             }
+            .zIndex(2)
         }
     }
 
     @ChartContentBuilder
     private func currentTimeMark() -> some ChartContent {
-        if let y = viewModel.interpolatedValue(at: viewModel.currentHour) {
-            RuleMark(x: .value("now", viewModel.currentHour),
+        let ux = viewModel.unwrap(viewModel.currentHour)
+        if ux >= viewModel.xMin, ux <= viewModel.xMax,
+           let y = viewModel.interpolatedValueAtUnwrappedHour(ux) {
+
+            RuleMark(x: .value("now", ux),
                      yStart: .value("bottom", 0),
                      yEnd:   .value("y", y))
             .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-            .foregroundStyle(Color(.chartCurrentTimePoint))  // 원하는 컬러
-            .zIndex(0.5) // 라인 뒤(0)와 데이터(1) 사이
-            
+            .foregroundStyle(Color(.chartCurrentTimePoint))
+            .zIndex(0.5)
+
             PointMark(
-                x: .value("now-x", viewModel.currentHour),
+                x: .value("now-x", ux),
                 y: .value("now-y", y)
             )
             .symbol(.circle)
-            .symbolSize(28)                    // 내부 흰 점 기준 면적
-            .foregroundStyle(.clear)           // 흰 채움
+            .symbolSize(28)
+            .foregroundStyle(.clear)
             .annotation(position: .overlay) {
                 ZStack {
-                    // 바깥 노란 하이라이트 링(반투명)
                     Circle()
                         .fill(Color(.chartCurrentTimePoint).opacity(0.50))
                         .frame(width: 14, height: 14)
-                    
-                    // 내부 흰 원 + 노란 테두리(1pt)
                     Circle()
                         .fill(Color(.chartCurrentTimePoint))
                         .stroke(Color(UIColor.grayScale1), lineWidth: 1)
@@ -241,7 +238,7 @@ struct CongestionChartView: View {
                 }
                 .allowsHitTesting(false)
             }
-            .zIndex(2) // 데이터보다 위
+            .zIndex(2)
         }
     }
     

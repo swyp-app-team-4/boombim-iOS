@@ -460,29 +460,15 @@ final class OfficialPlaceDetailViewController: UIViewController {
         
         setAgeStackView(percent: ageRateArray)
         
-        let sample: [HourPoint] = [
-            .init(hour: 6, level: .relaxed),
-            .init(hour: 7, level: .relaxed),
-            .init(hour: 8, level: .crowded),
-            .init(hour: 9, level: .relaxed),
-            .init(hour: 10, level: .relaxed),
-            .init(hour: 11, level: .busy),
-            .init(hour: 12, level: .crowded),
-            .init(hour: 13, level: .crowded),
-            .init(hour: 14, level: .crowded),
-            .init(hour: 15, level: .busy),
-            .init(hour: 16, level: .normal),
-            .init(hour: 17, level: .normal),
-            .init(hour: 18, level: .normal),
-            .init(hour: 19, level: .relaxed),
-            .init(hour: 20, level: .crowded),
-            .init(hour: 21, level: .crowded),
-            .init(hour: 22, level: .relaxed),
-            .init(hour: 23, level: .relaxed),
-            .init(hour: 24, level: .relaxed),
-        ]
-        
-        updateChart(data: sample)
+        let forecasts: [HourPoint] = data.forecasts.compactMap { f in
+            guard let hour  = DateHelper.getHour(from: f.forecastTime),
+                  let level = CongestionLevel(ko: f.congestionLevelName) else {
+                return nil              // 이 항목만 제외
+            }
+            return HourPoint(hour: hour, level: level)
+        }
+
+        updateChart(data: forecasts)
     }
     
     func ageRatesDict(data: [Demographic]) -> [AgeCategory: Double] {

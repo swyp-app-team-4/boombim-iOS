@@ -14,6 +14,17 @@ enum DateHelper {
         return max(0, Int(diff / 60.0)) // 미래 시간이면 0으로 클램프
     }
     
+    static func getHour(from forecastTime: String) -> Int? {
+        // "2025-10-30T18:00:00" ← 타임존 표기 없음
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "en_US_POSIX")
+        df.timeZone = .current                 // ← 로컬 기준으로 해석 (원하면 .utc로 바꾸세요)
+        df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+
+        guard let date = df.date(from: forecastTime) else { return nil }
+        return Calendar.current.component(.hour, from: date)
+    }
+    
     private static func parseObservedAt(_ s: String, tz: TimeZone) -> Date? {
         // 1) ISO8601 + (옵션)분수초
         let iso = ISO8601DateFormatter()
