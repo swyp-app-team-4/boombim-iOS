@@ -62,7 +62,7 @@ final class OnboardingPageViewController: UIViewController {
         
         self.imageView.image = image
         
-        self.subTitleLabel.isHidden = (subTitle == nil)
+//        self.subTitleLabel.isHidden = (subTitle == nil)
     }
     
     required init?(coder: NSCoder) { fatalError() }
@@ -87,6 +87,7 @@ final class OnboardingPageViewController: UIViewController {
         }
         
         titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        subTitleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         
         titleStackView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(titleStackView)
@@ -104,8 +105,7 @@ final class OnboardingPageViewController: UIViewController {
         
         NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: titleStackView.bottomAnchor, constant: 14),
-            imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
-            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
+            imageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             imageView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
