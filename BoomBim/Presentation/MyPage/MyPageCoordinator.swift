@@ -25,6 +25,9 @@ final class MyPageCoordinator: Coordinator {
         viewModel.goToProfileView = { [weak self] in
             self?.showProfile()
         }
+        viewModel.goToPointView = { [weak self] in
+            self?.showPoint()
+        }
         
         navigationController.setViewControllers([viewController], animated: false)
     }
@@ -43,6 +46,13 @@ final class MyPageCoordinator: Coordinator {
     private func showProfile() {
         let viewModel = ProfileViewModel()
         let viewController = ProfileViewController(viewModel: viewModel)
+        viewController.hidesBottomBarWhenPushed = true
+        navigationController.pushViewController(viewController, animated: true)
+    }
+    
+    private func showPoint() {
+        let viewModel = PointViewModel()
+        let viewController = PointViewController(viewModel: viewModel)
         viewController.hidesBottomBarWhenPushed = true
         navigationController.pushViewController(viewController, animated: true)
     }

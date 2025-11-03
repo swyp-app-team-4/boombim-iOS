@@ -32,14 +32,11 @@ final class MyPageViewModel {
     
     var goToSettingsView: (() -> Void)?
     var goToProfileView: (() -> Void)?
+    var goToPointView: (() -> Void)?
     
-    func didTapSettings() {
-        goToSettingsView?()
-    }
-    
-    func didTapProfile() {
-        goToProfileView?()
-    }
+    func didTapSettings() { goToSettingsView?() }
+    func didTapProfile() { goToProfileView?() }
+    func didTapPoint() { goToPointView?() }
     
     func transform(_ input: Input) -> Output {
         input.appear

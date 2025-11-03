@@ -21,7 +21,7 @@ final class MyPageViewController: BaseViewController {
         view.backgroundColor = .grayScale1
         view.layer.cornerRadius = 10
         view.layer.shadowColor = UIColor.shadow.cgColor
-        view.layer.shadowOpacity = 0.04
+        view.layer.shadowOpacity = 0.4
         view.layer.shadowOffset = .zero
         view.layer.shadowRadius = 4
         
@@ -98,8 +98,8 @@ final class MyPageViewController: BaseViewController {
         bind()
         bindHeaderAction()
         
-        // dummy data
         setProfile()
+        setPointAction()
     }
     
     // MARK: Setup UI
@@ -199,6 +199,14 @@ final class MyPageViewController: BaseViewController {
     // MARK: Action
     @objc private func didTapSettingsButton() {
         viewModel.didTapSettings()
+    }
+    
+    private func setPointAction() {
+        pointButton.addTarget(self, action: #selector(didTapPointButton), for: .touchUpInside)
+    }
+    
+    @objc private func didTapPointButton() {
+        viewModel.didTapPoint()
     }
     
     // MARK: - bind Action

@@ -117,9 +117,19 @@ extension UILabel {
             suffixStyle: TextStyle = Typography.Body03.medium,
             suffixColor: UIColor = .grayScale8,
             alignment: NSTextAlignment? = nil,
-            kern: CGFloat? = nil
+            kern: CGFloat? = nil,
+            includeSign: Bool = false,     // ✅ 부호 출력 여부
+            zeroSign: String = "+"        // ✅ 0일 때 부호(원하면 "" 로)
         ) {
-            // 1) 3자리 콤마 고정 포맷(로케일 독립)
+            // 부호 결정 (+, −, 0일 때는 zeroSign)
+            let sign: String = {
+                guard includeSign else { return "" }
+                if value < 0 { return "−" }     // 대시 대신 U+2212
+                if value > 0 { return "+" }
+                return zeroSign
+            }()
+
+            // 절댓값으로 3자리 콤마 포맷
             let nf = NumberFormatter()
             nf.locale = Locale(identifier: "en_US_POSIX")
             nf.numberStyle = .decimal
@@ -127,22 +137,29 @@ extension UILabel {
             nf.groupingSeparator = ","
             nf.groupingSize = 3
             nf.maximumFractionDigits = 0
-            let numberText = nf.string(from: NSNumber(value: value)) ?? "\(value)"
-            
-            print("numberText : \(numberText)")
+            let absValue = abs(value)
+            let grouped = nf.string(from: NSNumber(value: absValue)) ?? "\(absValue)"
 
-            // 2) 스타일 적용
+            // 최종 숫자 문자열 = 부호 + 포맷된 숫자
+            let signedNumberText = sign + grouped
+            // print("signedNumberText:", signedNumberText) // 예: +32,020 / −20
+
+            // 스타일 적용
             let align = alignment ?? self.textAlignment
-            let numberAttr = numberStyle.attributed(numberText,
-                                                    color: numberColor,
-                                                    alignment: align,
-                                                    kern: kern)
-            let pAttr = (suffixStyle).attributed(suffix,
-                                                 color: suffixColor,
-                                                 alignment: align,
-                                                 kern: kern)
+            let numberAttr = numberStyle.attributed(
+                signedNumberText,
+                color: numberColor,
+                alignment: align,
+                kern: kern
+            )
+            let pAttr = suffixStyle.attributed(
+                suffix,
+                color: suffixColor,
+                alignment: align,
+                kern: kern
+            )
 
-            // 3) 합치기
+            // 합치기
             let result = NSMutableAttributedString()
             result.append(numberAttr)
             result.append(pAttr)

@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class FeedChipButton: UIButton {
+final class DefaultChipButton: UIButton {
     override var isSelected: Bool { didSet { applyStyle() } }
     
     init(title: String) {
