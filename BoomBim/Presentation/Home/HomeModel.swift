@@ -90,8 +90,22 @@ enum HomeSection: Int, CaseIterable {
 
 enum HomeItem: Hashable {
     case region([RegionItem])
+    case regionEmpty
     case recommendPlace(RecommendPlaceItem)
     case favoritePlace(FavoritePlaceItem)
     case favoriteEmpty
     case congestionRank(CongestionRankPlaceItem)
+    
+    private var stableID: String {
+        switch self {
+        case .region:                       return "region"
+        case .regionEmpty:                  return "regionEmpty"
+        case .recommendPlace(let m):        return "recommend:\(m.id)"   // ← 섹션 네임스페이스
+        case .favoritePlace(let m):         return "favorite:\(m.placeId)"    // ← 섹션 네임스페이스
+        case .favoriteEmpty:                return "favoriteEmpty"
+        case .congestionRank(let m):        return "rank:\(m.id)"
+        }
+    }
+    func hash(into h: inout Hasher) { h.combine(stableID) }
+    static func == (l: Self, r: Self) -> Bool { l.stableID == r.stableID }
 }
