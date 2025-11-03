@@ -108,4 +108,46 @@ extension UILabel {
         numberOfLines = 0
         attributedText = m
     }
+    
+    func setPoints(
+            _ value: Int,
+            numberStyle: TextStyle,
+            numberColor: UIColor,
+            suffix: String = " P",
+            suffixStyle: TextStyle = Typography.Body03.medium,
+            suffixColor: UIColor = .grayScale8,
+            alignment: NSTextAlignment? = nil,
+            kern: CGFloat? = nil
+        ) {
+            // 1) 3자리 콤마 고정 포맷(로케일 독립)
+            let nf = NumberFormatter()
+            nf.locale = Locale(identifier: "en_US_POSIX")
+            nf.numberStyle = .decimal
+            nf.usesGroupingSeparator = true
+            nf.groupingSeparator = ","
+            nf.groupingSize = 3
+            nf.maximumFractionDigits = 0
+            let numberText = nf.string(from: NSNumber(value: value)) ?? "\(value)"
+            
+            print("numberText : \(numberText)")
+
+            // 2) 스타일 적용
+            let align = alignment ?? self.textAlignment
+            let numberAttr = numberStyle.attributed(numberText,
+                                                    color: numberColor,
+                                                    alignment: align,
+                                                    kern: kern)
+            let pAttr = (suffixStyle).attributed(suffix,
+                                                 color: suffixColor,
+                                                 alignment: align,
+                                                 kern: kern)
+
+            // 3) 합치기
+            let result = NSMutableAttributedString()
+            result.append(numberAttr)
+            result.append(pAttr)
+
+            numberOfLines = 1
+            attributedText = result
+        }
 }

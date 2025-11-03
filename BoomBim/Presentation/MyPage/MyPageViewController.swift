@@ -15,6 +15,57 @@ final class MyPageViewController: BaseViewController {
     private let activityIndicator = UIActivityIndicatorView(style: .large)
     
     private let profileView = MyProfileView()
+    
+    private let pointContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .grayScale1
+        view.layer.cornerRadius = 10
+        view.layer.shadowColor = UIColor.shadow.cgColor
+        view.layer.shadowOpacity = 0.04
+        view.layer.shadowOffset = .zero
+        view.layer.shadowRadius = 4
+        
+        return view
+    }()
+    
+    private let pointStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .equalSpacing
+        
+        return stackView
+    }()
+    
+    private let pointLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 1
+        label.setPoints(32020, numberStyle: Typography.Body02.semiBold, numberColor: .main)
+        
+        return label
+    }()
+    
+    private let pointButton: UIButton = {
+        let button = UIButton(type: .system)
+        
+        var config = UIButton.Configuration.plain()
+        // 제목
+        var attr = AttributeContainer()
+        attr.font = Typography.Body03.medium.font
+        config.attributedTitle = AttributedString("포인트 내역", attributes: attr)
+        
+        // 아이콘
+        config.image = .iconRightArrow
+        config.imagePlacement = .trailing   // ← 오른쪽으로
+        config.imagePadding = 6            // 텍스트와 간격
+        config.contentInsets = .init(top: 0, leading: 0, bottom: 0, trailing: 0)
+        
+        // 색상
+        config.baseForegroundColor = .grayScale8
+        
+        button.configuration = config
+        return button
+    }()
+    
     private let headerView = MyHeaderView()
     private let pageViewController: UIPageViewController = {
         let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal, options: nil)
@@ -69,6 +120,7 @@ final class MyPageViewController: BaseViewController {
         view.backgroundColor = .background
         
         configureProfileView()
+        configurePointView()
         configureHeaderView()
         configurePageViewController()
     }
@@ -85,12 +137,36 @@ final class MyPageViewController: BaseViewController {
         ])
     }
     
+    private func configurePointView() {
+        [pointLabel, pointButton].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            pointStackView.addArrangedSubview($0)
+        }
+        
+        pointStackView.translatesAutoresizingMaskIntoConstraints = false
+        pointContainerView.addSubview(pointStackView)
+        
+        pointContainerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(pointContainerView)
+        
+        NSLayoutConstraint.activate([
+            pointStackView.topAnchor.constraint(equalTo: pointContainerView.topAnchor, constant: 10),
+            pointStackView.bottomAnchor.constraint(equalTo: pointContainerView.bottomAnchor, constant: -10),
+            pointStackView.leadingAnchor.constraint(equalTo: pointContainerView.leadingAnchor, constant: 14),
+            pointStackView.trailingAnchor.constraint(equalTo: pointContainerView.trailingAnchor, constant: -14),
+            
+            pointContainerView.topAnchor.constraint(equalTo: profileView.bottomAnchor, constant: 14),
+            pointContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            pointContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+        ])
+    }
+    
     private func configureHeaderView() {
         headerView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(headerView)
         
         NSLayoutConstraint.activate([
-            headerView.topAnchor.constraint(equalTo: profileView.bottomAnchor, constant: 18),
+            headerView.topAnchor.constraint(equalTo: pointContainerView.bottomAnchor, constant: 18),
             headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             headerView.heightAnchor.constraint(equalToConstant: 44)
@@ -114,7 +190,7 @@ final class MyPageViewController: BaseViewController {
     }
     
     private func setProfile() {
-        profileView.configure(name: "닉네임", profile: nil, email: "123", socialProvider: "dfd", vote: 0, question: 0)
+        profileView.configure(name: "닉네임", profile: nil)
         profileView.onTapEdit = { [weak self] in
             self?.viewModel.didTapProfile()
         }
@@ -168,22 +244,18 @@ final class MyPageViewController: BaseViewController {
                 
                 self.profileView.configure(
                     name: p.name,
-                    profile: p.profile,
-                    email: p.email,
-                    socialProvider: p.socialProvider,
-                    vote: p.voteCnt,
-                    question: p.questionCnt)
+                    profile: p.profile)
             })
             .disposed(by: disposeBag)
         
         let favoriteViewModel = FavoriteViewModel(items: output.favorite)
         let favoriteViewController = FavoriteViewController(viewModel: favoriteViewModel)
         
-        let voteViewModel = VoteViewModel(items: output.answer)
-        let voteViewController = VoteViewController(viewModel: voteViewModel)
-        
-        let questionViewModel = QuestionViewModel(items: output.question)
-        let questionViewController = QuestionViewController(viewModel: questionViewModel)
+//        let voteViewModel = VoteViewModel(items: output.answer)
+//        let voteViewController = VoteViewController(viewModel: voteViewModel)
+//        
+//        let questionViewModel = QuestionViewModel(items: output.question)
+//        let questionViewController = QuestionViewController(viewModel: questionViewModel)
         
         /// 1.0.1 version 적용 내역) 투표와 질문이 사라짐.
         self.pages = [favoriteViewController/*, voteViewController, questionViewController*/]
