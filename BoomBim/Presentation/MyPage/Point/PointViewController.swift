@@ -6,17 +6,13 @@
 //
 
 import UIKit
+import RxSwift
 
 final class PointViewController: BaseViewController {
     private let viewModel: PointViewModel
+    private let disposeBag = DisposeBag()
     
-    // 데모 데이터
-    private var items: [PointHistoryItem] = [
-        .init(date: makeDate("2025-10-15 12:32"), title: "혼잡도 알리기", delta: +10, balance: 32020),
-        .init(date: makeDate("2025-10-15 12:26"), title: "혼잡도 알리기", delta: +10, balance: 32010),
-        .init(date: makeDate("2025-10-12 10:32"), title: "이벤트 응모",   delta: -20, balance: 32000),
-        .init(date: makeDate("2025-10-10 15:22"), title: "혼잡도 알리기", delta: +10, balance: 37000),
-    ]
+    private var items: [PointHistoryItem] = []
     
     private let headerContainerView: UIView = {
         let view = UIView()
@@ -131,7 +127,7 @@ final class PointViewController: BaseViewController {
         
         setupView()
         
-        pointValueLabel.setPoints(32020, numberStyle: Typography.Heading02.semiBold, numberColor: .main, suffixStyle: Typography.Heading02.semiBold, suffixColor: .grayScale7)
+        bind()
     }
     
     private func setupView() {
@@ -218,6 +214,26 @@ final class PointViewController: BaseViewController {
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
+    
+    // MARK: - bind
+    private func bind() {
+        viewModel.pointRelay
+            .asDriver()
+            .drive(onNext: { [weak self] point in
+                print("point : \(point.point)")
+                print("pointHistory : \(point.getPointHistoryRes)")
+                self?.applyPointHistory(point: point)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func applyPointHistory(point: UserPoint) {
+        pointValueLabel.setPoints(point.point, numberStyle: Typography.Heading02.semiBold, numberColor: .main, suffixStyle: Typography.Heading02.semiBold, suffixColor: .grayScale7)
+        
+        self.items = mapHistory(point.getPointHistoryRes)
+        print("items.count : \(self.items.count)")
+        tableView.reloadData()
+    }
 }
 
 extension PointViewController: UITableViewDataSource, UITableViewDelegate {
@@ -240,8 +256,34 @@ extension PointViewController: UITableViewDataSource, UITableViewDelegate {
         return cell
     }
 
+//    struct PointHistory: Decodable {
+//        let pointHistoryId: Int
+//        let balance: Int // 거래 후잔액
+//        let amount: Int // 거래량 여기서 USE면 마이너스, EARN이면 플러스
+//        let createdAt: String // "2025-10-16T13:28:08.831Z"
+//        let pointAction: String // USE면 사용된거, EARN이면 적립 내역
+//        let pointCategory: String // CONGESTION 이면 혼잡도 알리기임, EVENT 사용
+//    }
     
-    // MARK: - Helpers
+    /// 서버의 PointHistory 배열 -> 셀 모델 배열로 변환
+    func mapHistory(_ histories: [PointHistory]) -> [PointHistoryItem] {
+        let parsed: [PointHistoryItem] = histories.compactMap { h in
+            let date = DateHelper.fullDate(h.createdAt)
+            let isEarn = h.pointAction.uppercased() == "EARN"
+            let delta = isEarn ? +h.amount : -h.amount
+            
+            return PointHistoryItem(
+                date: Self.makeDate(date),
+                title: h.pointCategory,
+                delta: delta,
+                balance: h.balance
+            )
+        }
+        
+        // 최신순(내림차순) 정렬
+        return parsed.sorted { $0.date > $1.date }
+    }
+    
     private static func makeDate(_ s: String) -> Date {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd HH:mm"

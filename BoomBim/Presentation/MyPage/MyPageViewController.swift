@@ -196,6 +196,10 @@ final class MyPageViewController: BaseViewController {
         }
     }
     
+    private func setPoint(point: Int) {
+        pointLabel.setPoints(point, numberStyle: Typography.Body02.semiBold, numberColor: .main)
+    }
+    
     // MARK: Action
     @objc private func didTapSettingsButton() {
         viewModel.didTapSettings()
@@ -253,6 +257,14 @@ final class MyPageViewController: BaseViewController {
                 self.profileView.configure(
                     name: p.name,
                     profile: p.profile)
+            })
+            .disposed(by: disposeBag)
+        
+        output.point
+            .drive(onNext: { [weak self] p in
+                guard let self else { return }
+                
+                setPoint(point: p.point)
             })
             .disposed(by: disposeBag)
         

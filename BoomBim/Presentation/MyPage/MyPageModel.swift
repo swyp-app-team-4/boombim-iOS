@@ -21,6 +21,8 @@ struct UserProfile: Decodable {
     let questionCnt: Int
 }
 
+typealias UserPoint = PointResponse
+
 struct VoteItem: Hashable {
     let id = UUID()
     let image: UIImage

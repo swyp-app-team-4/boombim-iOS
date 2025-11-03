@@ -38,6 +38,20 @@ typealias ProfileResponse = UserProfile
 typealias MyAnswerResponse = MyAnswer
 typealias MyQuestionResponse = MyQuestion
 
+struct PointResponse: Decodable {
+    let point: Int
+    let getPointHistoryRes: [PointHistory]
+}
+
+struct PointHistory: Decodable {
+    let pointHistoryId: Int
+    let balance: Int // 거래 후잔액
+    let amount: Int // 거래량 여기서 USE면 마이너스, EARN이면 플러스
+    let createdAt: String // "2025-10-16T13:28:08.831Z"
+    let pointAction: String // USE면 사용된거, EARN이면 적립 내역
+    let pointCategory: String // CONGESTION 이면 혼잡도 알리기임, EVENT 사용
+}
+
 final class AuthService: Service {
     static let shared = AuthService()
     private override init() {}
@@ -199,5 +213,17 @@ final class AuthService: Service {
         }
         
         return requestPatch(url, header: headers)
+    }
+    
+    func getPoint() -> Single<PointResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Point.point
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
     }
 }

@@ -17,6 +17,7 @@ final class MyPageViewModel {
         let isLoading: Driver<Bool>
         let error: Signal<String>
         let profile: Driver<UserProfile>
+        let point: Driver<UserPoint>
         let favorite: Driver<[MyFavorite]>
         let answer: Driver<[MyAnswer]>
         let question: Driver<[MyQuestion]>
@@ -25,6 +26,7 @@ final class MyPageViewModel {
     private let loading = BehaviorRelay<Bool>(value: false)
     private let errorRelay = PublishRelay<String>()
     private let profileRelay = BehaviorRelay<UserProfile?>(value: nil)
+    private let pointRelay = BehaviorRelay<UserPoint?>(value: nil)
     private let favoriteRelay = BehaviorRelay<[MyFavorite]?>(value: nil)
     private let answerRelay = BehaviorRelay<[MyAnswer]?>(value: nil)
     private let questionRelay = BehaviorRelay<[MyQuestion]?>(value: nil)
@@ -32,11 +34,20 @@ final class MyPageViewModel {
     
     var goToSettingsView: (() -> Void)?
     var goToProfileView: (() -> Void)?
-    var goToPointView: (() -> Void)?
+    var goToPointView: ((UserPoint) -> Void)?
+    
+    private var pointData: UserPoint?
     
     func didTapSettings() { goToSettingsView?() }
     func didTapProfile() { goToProfileView?() }
-    func didTapPoint() { goToPointView?() }
+    func didTapPoint() {
+        guard let p = pointData else {
+            // 아직 로딩 중이거나 실패한 상태 → 토스트/로딩 유도
+            loading.accept(true) // 선택
+            return
+        }
+        goToPointView?(p)
+    }
     
     func transform(_ input: Input) -> Output {
         input.appear
@@ -47,6 +58,7 @@ final class MyPageViewModel {
             isLoading: loading.asDriver(),
             error: errorRelay.asSignal(),
             profile: profileRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
+            point: pointRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
             favorite: favoriteRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
             answer: answerRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
             question: questionRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty())
@@ -60,6 +72,18 @@ final class MyPageViewModel {
             .subscribe(onSuccess: { [weak self] p in
                 self?.loading.accept(false)
                 self?.profileRelay.accept(p)
+            }, onFailure: { [weak self] err in
+                self?.loading.accept(false)
+                self?.errorRelay.accept(err.localizedDescription)
+            })
+            .disposed(by: disposeBag)
+        
+        AuthService.shared.getPoint()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onSuccess: { [weak self] p in
+                self?.loading.accept(false)
+                self?.pointData = p
+                self?.pointRelay.accept(p)
             }, onFailure: { [weak self] err in
                 self?.loading.accept(false)
                 self?.errorRelay.accept(err.localizedDescription)
