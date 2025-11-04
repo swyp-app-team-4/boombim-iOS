@@ -10,6 +10,9 @@ import RxSwift
 
 final class PointViewController: BaseViewController {
     private let viewModel: PointViewModel
+    // Expected ViewModel API (adjust to your actual implementation):
+    // var onTapEvent: (() -> Void)?
+    // var onTapPoint: (() -> Void)?
     private let disposeBag = DisposeBag()
     
     private var items: [PointHistoryItem] = []
@@ -128,6 +131,8 @@ final class PointViewController: BaseViewController {
         setupView()
         
         bind()
+        
+        setActions()
     }
     
     private func setupView() {
@@ -233,6 +238,19 @@ final class PointViewController: BaseViewController {
         self.items = mapHistory(point.getPointHistoryRes)
         print("items.count : \(self.items.count)")
         tableView.reloadData()
+    }
+    
+    // MARK: - Actions
+    private func setActions() {
+        eventButton.addTarget(self, action: #selector(didTapEventButton), for: .touchUpInside)
+    }
+    
+    @objc private func didTapEventButton() {
+        viewModel.goToEventInfoView?()
+    }
+
+    @objc private func didTapPointButton() {
+        
     }
 }
 

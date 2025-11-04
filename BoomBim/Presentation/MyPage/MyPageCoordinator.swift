@@ -10,6 +10,7 @@ import UIKit
 final class MyPageCoordinator: Coordinator {
     var navigationController: UINavigationController
     var settingsCoordinator: SettingCoordinator?
+    var pointCoordinator: PointCoordinator?
 
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -33,14 +34,12 @@ final class MyPageCoordinator: Coordinator {
     }
     
     private func showSettings() {
-        let viewModel = SettingsViewModel()
-        let viewController = SettingsViewController(viewModel: viewModel)
+//        let viewModel = SettingsViewModel()
+//        let viewController = SettingsViewController(viewModel: viewModel)
         let coordinator = SettingCoordinator(navigationController: navigationController)
         
         self.settingsCoordinator = coordinator
         coordinator.start()
-        
-//        navigationController.pushViewController(viewController, animated: true)
     }
     
     private func showProfile() {
@@ -51,9 +50,14 @@ final class MyPageCoordinator: Coordinator {
     }
     
     private func showPoint(point: UserPoint) {
-        let viewModel = PointViewModel(initialPoint: point)
-        let viewController = PointViewController(viewModel: viewModel)
-        viewController.hidesBottomBarWhenPushed = true
-        navigationController.pushViewController(viewController, animated: true)
+//        let viewModel = PointViewModel(initialPoint: point)
+//        let viewController = PointViewController(viewModel: viewModel)
+        
+        let coordinator = PointCoordinator(navigationController: navigationController, initialPoint: point)
+        
+        self.pointCoordinator = coordinator
+        coordinator.start()
+//        viewController.hidesBottomBarWhenPushed = true
+//        navigationController.pushViewController(viewController, animated: true)
     }
 }

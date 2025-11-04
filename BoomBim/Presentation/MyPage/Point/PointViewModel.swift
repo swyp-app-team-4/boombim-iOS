@@ -10,6 +10,8 @@ import RxRelay
 
 final class PointViewModel {
     // 초기값부터 가지고 있고, 이후 갱신도 가능
+    var goToEventInfoView: (() -> Void)?
+    
     let pointRelay: BehaviorRelay<UserPoint>
     
     init(initialPoint: UserPoint) {
