@@ -15,35 +15,49 @@ final class CongestionReportCoordinator: Coordinator {
     
     var childCoordinators: [Coordinator] = []
     
-    var service: KakaoLocalService?
-    var locationRepo: LocationRepository?
-    
+    private let selectedPlace: Place?
+    private let service: KakaoLocalService
+    private let locationRepo: LocationRepository
     private var rootViewModel: CongestionReportViewModel?
     
-    init(navigationController: UINavigationController) {
+    init(navigationController: UINavigationController,
+         selectedPlace: Place?,
+         service: KakaoLocalService,
+         locationRepo: LocationRepository) {
         self.navigationController = navigationController
+        self.selectedPlace = selectedPlace
+        self.service = service
+        self.locationRepo = locationRepo
     }
     
     func start() {
         print("CongestionReportCoordinator start")
-        guard let service = self.service else { return }
-        let viewModel = CongestionReportViewModel(service: service)
+//        guard let service = self.service else { return }
+        let viewModel = CongestionReportViewModel(service: service, selectedPlace: selectedPlace)
         let viewController = CongestionReportViewController(viewModel: viewModel)
         rootViewModel = viewModel
         
-        viewModel.goToMapPickerView = { [weak self] location in
-            print("goToMapPickerView")
-            self?.showMapPicker(location)
+        if selectedPlace == nil {
+            viewModel.goToMapPickerView = { [weak self] coord in self?.showMapPicker(coord) }
+            viewModel.goToSearchPlaceView = { [weak self] in self?.showSearchPlace() }
+        } else {
+            viewModel.goToMapPickerView = nil
+            viewModel.goToSearchPlaceView = nil
         }
+        
+//        viewModel.goToMapPickerView = { [weak self] location in
+//            print("goToMapPickerView")
+//            self?.showMapPicker(location)
+//        }
+//
+//        viewModel.goToSearchPlaceView = { [weak self] in
+//            print("goToSearchPlaceView")
+//            self?.showSearchPlace()
+//        }
         
         viewModel.backToHome = { [weak self] in
             print("backToHome")
             self?.onFinish?()
-        }
-        
-        viewModel.goToSearchPlaceView = { [weak self] in
-            print("goToSearchPlaceView")
-            self?.showSearchPlace()
         }
         
         navigationController.setViewControllers([viewController], animated: false)
@@ -60,8 +74,6 @@ final class CongestionReportCoordinator: Coordinator {
     
     func showSearchPlace() {
         print("showSearchPlace")
-        guard let service = self.service, let locationRepo = self.locationRepo else { return }
-        
         let childCoordinator = SearchPlaceCoordinator(navigationController: navigationController)
         childCoordinator.service = service
         childCoordinator.locationRepo = locationRepo

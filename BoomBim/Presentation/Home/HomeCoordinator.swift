@@ -7,13 +7,20 @@
 
 import UIKit
 
-final class HomeCoordinator: Coordinator {
-    var navigationController: UINavigationController
-    
-    var childCoordinators: [Coordinator] = []
+protocol HomeCoordinating: AnyObject {
+    func makeUserPlaceDetailViewController() -> UserPlaceDetailViewController
+    func showCongestionReport(selectedPlace: Place)
+}
 
-    init(navigationController: UINavigationController) {
+final class HomeCoordinator: Coordinator, HomeCoordinating {
+    var navigationController: UINavigationController
+    var childCoordinators: [Coordinator] = []
+    
+    weak var router: ReportRouting?
+
+    init(navigationController: UINavigationController, router: ReportRouting) {
         self.navigationController = navigationController
+        self.router = router
     }
 
     func start() {
@@ -22,7 +29,8 @@ final class HomeCoordinator: Coordinator {
         let viewController = HomeViewController(viewModel: viewModel)
         
         viewModel.goToCongestionReportView = { [weak self] in
-            self?.showCongestionReport()
+//            self?.showCongestionReport()
+            self?.router?.showCongestionReport(selectedPlace: nil)
         }
         
         viewModel.goToSearchView = { [weak self] in
@@ -40,31 +48,43 @@ final class HomeCoordinator: Coordinator {
         navigationController.setViewControllers([viewController], animated: false)
     }
     
-    func showCongestionReport() {
-        let service = KakaoLocalService()
-        let locationRepo = LocationRepository()
-        let viewModel = CongestionReportViewModel(service: service)
-        let viewController = CongestionReportViewController(viewModel: viewModel)
-//        navigationController.pushViewController(viewController, animated: true)
-        
-        // 모달 형식 구현시 사용 예정
-        let navigationController = UINavigationController(rootViewController: viewController)
-        
-        let childCoordinator = CongestionReportCoordinator(navigationController: navigationController)
-        childCoordinator.service = service
-        childCoordinator.locationRepo = locationRepo
-        childCoordinator.onFinish = { [weak self, weak childCoordinator] in
-            guard let self, let childCoordinator else { return }
-            self.childCoordinators.removeAll { $0 === childCoordinator }
-            self.navigationController.presentedViewController?.dismiss(animated: true)
-        }
-        childCoordinators.append(childCoordinator)
-        childCoordinator.start()
-        
-        navigationController.modalPresentationStyle = .fullScreen
-        
-        self.navigationController.present(navigationController, animated: true)
+    // MARK: - 사용자 공유 장소에서 사용하기 위해 팩토리 메서드 사용
+    func makeUserPlaceDetailViewController() -> UserPlaceDetailViewController {
+        let vc = UserPlaceDetailViewController()               // ← 내부에서 세팅
+        return vc
     }
+    
+    func showCongestionReport(selectedPlace: Place) {
+        showCongestionReport(selectedPlace: selectedPlace)
+    }
+    
+//    func showCongestionReport(selectedPlace: Place? = nil) {
+//        let service = KakaoLocalService()
+//        let locationRepo = LocationRepository()
+//        let viewModel = CongestionReportViewModel(service: service, selectedPlace: selectedPlace)
+//        let viewController = CongestionReportViewController(viewModel: viewModel)
+////        navigationController.pushViewController(viewController, animated: true)
+//        
+//        // 모달 형식 구현시 사용 예정
+//        let navigationController = UINavigationController(rootViewController: viewController)
+//        
+//        let childCoordinator = CongestionReportCoordinator(navigationController: navigationController,
+//                                                           selectedPlace: selectedPlace,
+//                                                           service: service,
+//                                                           locationRepo: locationRepo)
+//        
+//        childCoordinator.onFinish = { [weak self, weak childCoordinator] in
+//            guard let self, let childCoordinator else { return }
+//            self.childCoordinators.removeAll { $0 === childCoordinator }
+//            self.navigationController.presentedViewController?.dismiss(animated: true)
+//        }
+//        childCoordinators.append(childCoordinator)
+//        childCoordinator.start()
+//        
+//        navigationController.modalPresentationStyle = .fullScreen
+//        
+//        self.navigationController.present(navigationController, animated: true)
+//    }
     
     func showSearch() {
         let service = KakaoLocalService()

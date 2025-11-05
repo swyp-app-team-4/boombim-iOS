@@ -57,6 +57,8 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private var officialPlaceListViewController: OfficialPlaceListViewController?
     private var officialPlaceDetailViewController: OfficialPlaceDetailViewController?
     
+    // MapCoordinator가 세팅해줄 빌더
+    var makeUserPlaceDetailViewController: (() -> UserPlaceDetailViewController)?
     private var userPlaceDetailViewController: UserPlaceDetailViewController?
     private var userPlaceListViewController: UserPlaceListViewController?
     
@@ -854,7 +856,8 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     
     private func showUserDetailPanel(with places: UserPlaceDetailInfo) {
         if userPlaceDetailViewController == nil {
-            userPlaceDetailViewController = UserPlaceDetailViewController()
+            guard let detail = makeUserPlaceDetailViewController?() else { return }
+            userPlaceDetailViewController = detail
             userDetailBindingsBag = DisposeBag()
         }
         userPlaceDetailViewController?.configure(data: places)

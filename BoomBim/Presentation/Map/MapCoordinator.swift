@@ -10,8 +10,11 @@ import UIKit
 final class MapCoordinator: Coordinator {
     var navigationController: UINavigationController
 
-    init(navigationController: UINavigationController) {
+    weak var router: ReportRouting?
+
+    init(navigationController: UINavigationController, router: ReportRouting) {
         self.navigationController = navigationController
+        self.router = router
     }
 
     func start() {
@@ -24,6 +27,13 @@ final class MapCoordinator: Coordinator {
         }
         
         let viewController = MapViewController(viewModel: viewModel)
+        
+        viewController.makeUserPlaceDetailViewController = { [weak self] in
+            let vc = UserPlaceDetailViewController()
+            vc.reportRouter = self?.router
+            return vc
+        }
+        
         navigationController.setNavigationBarHidden(true, animated: false)
         navigationController.setViewControllers([viewController], animated: false)
     }

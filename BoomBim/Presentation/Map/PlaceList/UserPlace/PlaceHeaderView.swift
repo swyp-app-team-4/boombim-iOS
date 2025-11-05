@@ -8,7 +8,16 @@
 import UIKit
 
 final class PlaceHeaderView: UIView {
-    private let titleLabel = UILabel()
+    private var place: Place?
+    var onTapReport: ((Place) -> Void)?
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Body02.semiBold.font
+        label.textColor = .grayScale10
+        
+        return label
+    }()
     
     private let updateStackView: UIStackView = {
         let stackView = UIStackView()
@@ -23,7 +32,8 @@ final class PlaceHeaderView: UIView {
     private let timeImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
-        imageView.image = .iconRecycleTime
+        imageView.image = .iconRecycleTime.withRenderingMode(.alwaysTemplate)
+        imageView.tintColor = .grayScale9
         
         return imageView
     }()
@@ -31,44 +41,69 @@ final class PlaceHeaderView: UIView {
     private let updateLabel: UILabel = {
         let label = UILabel()
         label.font = Typography.Caption.regular.font
+        label.textColor = .grayScale9
+        
+        return label
+    }()
+    
+    private let bulletImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.image = .iconBullet
+        
+        return imageView
+    }()
+    
+    private let addressLabel: UILabel = {
+        let label = UILabel()
+        label.font = Typography.Caption.regular.font
         label.textColor = .grayScale8
         
         return label
     }()
     
-    private let addressLabel  = UILabel()
     private let statusBadge = UIImageView()
-    let reportButton = UIButton(type: .system) // “붐빔 알리기”
     
-    init(title: String, update: String, address: String, currentLevel: CongestionLevel) {
+    private let reportButton: UIButton = {
+        let button = UIButton(type: .system)
+
+        var config = UIButton.Configuration.filled()
+        config.baseBackgroundColor = .main
+        config.cornerStyle = .capsule
+        config.contentInsets = .init(top: 11, leading: 20, bottom: 11, trailing: 20)
+
+        let font = Typography.Body03.medium.font
+        let color = UIColor.grayScale1
+        let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: color]
+        let s = NSMutableAttributedString(string: "혼잡도 알리기  ", attributes: attrs)
+
+        let icon = UIImage.iconPointMain
+        let iconSize = font.pointSize * 1.0
+        let att = NSTextAttachment()
+        att.image = icon
+        att.bounds = CGRect(x: 0, y: (font.capHeight - iconSize)/2 - 1, width: iconSize, height: iconSize)
+        s.append(NSAttributedString(attachment: att))
+        s.append(NSAttributedString(string: " 10", attributes: attrs))
+
+        config.attributedTitle = AttributedString(s)
+        button.configuration = config
+       
+        return button
+    }()
+    
+    init() {
         super.init(frame: .zero)
         backgroundColor = .clear
+        reportButton.addTarget(self, action: #selector(didTapReport), for: .touchUpInside)
         
-        titleLabel.text = title
-        titleLabel.font = Typography.Body02.semiBold.font
-        titleLabel.textColor = .grayScale10
+//        titleLabel.text = title
+//        updateLabel.text = update
+//        addressLabel.text = address
         
-        updateLabel.text = update
-        
-        addressLabel.text = address
-        addressLabel.font = Typography.Caption.regular.font
-        addressLabel.textColor = .grayScale8
-        
-        [timeImageView, updateLabel, addressLabel].forEach { view in
+        [timeImageView, updateLabel, bulletImageView, addressLabel].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             updateStackView.addArrangedSubview(view)
         }
-        
-        // 붐빔 알리기 버튼 (가로 크게)
-        reportButton.setTitle("＋ 혼잡도 질문하기", for: .normal)
-        reportButton.setTitleColor(.white, for: .normal)
-        reportButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
-        reportButton.backgroundColor = UIColor(red: 1.00, green: 0.66, blue: 0.19, alpha: 1)
-        reportButton.layer.cornerRadius = 12
-        reportButton.contentEdgeInsets = .init(top: 18, left: 16, bottom: 18, right: 16)
-        reportButton.alpha = 0            // 보이지 않음 (공간은 그대로)
-        reportButton.isUserInteractionEnabled = false  // 탭 방지
-        reportButton.isAccessibilityElement = false 
         
         // 레이아웃
         let headerTop = UIStackView(arrangedSubviews: [titleLabel, updateStackView])
@@ -79,7 +114,7 @@ final class PlaceHeaderView: UIView {
         
         let v = UIStackView(arrangedSubviews: [headerTop, reportButton])
         v.axis = .vertical
-        v.spacing = 10
+        v.spacing = 14
         
         addSubview(v)
         addSubview(statusBadge)
@@ -98,13 +133,20 @@ final class PlaceHeaderView: UIView {
             reportButton.heightAnchor.constraint(equalToConstant: 44)
         ])
     }
+    
     required init?(coder: NSCoder) { fatalError() }
     
-    func update(title: String, update: String, address: String, level: CongestionLevel) {
+    @objc private func didTapReport() {
+        guard let place else { return }
+        onTapReport?(place)
+    }
+
+    func update(title: String, update: String, address: String, level: CongestionLevel, place: Place) {
         titleLabel.text = title
         updateLabel.text = update
         addressLabel.text = address
         statusBadge.image = level.badge
+        self.place = place
     }
 }
 

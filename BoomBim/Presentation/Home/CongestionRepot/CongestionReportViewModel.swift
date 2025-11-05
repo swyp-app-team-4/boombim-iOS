@@ -57,12 +57,21 @@ final class CongestionReportViewModel {
 //    }
     private let service: KakaoLocalService
     
-    init(service: KakaoLocalService) {
+    let canChangePlace: Bool // 장소를 변경할 수 있는지 없는지 여부
+    
+    init(service: KakaoLocalService, selectedPlace: Place?) {
         self.service = service
+        self.canChangePlace = (selectedPlace == nil)
+        if let place = selectedPlace {
+            _currentSelectedPlace.accept(place)
+            _registerPlaceId.accept(Int(place.id) ?? 0)
+        }
     }
     
     // Coordinator가 호출할 setter
     func setSelectedPlace(place: Place, id: Int) {
+        print("place : \(place)")
+        print("id : \(id)")
         _currentSelectedPlace.accept(place)
         _registerPlaceId.accept(id)
         _registerPlaceName.accept(place.name)

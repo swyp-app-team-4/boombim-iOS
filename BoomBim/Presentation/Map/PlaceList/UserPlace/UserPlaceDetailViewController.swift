@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreLocation
 import RxSwift
 import RxCocoa
 import SafariServices
@@ -13,6 +14,8 @@ import SafariServices
 typealias FeedItem = MemberCongestionItem
 
 final class UserPlaceDetailViewController: UIViewController {
+    weak var reportRouter: ReportRouting?
+    
     // MARK: - State
     private let disposeBag = DisposeBag()
     private let filterRelay = BehaviorRelay<FeedFilter>(value: .latest)
@@ -75,9 +78,7 @@ final class UserPlaceDetailViewController: UIViewController {
         return view
     }()
     
-    private var headerView = PlaceHeaderView(
-        title: "—", update: "—", address: "-", currentLevel: .normal
-    )
+    private lazy var headerView = PlaceHeaderView()
     public let tableView = UITableView(frame: .zero, style: .plain)
     private let filterBar = FilterBarView()
     
@@ -133,11 +134,25 @@ final class UserPlaceDetailViewController: UIViewController {
         placeTypeRelay.accept(.MEMBER_PLACE)
         favoriteState.accept(data.memberPlaceSummary.isFavorite)
         
+        let placeInfo: Place = .init(
+            id: String(data.memberPlaceSummary.memberPlaceId),
+            name: data.memberPlaceSummary.name,
+            coord: CLLocationCoordinate2D(latitude: data.memberPlaceSummary.latitude, longitude: data.memberPlaceSummary.longitude),
+            address: data.memberPlaceSummary.address,
+            distance: nil)
+        
         headerView.update(
             title: data.memberPlaceSummary.name,
             update: DateHelper.displayString(from: data.memberCongestionItems.first?.createdAt ?? ""),
             address: data.memberPlaceSummary.address,
-            level: CongestionLevel(ko: data.memberCongestionItems.first?.congestionLevelName ?? "여유") ?? .relaxed)
+            level: CongestionLevel(ko: data.memberCongestionItems.first?.congestionLevelName ?? "여유") ?? .relaxed,
+            place: placeInfo
+        )
+        
+        headerView.onTapReport = { [weak self] place in
+            guard let self else { return }
+            self.reportRouter?.showCongestionReport(selectedPlace: place)
+        }
         
         // 목록 데이터 반영
         allItemsRelay.accept(data.memberCongestionItems)
