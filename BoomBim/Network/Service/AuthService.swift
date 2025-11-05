@@ -52,6 +52,15 @@ struct PointHistory: Decodable {
     let pointCategory: String // CONGESTION 이면 혼잡도 알리기임, EVENT 사용
 }
 
+struct EventResponse: Decodable {
+    let eventCampaignId: Int
+    let eventStartDate: String
+    let eventEndDate: String
+    let winnerAnnouncementDate: String // // 당첨자 발표
+    let memberPoint: Int // 포인트
+    let currentTicket: Int // 이벤트 응모한 티켓수
+}
+
 final class AuthService: Service {
     static let shared = AuthService()
     private override init() {}
@@ -215,8 +224,22 @@ final class AuthService: Service {
         return requestPatch(url, header: headers)
     }
     
+    // MARK: - Point
     func getPoint() -> Single<PointResponse> {
         let url = NetworkDefine.apiHost + NetworkDefine.Point.point
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
+    }
+    
+    // MARK: - Event
+    func getEvent() -> Single<EventResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Event.check
         
         var headers: HTTPHeaders = ["Content-Type": "application/json"]
         headers["Accept"] = "application/json"

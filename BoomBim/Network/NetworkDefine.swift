@@ -36,6 +36,10 @@ enum NetworkDefine {
         static let point = "api/app/point"
     }
     
+    enum Event {
+        static let check = "api/app/event"
+    }
+    
     enum Vote {
         static let create = "api/vote"
         static let fetch = "api/vote"

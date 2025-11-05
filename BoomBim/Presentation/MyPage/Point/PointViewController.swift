@@ -273,15 +273,6 @@ extension PointViewController: UITableViewDataSource, UITableViewDelegate {
         
         return cell
     }
-
-//    struct PointHistory: Decodable {
-//        let pointHistoryId: Int
-//        let balance: Int // 거래 후잔액
-//        let amount: Int // 거래량 여기서 USE면 마이너스, EARN이면 플러스
-//        let createdAt: String // "2025-10-16T13:28:08.831Z"
-//        let pointAction: String // USE면 사용된거, EARN이면 적립 내역
-//        let pointCategory: String // CONGESTION 이면 혼잡도 알리기임, EVENT 사용
-//    }
     
     /// 서버의 PointHistory 배열 -> 셀 모델 배열로 변환
     func mapHistory(_ histories: [PointHistory]) -> [PointHistoryItem] {

@@ -6,9 +6,14 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class EventViewController: BaseViewController {
     private let viewModel: EventViewModel
+    private let disposeBag = DisposeBag()
+    
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
     
     private let scrollView = UIScrollView()
     
@@ -55,6 +60,83 @@ final class EventViewController: BaseViewController {
         return imageView
     }()
     
+    private let eventInfoStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .fill
+        stackView.alignment = .center
+        stackView.isLayoutMarginsRelativeArrangement = true
+        stackView.layoutMargins = UIEdgeInsets(top: 18, left: 8, bottom: 18, right: 8)
+        stackView.spacing = 8
+        
+        stackView.backgroundColor = .background
+        stackView.layer.cornerRadius = 14
+        stackView.layer.borderWidth = 1
+        stackView.layer.borderColor = UIColor.eventSroke.cgColor
+        stackView.layer.masksToBounds = true
+        
+        return stackView
+    }()
+    
+    private let ticketStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.distribution = .fill
+        stackView.alignment = .center
+        stackView.spacing = 5
+        
+        return stackView
+    }()
+    
+    private let ticketTitleLabel: UILabel = {
+        let label = UILabel()
+        label.setText("획득한 응모권", style: Typography.Body03.medium)
+        label.textColor = .grayScale9
+        
+        return label
+    }()
+    
+    private let ticketValueLabel: UILabel = {
+        let label = UILabel()
+        label.setText("0 장", style: Typography.Body02.semiBold)
+        label.textColor = .grayScale9
+        
+        return label
+    }()
+    
+    private let dividerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .eventDivider
+        
+        return view
+    }()
+    
+    private let pointStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.distribution = .fill
+        stackView.alignment = .center
+        stackView.spacing = 5
+        
+        return stackView
+    }()
+    
+    private let pointTitleLabel: UILabel = {
+        let label = UILabel()
+        label.setText("현재 포인트", style: Typography.Body03.medium)
+        label.textColor = .grayScale9
+        
+        return label
+    }()
+    
+    private let pointValueLabel: UILabel = {
+        let label = UILabel()
+        label.setText("0 point", style: Typography.Body02.semiBold)
+        label.textColor = .grayScale9
+        
+        return label
+    }()
+    
     private let noticeButton: UIButton = {
         let button = UIButton()
         button.setImage(.eventButtonNotice, for: .normal)
@@ -87,12 +169,16 @@ final class EventViewController: BaseViewController {
         super.viewDidLoad()
         
         setupView()
+        
+        bind()
     }
     
     private func setupView() {
         view.backgroundColor = .background
      
         configureScrollView()
+        configureButton()
+        configureEventInfoStackView()
         configureStackView()
     }
     
@@ -105,6 +191,52 @@ final class EventViewController: BaseViewController {
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+    
+    private func configureButton() {
+        purchaseButton.translatesAutoresizingMaskIntoConstraints = false
+        giftImageView.addSubview(purchaseButton)
+        
+        noticeButton.translatesAutoresizingMaskIntoConstraints = false
+        partImageView.addSubview(noticeButton)
+        
+        NSLayoutConstraint.activate([
+            purchaseButton.centerXAnchor.constraint(equalTo: giftImageView.centerXAnchor),
+            purchaseButton.bottomAnchor.constraint(equalTo: giftImageView.bottomAnchor, constant: -52),
+            
+            noticeButton.centerXAnchor.constraint(equalTo: partImageView.centerXAnchor),
+            noticeButton.bottomAnchor.constraint(equalTo: partImageView.bottomAnchor, constant: -52)
+        ])
+    }
+    
+    private func configureEventInfoStackView(){
+        [ticketTitleLabel, ticketValueLabel].forEach { label in
+            label.translatesAutoresizingMaskIntoConstraints = false
+            ticketStackView.addArrangedSubview(label)
+        }
+        
+        [pointTitleLabel, pointValueLabel].forEach { label in
+            label.translatesAutoresizingMaskIntoConstraints = false
+            pointStackView.addArrangedSubview(label)
+        }
+        
+        [ticketStackView, dividerView, pointStackView].forEach { view in
+            view.translatesAutoresizingMaskIntoConstraints = false
+            eventInfoStackView.addArrangedSubview(view)
+        }
+        
+        eventInfoStackView.translatesAutoresizingMaskIntoConstraints = false
+        partImageView.addSubview(eventInfoStackView)
+        
+        NSLayoutConstraint.activate([
+            eventInfoStackView.centerXAnchor.constraint(equalTo: partImageView.centerXAnchor),
+            eventInfoStackView.bottomAnchor.constraint(equalTo: noticeButton.topAnchor, constant: -16),
+            eventInfoStackView.leadingAnchor.constraint(equalTo: partImageView.leadingAnchor, constant: 16),
+            eventInfoStackView.trailingAnchor.constraint(equalTo: partImageView.trailingAnchor, constant: -16),
+            
+            dividerView.heightAnchor.constraint(equalToConstant: 40),
+            dividerView.widthAnchor.constraint(equalToConstant: 1)
         ])
     }
     
@@ -138,5 +270,39 @@ final class EventViewController: BaseViewController {
             equalTo: imageView.widthAnchor,
             multiplier: multiplier
         ).isActive = true
+    }
+    
+    private func setEventInfo(ticket: Int, point: Int) {
+        ticketValueLabel.setText("\(ticket) 장", style: Typography.Body02.semiBold)
+        pointValueLabel.setText("\(point) point", style: Typography.Body02.semiBold)
+    }
+    
+    // MARK: - bind
+    private func bind() {
+        let appear = rx.methodInvoked(#selector(UIViewController.viewWillAppear(_:)))
+            .map { _ in () }
+            .asSignal(onErrorSignalWith: .empty())
+        
+        let input = EventViewModel.Input(appear: appear)
+        let output = viewModel.transform(input)
+        
+        output.isLoading
+            .drive(activityIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        output.error
+            .emit(onNext: { [weak self] msg in
+                self?.presentAlert(title: "오류", message: msg)
+            })
+            .disposed(by: disposeBag)
+        
+        output.event
+            .drive(onNext: { [weak self] p in
+                guard let self else { return }
+                
+                print("p : \(p)")
+                setEventInfo(ticket: p.currentTicket, point: p.memberPoint)
+            })
+            .disposed(by: disposeBag)
     }
 }

@@ -39,7 +39,7 @@ final class MyPageViewController: BaseViewController {
     private let pointLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 1
-        label.setPoints(32020, numberStyle: Typography.Body02.semiBold, numberColor: .main)
+        label.setPoints(0, numberStyle: Typography.Body02.semiBold, numberColor: .main)
         
         return label
     }()

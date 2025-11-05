@@ -5,6 +5,50 @@
 //  Created by 조영현 on 11/3/25.
 //
 
+import RxSwift
+import RxCocoa
+
 final class EventViewModel {
     var goToPersonalInfoView: (() -> Void)?
+    
+    struct Input {
+        let appear: Signal<Void> // viewDidAppear 등에서 트리거
+    }
+    
+    struct Output {
+        let isLoading: Driver<Bool>
+        let error: Signal<String>
+        let event: Driver<UserEventInfo>
+    }
+    
+    private let loading = BehaviorRelay<Bool>(value: false)
+    private let errorRelay = PublishRelay<String>()
+    private let eventRelay = BehaviorRelay<UserEventInfo?>(value: nil)
+    private let disposeBag = DisposeBag()
+    
+    func transform(_ input: Input) -> Output {
+        input.appear
+            .emit(onNext: { [weak self] in self?.load() })
+            .disposed(by: disposeBag)
+        
+        return Output(
+            isLoading: loading.asDriver(),
+            error: errorRelay.asSignal(),
+            event: eventRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty())
+        )
+    }
+    
+    private func load() {
+        loading.accept(true)
+        AuthService.shared.getEvent()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onSuccess: { [weak self] p in
+                self?.loading.accept(false)
+                self?.eventRelay.accept(p)
+            }, onFailure: { [weak self] err in
+                self?.loading.accept(false)
+                self?.errorRelay.accept(err.localizedDescription)
+            })
+            .disposed(by: disposeBag)
+    }
 }
