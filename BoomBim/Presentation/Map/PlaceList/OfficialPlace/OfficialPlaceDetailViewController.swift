@@ -63,6 +63,15 @@ final class OfficialPlaceDetailViewController: UIViewController {
         return label
     }()
     
+    public lazy var backButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.iconLeftArrow, for: .normal)
+        button.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
+        button.isHidden = true
+        
+        return button
+    }()
+    
     private let favoriteButton: UIButton = {
         let button = UIButton()
         button.setImage(.iconUnselectedFavorite, for: .normal)
@@ -417,7 +426,7 @@ final class OfficialPlaceDetailViewController: UIViewController {
     }
     
     private func configureTitle() {
-        [viewTitleLabel, favoriteButton].forEach { view in
+        [backButton, viewTitleLabel, favoriteButton].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview(view)
         }
@@ -427,6 +436,11 @@ final class OfficialPlaceDetailViewController: UIViewController {
             viewTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             viewTitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             viewTitleLabel.heightAnchor.constraint(equalToConstant: 46),
+            
+            backButton.centerYAnchor.constraint(equalTo: viewTitleLabel.centerYAnchor),
+            backButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            backButton.widthAnchor.constraint(equalToConstant: 34),
+            backButton.heightAnchor.constraint(equalToConstant: 34),
             
             favoriteButton.centerYAnchor.constraint(equalTo: viewTitleLabel.centerYAnchor),
             favoriteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
@@ -694,5 +708,11 @@ final class OfficialPlaceDetailViewController: UIViewController {
     func ageRatesArrayOrdered(data: [Demographic]) -> [Double] {
         let map = ageRatesDict(data: data)
         return AgeCategory.allCases.map { map[$0] ?? 0 }
+    }
+    
+    // MARK: - Action
+    /// 전체화면으로 표시됬을 때 표시 유무
+    @objc private func didTapClose() {
+        dismiss(animated: true)
     }
 }

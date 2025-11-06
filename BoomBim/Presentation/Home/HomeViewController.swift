@@ -12,8 +12,12 @@ import RxCocoa
 final class HomeViewController: BaseViewController {
     private let viewModel: HomeViewModel
     private let disposeBag = DisposeBag()
+    private var detailViewBag = DisposeBag()
+    
     private let refreshFavoriteRelay = PublishRelay<Void>()
     private let refreshRankRelay = PublishRelay<Void>()
+    private let userPlaceCellTapRelay = PublishRelay<Int>()
+    private let officialPlaceCellTapRelay = PublishRelay<Int>()
     
     // applyInitialSnapshot 진행할 때 데이터 유무 확인
     private var lastFavoritesWasEmpty = true
@@ -67,7 +71,9 @@ final class HomeViewController: BaseViewController {
             appear: rx.methodInvoked(#selector(UIViewController.viewWillAppear(_:)))
                 .map { _ in () },
             refreshFavorite: refreshFavoriteRelay.asObservable(),
-            refreshRank: refreshRankRelay.asObservable()
+            refreshRank: refreshRankRelay.asObservable(),
+            officialPlaceCellTap: officialPlaceCellTapRelay.asSignal(),
+            userPlaceCellTap: userPlaceCellTapRelay.asSignal()
         ))
         
         let regions = output.regionNewsItems.asObservable()
@@ -86,6 +92,19 @@ final class HomeViewController: BaseViewController {
                 self?.applyInitialSnapshot()
             })
             .disposed(by: disposeBag)
+        
+        output.officialPlaceDetail
+            .emit(onNext: { [weak self] info in
+                print("info : \(info)")
+                self?.presentOfficialDetail(with: info)
+            })
+            .disposed(by: disposeBag)
+        
+        output.userPlaceDetail
+            .emit(onNext: { [weak self] info in
+                print("info : \(info)")
+                self?.presentUserDetail(with: info)
+            })
 
         output.errorMessage
             .emit(onNext: { [weak self] msg in
@@ -276,8 +295,8 @@ final class HomeViewController: BaseViewController {
 
         // Recommend: id 기준 중복 제거
         print("recommendPlace : \(currentRecommend)")
-        let uniqueRecommend = Array(currentRecommend.map(\.id)).compactMap { id in
-            currentRecommend.first { $0.id == id }
+        let uniqueRecommend = Array(currentRecommend.map(\.placeId)).compactMap { id in
+            currentRecommend.first { $0.placeId == id }
         }
         print("uniqueRecommend : \(uniqueRecommend)")
         snapshot.appendItems(uniqueRecommend.map { .recommendPlace($0) }, toSection: .recommendPlace)
@@ -492,14 +511,127 @@ final class HomeViewController: BaseViewController {
     @objc private func didTapNotificationButton() {
         viewModel.didTapNotification()
     }
+    
+    // MARK: - Modal 화면 이동
+    private func presentOfficialDetail(with info: OfficialPlaceDetailInfo) {
+        let detailVC = OfficialPlaceDetailViewController()
+        detailVC.configure(data: info)
+        detailVC.backButton.isHidden = false
+
+        detailVC.modalPresentationStyle = .fullScreen  // 전체화면
+        detailVC.modalTransitionStyle = .coverVertical // 기본 위아래 전환
+
+        detailViewBag = DisposeBag() // 매 표시마다 바인딩 새로
+        detailVC.favoriteActionRequested
+            .emit(onNext: { [weak self, weak detailVC] action in
+                guard let self, let detailVC = detailVC else { return }
+                detailVC.setFavoriteLoading(true)
+
+                switch action {
+                case .add(let req):
+                    PlaceService.shared.registerFavoritePlace(body: req)
+                        .observe(on: MainScheduler.instance)
+                        .subscribe(onSuccess: { _ in
+                            detailVC.setFavoriteSelected(true)
+                            detailVC.setFavoriteLoading(false)
+                            // 홈 목록 갱신 필요 시:
+                            self.refreshFavoriteRelay.accept(())
+                        }, onFailure: { _ in
+                            detailVC.setFavoriteLoading(false)
+                            self.presentAlert(title: "오류", message: "즐겨찾기 추가에 실패했습니다.")
+                        })
+                        .disposed(by: self.detailViewBag)
+
+                case .remove(let req):
+                    PlaceService.shared.removeFavoritePlace(body: req)
+                        .observe(on: MainScheduler.instance)
+                        .subscribe(onSuccess: { _ in
+                            detailVC.setFavoriteSelected(false)
+                            detailVC.setFavoriteId(nil)
+                            detailVC.setFavoriteLoading(false)
+                            self.refreshFavoriteRelay.accept(())
+                        }, onFailure: { _ in
+                            detailVC.setFavoriteLoading(false)
+                            self.presentAlert(title: "오류", message: "즐겨찾기 해제에 실패했습니다.")
+                        })
+                        .disposed(by: self.detailViewBag)
+                }
+            })
+            .disposed(by: detailViewBag)
+
+        // 4) 표시
+        present(detailVC, animated: true)
+    }
+
+    private func presentUserDetail(with info: UserPlaceDetailInfo) {
+        let detailVC = UserPlaceDetailViewController()
+        detailVC.configure(data: info)
+        detailVC.backButton.isHidden = false
+
+        detailVC.modalPresentationStyle = .fullScreen  // 전체화면
+        detailVC.modalTransitionStyle = .coverVertical // 기본 위아래 전환
+
+        detailViewBag = DisposeBag() // 매 표시마다 바인딩 새로
+        detailVC.favoriteActionRequested
+            .emit(onNext: { [weak self, weak detailVC] action in
+                guard let self, let detailVC = detailVC else { return }
+                detailVC.setFavoriteLoading(true)
+
+                switch action {
+                case .add(let req):
+                    PlaceService.shared.registerFavoritePlace(body: req)
+                        .observe(on: MainScheduler.instance)
+                        .subscribe(onSuccess: { _ in
+                            detailVC.setFavoriteSelected(true)
+                            detailVC.setFavoriteLoading(false)
+                            // 홈 목록 갱신 필요 시:
+                            self.refreshFavoriteRelay.accept(())
+                        }, onFailure: { _ in
+                            detailVC.setFavoriteLoading(false)
+                            self.presentAlert(title: "오류", message: "즐겨찾기 추가에 실패했습니다.")
+                        })
+                        .disposed(by: self.detailViewBag)
+
+                case .remove(let req):
+                    PlaceService.shared.removeFavoritePlace(body: req)
+                        .observe(on: MainScheduler.instance)
+                        .subscribe(onSuccess: { _ in
+                            detailVC.setFavoriteSelected(false)
+                            detailVC.setFavoriteId(nil)
+                            detailVC.setFavoriteLoading(false)
+                            self.refreshFavoriteRelay.accept(())
+                        }, onFailure: { _ in
+                            detailVC.setFavoriteLoading(false)
+                            self.presentAlert(title: "오류", message: "즐겨찾기 해제에 실패했습니다.")
+                        })
+                        .disposed(by: self.detailViewBag)
+                }
+            })
+            .disposed(by: detailViewBag)
+
+        // 4) 표시
+        present(detailVC, animated: true)
+    }
 }
 
 extension HomeViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
         switch item {
-//        case .bookmarkPlace(let place):
-//            viewModel.didSelectPlace(place)
+        case .recommendPlace(let p):
+            print("recommendPlace p : \(p)")
+            officialPlaceCellTapRelay.accept(p.placeId)
+        case .favoritePlace(let p):
+            print("favoritePlace p : \(p)")
+            switch p.placeType{
+            case .OFFICIAL_PLACE:
+                officialPlaceCellTapRelay.accept(p.placeId)
+            case .MEMBER_PLACE:
+                userPlaceCellTapRelay.accept(p.placeId)
+            }
+        case .congestionRank(let p):
+            print("congestionRank p : \(p)")
+            officialPlaceCellTapRelay.accept(p.placeId)
         default:
             break
         }
