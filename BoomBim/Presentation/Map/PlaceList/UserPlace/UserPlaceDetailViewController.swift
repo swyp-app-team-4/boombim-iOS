@@ -61,6 +61,15 @@ final class UserPlaceDetailViewController: UIViewController {
         return label
     }()
     
+    public lazy var backButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.iconLeftArrow, for: .normal)
+        button.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
+        button.isHidden = true
+        
+        return button
+    }()
+    
     private let favoriteButton: UIButton = {
         let button = UIButton()
         button.setImage(.iconUnselectedFavorite, for: .normal)
@@ -174,7 +183,7 @@ final class UserPlaceDetailViewController: UIViewController {
     }
     
     private func configureTitle() {
-        [viewTitleLabel, favoriteButton].forEach { view in
+        [backButton, viewTitleLabel, favoriteButton].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             self.view.addSubview(view)
         }
@@ -184,6 +193,11 @@ final class UserPlaceDetailViewController: UIViewController {
             viewTitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             viewTitleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             viewTitleLabel.heightAnchor.constraint(equalToConstant: 46),
+            
+            backButton.centerYAnchor.constraint(equalTo: viewTitleLabel.centerYAnchor),
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            backButton.widthAnchor.constraint(equalToConstant: 34),
+            backButton.heightAnchor.constraint(equalToConstant: 34),
             
             favoriteButton.centerYAnchor.constraint(equalTo: viewTitleLabel.centerYAnchor),
             favoriteButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
@@ -312,5 +326,11 @@ final class UserPlaceDetailViewController: UIViewController {
         }))
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         present(alert, animated: true)
+    }
+    
+    // MARK: - Action
+    /// 전체화면으로 표시됬을 때 표시 유무
+    @objc private func didTapClose() {
+        dismiss(animated: true)
     }
 }

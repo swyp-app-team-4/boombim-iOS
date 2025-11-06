@@ -40,6 +40,8 @@ final class HomeViewModel {
         let appear: Observable<Void>        // 최초 1회
         let refreshFavorite: Observable<Void>
         let refreshRank: Observable<Void>   // 랭킹 새로고침 버튼 탭
+        let officialPlaceCellTap: Signal<Int>
+        let userPlaceCellTap: Signal<Int>
     }
     
     struct Output {
@@ -48,6 +50,8 @@ final class HomeViewModel {
         let nearbyOfficialPlace: Driver<[RecommendPlaceItem]>
         let favoritePlace: Driver<[FavoritePlaceItem]>
         let rankOfficialPlace: Driver<[CongestionRankPlaceItem]>
+        let officialPlaceDetail: Signal<OfficialPlaceDetailInfo>
+        let userPlaceDetail: Signal<UserPlaceDetailInfo>
         let isLoading: Driver<Bool>
         let isRegionNewsEmpty: Driver<Bool>
         let isEmpty: Driver<Bool>
@@ -179,12 +183,44 @@ final class HomeViewModel {
             .compactMap { $0.element }
             .asDriver(onErrorJustReturn: [])
         
+        let officialDetail: Signal<OfficialPlaceDetailInfo> = input.officialPlaceCellTap
+                .throttle(.milliseconds(500))                 // 빠른 중복 탭 방지
+                .do(onNext: { _ in self.loading.accept(true) }) // 로딩 ON
+                .flatMapLatest { id -> Signal<OfficialPlaceDetailInfo> in
+                    print("officialDetail id : \(id)")
+                    return PlaceService.shared.getOfficialPlaceDetail(body: .init(officialPlaceId: id))
+                        .map { $0.data }
+                        .asSignal(onErrorRecover: { error in
+                            self.loading.accept(false)                // 로딩 OFF
+                            self.error.accept(error.localizedDescription)
+                            return .empty()                           // 실패 시 방출 없음
+                        })
+                }
+                .do(onNext: { _ in self.loading.accept(false) })
+        
+        let userDetail: Signal<UserPlaceDetailInfo> = input.userPlaceCellTap
+                .throttle(.milliseconds(500))                 // 빠른 중복 탭 방지
+                .do(onNext: { _ in self.loading.accept(true) }) // 로딩 ON
+                .flatMapLatest { id -> Signal<UserPlaceDetailInfo> in
+                    print("userDetail id : \(id)")
+                    return PlaceService.shared.getUserPlaceDetail(body: .init(memberPlaceId: id))
+                        .map { $0.data }
+                        .asSignal(onErrorRecover: { error in
+                            self.loading.accept(false)                // 로딩 OFF
+                            self.error.accept(error.localizedDescription)
+                            return .empty()                           // 실패 시 방출 없음
+                        })
+                }
+                .do(onNext: { _ in self.loading.accept(false) })
+        
         return Output(
             myCoordinate: myCoord,
             regionNewsItems: regionNewsItems,
             nearbyOfficialPlace: nearbyOfficialPlace,
             favoritePlace: favoritePlace,
             rankOfficialPlace: rankOfficialPlace,
+            officialPlaceDetail: officialDetail,
+            userPlaceDetail: userDetail,
             isLoading: loading.asDriver(),
             isRegionNewsEmpty: isRegionNewsEmpty,
             isEmpty: isRegionNewsEmpty,
@@ -219,6 +255,7 @@ final class HomeViewModel {
     private static func makeItem(_ r: NearbyOfficialPlaceInfo) -> RecommendPlaceItem {
         
         return RecommendPlaceItem(
+            placeId: r.officialPlaceId,
             image: r.imageUrl,
             title: r.officialPlaceName,
             address: r.legalDong,
@@ -249,6 +286,7 @@ final class HomeViewModel {
     private static func makeItem(_ r: RankOfficialPlaceInfo, rank: Int) -> CongestionRankPlaceItem {
         
         return CongestionRankPlaceItem(
+            placeId: r.officialPlaceId,
             rank: rank + 1,
             image: r.imageUrl,
             title: r.officialPlaceName,
