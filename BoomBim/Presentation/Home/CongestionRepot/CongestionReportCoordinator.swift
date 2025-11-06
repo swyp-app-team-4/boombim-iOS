@@ -15,15 +15,19 @@ final class CongestionReportCoordinator: Coordinator {
     
     var childCoordinators: [Coordinator] = []
     
+    let origin: ReportOrigin
+    
     private let selectedPlace: Place?
     private let service: KakaoLocalService
     private let locationRepo: LocationRepository
     private var rootViewModel: CongestionReportViewModel?
     
-    init(navigationController: UINavigationController,
+    init(origin: ReportOrigin,
+        navigationController: UINavigationController,
          selectedPlace: Place?,
          service: KakaoLocalService,
          locationRepo: LocationRepository) {
+        self.origin = origin
         self.navigationController = navigationController
         self.selectedPlace = selectedPlace
         self.service = service

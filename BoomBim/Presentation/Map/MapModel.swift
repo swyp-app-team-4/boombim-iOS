@@ -8,6 +8,11 @@
 import Foundation
 import CoreLocation
 
+enum MapMode {
+    case official
+    case user
+}
+
 struct Place: Hashable {
     let id: String
     let name: String

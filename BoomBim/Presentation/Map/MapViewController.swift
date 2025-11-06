@@ -14,6 +14,10 @@ import FloatingPanel
 
 final class MapViewController: BaseViewController, FloatingPanelControllerDelegate {
 
+    // MARK: - 외부에서 접근할 때 초기 모드 설정
+    private var preferredInitialMode: MapMode?
+    private var isMapReady = false
+    
     // MARK: - DI
     private let viewModel: MapViewModel
     private let disposeBag = DisposeBag()
@@ -292,6 +296,16 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         // 맵이 맨 뒤로
         view.sendSubviewToBack(mapContainer)
     }
+    
+    /// 화면 초기 구성시 사용.
+    func setPreferredInitialMode(_ mode: MapMode) {
+        preferredInitialMode = mode
+        // 맵이 이미 준비되어 있으면 즉시 반영
+        if isMapReady {
+            selectMode(mode == .official ? .official : .realtime)
+            preferredInitialMode = nil
+        }
+    }
 
     // MARK: - Map Engine
     private func setupMapEngine() {
@@ -514,7 +528,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] coord in
                 print("현재 위치 확인 후 이제는 이동해야지 coord: \(coord)")
-                self?.moveCamera(to: coord, level: 14)
+                self?.moveCamera(to: coord, level: 16)
             })
             .disposed(by: disposeBag)
     }
@@ -997,7 +1011,17 @@ extension MapViewController: MapControllerDelegate {
         mapReady.accept(())
         
         // 초기 모드(실시간) 선택
-        selectMode(.official)
+//        selectMode(.official)
+        // ✅ 맵 준비 완료 플래그
+        isMapReady = true
+        
+        // ✅ 외부에서 의도를 주입했다면 그걸 우선 적용, 없으면 기존 기본값(.official)
+        if let mode = preferredInitialMode {
+            selectMode(mode == .official ? .official : .realtime)
+            preferredInitialMode = nil
+        } else {
+            selectMode(.official)  // 기존 기본 동작
+        }
     }
     
     private func moveCamera(to coord: CLLocationCoordinate2D, level: Int32) {

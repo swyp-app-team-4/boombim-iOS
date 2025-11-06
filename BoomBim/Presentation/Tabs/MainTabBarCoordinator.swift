@@ -20,6 +20,9 @@ final class MainTabBarCoordinator: Coordinator, ReportRouting {
 //    private var chatCoordinator: ChatCoordinator?
     private var myPageCoordinator: MyPageCoordinator?
     
+    private let homeTabIndex = 0
+    private let mapTabIndex  = 1
+    
     var childCoordinators: [Coordinator] = []
 
     func start() {
@@ -52,9 +55,12 @@ final class MainTabBarCoordinator: Coordinator, ReportRouting {
     }
     // ✅ 공용 라우터 구현 (탭 어디서든 호출)
     func showCongestionReport(selectedPlace: Place? = nil) {
+        let origin: ReportOrigin = (tabBarController.selectedIndex == homeTabIndex) ? .home : .map
+        
         // 1) Report 전용 내비 + Coordinator 생성
         let reportNav = UINavigationController()
         let reportCoord = CongestionReportCoordinator(
+            origin: origin,
             navigationController: reportNav,
             selectedPlace: selectedPlace,
             service: KakaoLocalService(),
@@ -64,9 +70,30 @@ final class MainTabBarCoordinator: Coordinator, ReportRouting {
         // 2) 해제 처리
         reportCoord.onFinish = { [weak self, weak reportCoord] in
             guard let self, let reportCoord else { return }
+//            self.childCoordinators.removeAll { $0 === reportCoord }
+//            // 현재 선택 탭 위에서 dismiss
+//            self.tabBarController.selectedViewController?.presentedViewController?.dismiss(animated: true)
             self.childCoordinators.removeAll { $0 === reportCoord }
-            // 현재 선택 탭 위에서 dismiss
-            self.tabBarController.selectedViewController?.presentedViewController?.dismiss(animated: true)
+            
+            // 안전하게 presented VC 찾기
+            let presented = self.tabBarController.presentedViewController
+            ?? self.tabBarController.selectedViewController?.presentedViewController
+            
+            presented?.dismiss(animated: true, completion: { [weak self] in
+                guard let self else { return }
+                // 홈에서 시작했으면 지도 탭으로 전환, 지도에서 시작했으면 유지
+                if reportCoord.origin == .home {
+                    self.tabBarController.selectedIndex = self.mapTabIndex
+                    
+//                    if let nav = self.tabBarController.viewControllers?[self.mapTabIndex] as? UINavigationController {
+//                        nav.popToRootViewController(animated: false)
+//                    }
+                    if let nav = self.tabBarController.viewControllers?[self.mapTabIndex] as? UINavigationController,
+                       let mapVC = nav.viewControllers.first(where: { $0 is MapViewController }) as? MapViewController {
+                        mapVC.setPreferredInitialMode(.user) // ✅ 핵심
+                    }
+                }
+            })
         }
         
         // 3) 보관 + 시작
