@@ -278,12 +278,12 @@ extension PointViewController: UITableViewDataSource, UITableViewDelegate {
     /// 서버의 PointHistory 배열 -> 셀 모델 배열로 변환
     func mapHistory(_ histories: [PointHistory]) -> [PointHistoryItem] {
         let parsed: [PointHistoryItem] = histories.compactMap { h in
-            let date = DateHelper.fullDate(h.createdAt)
+            let date = DateHelper.parseServerDate(h.createdAt) ?? Date()
             let isEarn = h.pointAction.uppercased() == "EARN"
             let delta = isEarn ? +h.amount : -h.amount
             
             return PointHistoryItem(
-                date: Self.makeDate(date),
+                date: date,
                 title: h.pointCategory,
                 delta: delta,
                 balance: h.balance
@@ -296,9 +296,16 @@ extension PointViewController: UITableViewDataSource, UITableViewDelegate {
     
     private static func makeDate(_ s: String) -> Date {
         let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm"
-        f.locale = Locale(identifier: "ko_KR")
-        f.timeZone = .current
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = Calendar(identifier: .gregorian)
+        f.timeZone = TimeZone(secondsFromGMT: 0)              // 서버가 UTC라면
+        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"  
+        
+        guard let date = f.date(from: s) else {
+            print("설마?")
+            return Date()
+        }
+        
         return f.date(from: s) ?? Date()
     }
 }
