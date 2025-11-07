@@ -38,6 +38,7 @@ enum NetworkDefine {
     
     enum Event {
         static let check = "api/app/event"
+        static let purchase = "api/app/point"
     }
     
     enum Vote {

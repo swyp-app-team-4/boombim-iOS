@@ -285,7 +285,10 @@ final class EventViewController: BaseViewController {
             .map { _ in () }
             .asSignal(onErrorSignalWith: .empty())
         
-        let input = EventViewModel.Input(appear: appear)
+        let input = EventViewModel.Input(
+            appear: appear,
+            purchaseTap: purchaseButton.rx.tap.asSignal()
+        )
         let output = viewModel.transform(input)
         
         output.isLoading
@@ -306,6 +309,43 @@ final class EventViewController: BaseViewController {
                 setEventInfo(ticket: p.currentTicket, point: p.memberPoint)
             })
             .disposed(by: disposeBag)
+        
+        output.completed
+            .emit(with: self) { vc, ticketCount in
+                print("응모 완료")
+                AppDialogController.showOK(
+                    on: self,
+                    title: "\(ticketCount)번째 응모권 구매 완료",
+                    message: "응모권이 많을 수록 당첨에 유리해요",
+                    onOK: {
+                        self.dismiss(animated: true)
+                    })
+            }
+            .disposed(by: disposeBag)
+        
+        output.purchaseFail
+            .emit(with: self) { vc, code in
+                print("응모 실패 : \(code)")
+                
+                if code == -1003 {
+                    AppDialogController.showOK(
+                        on: self,
+                        title: "포인트가 부족해요",
+                        message: "혼잡도를 알리고 포인트를 모아보세요",
+                        okTitle: "혼잡도 알리고 10p 받기",
+                        onOK: {
+                            self.dismiss(animated: true)
+                        })
+                } else {
+                    AppDialogController.showOK(
+                        on: self,
+                        title: "내일 다시 도전해 보세요!",
+                        message: "하루에 최대 5개의 응모권을 구매할 수 있어요",
+                        onOK: {
+                            self.dismiss(animated: true)
+                        })
+                }
+            }
     }
     
     // MARK: - Actions

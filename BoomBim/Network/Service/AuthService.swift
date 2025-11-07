@@ -61,6 +61,18 @@ struct EventResponse: Decodable {
     let currentTicket: Int // 이벤트 응모한 티켓수
 }
 
+struct EventTicketRequest: Encodable {
+    let eventCampaignId: Int // 해당 이벤트 ID
+    let amount: Int // 이벤트 차감 포인트
+}
+
+struct EventTicketResponse: Decodable {
+    let status: Int
+    let code: Int
+    let message: String
+    let time: String
+}
+
 final class AuthService: Service {
     static let shared = AuthService()
     private override init() {}
@@ -248,5 +260,17 @@ final class AuthService: Service {
         }
         
         return requestGet(url, method: .get, header: headers)
+    }
+    
+    func purchaseTicket(body: EventTicketRequest) -> Single<EventTicketResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Event.purchase
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+
+        return request(url, method: .patch, header: headers, body: body)
     }
 }
