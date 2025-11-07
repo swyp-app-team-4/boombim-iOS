@@ -39,6 +39,7 @@ final class EventViewController: BaseViewController {
         imageView.image = .eventGift202511
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = false
+        imageView.isUserInteractionEnabled = true
         
         return imageView
     }()
@@ -56,6 +57,7 @@ final class EventViewController: BaseViewController {
         imageView.image = .eventPart202511
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = false
+        imageView.isUserInteractionEnabled = true
         
         return imageView
     }()
@@ -169,8 +171,8 @@ final class EventViewController: BaseViewController {
         super.viewDidLoad()
         
         setupView()
-        
         bind()
+        setActions()
     }
     
     private func setupView() {
@@ -304,5 +306,15 @@ final class EventViewController: BaseViewController {
                 setEventInfo(ticket: p.currentTicket, point: p.memberPoint)
             })
             .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Actions
+    private func setActions() {
+        noticeButton.addTarget(self, action: #selector(didTapNoticeButton), for: .touchUpInside)
+    }
+    
+    @objc private func didTapNoticeButton() {
+        print("didTapNoticeButton")
+        viewModel.goToCongestionReportView?()
     }
 }

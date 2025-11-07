@@ -23,6 +23,8 @@ final class HomeViewController: BaseViewController {
     private var lastFavoritesWasEmpty = true
     private var lastRegionWasEmpty = true
     
+    var makeUserPlaceDetailViewController: (() -> UserPlaceDetailViewController)?
+    
     private var dataSource: UICollectionViewDiffableDataSource<HomeSection, HomeItem>!
     
     private lazy var collectionView: UICollectionView = {
@@ -564,7 +566,7 @@ final class HomeViewController: BaseViewController {
     }
 
     private func presentUserDetail(with info: UserPlaceDetailInfo) {
-        let detailVC = UserPlaceDetailViewController()
+        guard let detailVC = makeUserPlaceDetailViewController?() else { return }
         detailVC.configure(data: info)
         detailVC.backButton.isHidden = false
 

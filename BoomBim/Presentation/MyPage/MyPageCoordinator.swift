@@ -12,8 +12,11 @@ final class MyPageCoordinator: Coordinator {
     var settingsCoordinator: SettingCoordinator?
     var pointCoordinator: PointCoordinator?
 
-    init(navigationController: UINavigationController) {
+    private let router: ReportRouting
+
+    init(navigationController: UINavigationController, router: ReportRouting) {
         self.navigationController = navigationController
+        self.router = router
     }
 
     func start() {
@@ -50,14 +53,9 @@ final class MyPageCoordinator: Coordinator {
     }
     
     private func showPoint(point: UserPoint) {
-//        let viewModel = PointViewModel(initialPoint: point)
-//        let viewController = PointViewController(viewModel: viewModel)
-        
-        let coordinator = PointCoordinator(navigationController: navigationController, initialPoint: point)
+        let coordinator = PointCoordinator(navigationController: navigationController, initialPoint: point, router: self.router)
         
         self.pointCoordinator = coordinator
         coordinator.start()
-//        viewController.hidesBottomBarWhenPushed = true
-//        navigationController.pushViewController(viewController, animated: true)
     }
 }

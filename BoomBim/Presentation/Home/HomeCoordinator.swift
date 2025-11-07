@@ -7,12 +7,7 @@
 
 import UIKit
 
-protocol HomeCoordinating: AnyObject {
-    func makeUserPlaceDetailViewController() -> UserPlaceDetailViewController
-    func showCongestionReport(selectedPlace: Place)
-}
-
-final class HomeCoordinator: Coordinator, HomeCoordinating {
+final class HomeCoordinator: Coordinator {
     var navigationController: UINavigationController
     var childCoordinators: [Coordinator] = []
     
@@ -30,7 +25,7 @@ final class HomeCoordinator: Coordinator, HomeCoordinating {
         
         viewModel.goToCongestionReportView = { [weak self] in
 //            self?.showCongestionReport()
-            self?.router?.showCongestionReport(selectedPlace: nil)
+            self?.router?.showCongestionReport(selectedPlace: nil, origin: .home)
         }
         
         viewModel.goToSearchView = { [weak self] in
@@ -41,22 +36,20 @@ final class HomeCoordinator: Coordinator, HomeCoordinating {
             self?.showNotification()
         }
         
-//        viewModel.goToPlaceView = { [weak self] place in
-//            self?.showPlaceDetail(place)
-//        }
+        viewController.makeUserPlaceDetailViewController = { [weak self] in
+            let vc = UserPlaceDetailViewController()
+            vc.reportRouter = self?.router
+            return vc
+        }
         
         navigationController.setViewControllers([viewController], animated: false)
     }
     
     // MARK: - 사용자 공유 장소에서 사용하기 위해 팩토리 메서드 사용
-    func makeUserPlaceDetailViewController() -> UserPlaceDetailViewController {
-        let vc = UserPlaceDetailViewController()               // ← 내부에서 세팅
-        return vc
-    }
-    
-    func showCongestionReport(selectedPlace: Place) {
-        showCongestionReport(selectedPlace: selectedPlace)
-    }
+//    func makeUserPlaceDetailViewController() -> UserPlaceDetailViewController {
+//        let vc = UserPlaceDetailViewController()
+//        return vc
+//    }
     
 //    func showCongestionReport(selectedPlace: Place? = nil) {
 //        let service = KakaoLocalService()

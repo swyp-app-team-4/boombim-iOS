@@ -8,7 +8,7 @@
 import UIKit
 
 protocol ReportRouting: AnyObject {
-    func showCongestionReport(selectedPlace: Place?)
+    func showCongestionReport(selectedPlace: Place?, origin: ReportOrigin)
 }
 
 final class MainTabBarCoordinator: Coordinator, ReportRouting {
@@ -22,6 +22,7 @@ final class MainTabBarCoordinator: Coordinator, ReportRouting {
     
     private let homeTabIndex = 0
     private let mapTabIndex  = 1
+    private let myPageTabIndex  = 2
     
     var childCoordinators: [Coordinator] = []
 
@@ -34,7 +35,7 @@ final class MainTabBarCoordinator: Coordinator, ReportRouting {
         let homeCoordinator = HomeCoordinator(navigationController: homeNC, router: self)
         let mapCoordinator = MapCoordinator(navigationController: mapNC, router: self)
 //        let chatCoordinator = ChatCoordinator(navigationController: chatNC)
-        let myPageCoordinator = MyPageCoordinator(navigationController: myPageNC)
+        let myPageCoordinator = MyPageCoordinator(navigationController: myPageNC, router: self)
         
         self.homeCoordinator = homeCoordinator
         self.mapCoordinator = mapCoordinator
@@ -53,11 +54,10 @@ final class MainTabBarCoordinator: Coordinator, ReportRouting {
 
         tabBarController.viewControllers = [homeNC, mapNC, /*chatNC,*/ myPageNC]
     }
-    // ✅ 공용 라우터 구현 (탭 어디서든 호출)
-    func showCongestionReport(selectedPlace: Place? = nil) {
-        let origin: ReportOrigin = (tabBarController.selectedIndex == homeTabIndex) ? .home : .map
+    
+    func showCongestionReport(selectedPlace: Place? = nil, origin: ReportOrigin) {
+        let origin: ReportOrigin = origin
         
-        // 1) Report 전용 내비 + Coordinator 생성
         let reportNav = UINavigationController()
         let reportCoord = CongestionReportCoordinator(
             origin: origin,
@@ -67,31 +67,30 @@ final class MainTabBarCoordinator: Coordinator, ReportRouting {
             locationRepo: LocationRepository()
         )
         
-        // 2) 해제 처리
         reportCoord.onFinish = { [weak self, weak reportCoord] in
             guard let self, let reportCoord else { return }
-//            self.childCoordinators.removeAll { $0 === reportCoord }
-//            // 현재 선택 탭 위에서 dismiss
-//            self.tabBarController.selectedViewController?.presentedViewController?.dismiss(animated: true)
             self.childCoordinators.removeAll { $0 === reportCoord }
-            
-            // 안전하게 presented VC 찾기
-            let presented = self.tabBarController.presentedViewController
-            ?? self.tabBarController.selectedViewController?.presentedViewController
-            
+
+            let presented = self.tabBarController.presentedViewController ?? self.tabBarController.selectedViewController?.presentedViewController
+
             presented?.dismiss(animated: true, completion: { [weak self] in
                 guard let self else { return }
-                // 홈에서 시작했으면 지도 탭으로 전환, 지도에서 시작했으면 유지
-                if reportCoord.origin == .home {
+
+                switch reportCoord.origin {
+                case .map:
+                    break
+                case .home, .myPagePoint, .myPageEvent:
                     self.tabBarController.selectedIndex = self.mapTabIndex
                     
-//                    if let nav = self.tabBarController.viewControllers?[self.mapTabIndex] as? UINavigationController {
-//                        nav.popToRootViewController(animated: false)
-//                    }
                     if let nav = self.tabBarController.viewControllers?[self.mapTabIndex] as? UINavigationController,
                        let mapVC = nav.viewControllers.first(where: { $0 is MapViewController }) as? MapViewController {
-                        mapVC.setPreferredInitialMode(.user) // ✅ 핵심
+                        mapVC.setPreferredInitialMode(.user) // 현장피드로 시작
                     }
+                }
+                
+                // (옵션) 마이페이지 스택도 리셋
+                if let myNav = self.tabBarController.viewControllers?[self.myPageTabIndex] as? UINavigationController {
+                    myNav.popToRootViewController(animated: false)
                 }
             })
         }

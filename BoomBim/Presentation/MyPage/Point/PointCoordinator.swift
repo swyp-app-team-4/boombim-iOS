@@ -10,10 +10,12 @@ import UIKit
 final class PointCoordinator: Coordinator {
     var navigationController: UINavigationController
     private let initialPoint: UserPoint
-
-    init(navigationController: UINavigationController, initialPoint: UserPoint) {
+    private let router: ReportRouting
+    
+    init(navigationController: UINavigationController, initialPoint: UserPoint, router: ReportRouting) {
         self.navigationController = navigationController
         self.initialPoint = initialPoint
+        self.router = router
     }
     
     var pointViewModel: PointViewModel?
@@ -25,6 +27,10 @@ final class PointCoordinator: Coordinator {
         
         self.pointViewModel = viewModel
         
+        viewModel.goToCongestionReportView = { [weak self] in
+            self?.router.showCongestionReport(selectedPlace: nil, origin: .myPagePoint)
+        }
+        
         viewModel.goToEventInfoView = { [weak self] in
             self?.pushEventView()
         }
@@ -34,6 +40,11 @@ final class PointCoordinator: Coordinator {
     
     private func pushEventView() {
         let viewModel = EventViewModel()
+        viewModel.goToCongestionReportView = { [weak self] in
+            print("point Coordinator")
+            self?.router.showCongestionReport(selectedPlace: nil, origin: .myPageEvent)
+        }
+        
         let viewController = EventViewController(viewModel: viewModel)
         
         navigationController.pushViewController(viewController, animated: true)

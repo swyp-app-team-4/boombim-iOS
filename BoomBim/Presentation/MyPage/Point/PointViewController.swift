@@ -243,6 +243,7 @@ final class PointViewController: BaseViewController {
     // MARK: - Actions
     private func setActions() {
         eventButton.addTarget(self, action: #selector(didTapEventButton), for: .touchUpInside)
+        pointButton.addTarget(self, action: #selector(didTapPointButton), for: .touchUpInside)
     }
     
     @objc private func didTapEventButton() {
@@ -250,7 +251,7 @@ final class PointViewController: BaseViewController {
     }
 
     @objc private func didTapPointButton() {
-        
+        viewModel.goToCongestionReportView?()
     }
 }
 

@@ -9,7 +9,7 @@ import RxSwift
 import RxCocoa
 
 final class EventViewModel {
-    var goToPersonalInfoView: (() -> Void)?
+    var goToCongestionReportView: (() -> Void)?
     
     struct Input {
         let appear: Signal<Void> // viewDidAppear 등에서 트리거

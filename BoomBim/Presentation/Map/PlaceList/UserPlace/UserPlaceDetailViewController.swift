@@ -15,6 +15,7 @@ typealias FeedItem = MemberCongestionItem
 
 final class UserPlaceDetailViewController: UIViewController {
     weak var reportRouter: ReportRouting?
+    var origin: ReportOrigin = .map
     
     // MARK: - State
     private let disposeBag = DisposeBag()
@@ -160,7 +161,7 @@ final class UserPlaceDetailViewController: UIViewController {
         
         headerView.onTapReport = { [weak self] place in
             guard let self else { return }
-            self.reportRouter?.showCongestionReport(selectedPlace: place)
+            self.reportRouter?.showCongestionReport(selectedPlace: place, origin: origin)
         }
         
         // 목록 데이터 반영
