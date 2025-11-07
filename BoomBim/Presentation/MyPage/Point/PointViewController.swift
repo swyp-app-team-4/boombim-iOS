@@ -7,14 +7,16 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 
 final class PointViewController: BaseViewController {
     private let viewModel: PointViewModel
-    // Expected ViewModel API (adjust to your actual implementation):
-    // var onTapEvent: (() -> Void)?
-    // var onTapPoint: (() -> Void)?
     private let disposeBag = DisposeBag()
     
+    // 원본(서버 응답 → 셀 모델로 매핑 후)
+    private let allItemsRelay = BehaviorRelay<[PointHistoryItem]>(value: [])
+    // 선택된 필터
+    private let filterRelay   = BehaviorRelay<PointFilter>(value: .all)
     private var items: [PointHistoryItem] = []
     
     private let headerContainerView: UIView = {
@@ -225,25 +227,44 @@ final class PointViewController: BaseViewController {
         viewModel.pointRelay
             .asDriver()
             .drive(onNext: { [weak self] point in
-                print("point : \(point.point)")
-                print("pointHistory : \(point.getPointHistoryRes)")
-                self?.applyPointHistory(point: point)
+                guard let self else { return }
+                
+                self.pointValueLabel.setPoints(point.point, numberStyle: Typography.Heading02.semiBold, numberColor: .main, suffixStyle: Typography.Heading02.semiBold, suffixColor: .grayScale7)
+                
+                let mapped = self.mapHistory(point.getPointHistoryRes)
+                self.allItemsRelay.accept(mapped)
+            })
+            .disposed(by: disposeBag)
+        
+        Observable
+            .combineLatest(allItemsRelay.asObservable(), filterRelay.asObservable())
+            .map { items, filter -> [PointHistoryItem] in
+                switch filter {
+                case .all:  return items
+                case .earn: return items.filter { $0.delta > 0 }
+                case .use:  return items.filter { $0.delta < 0 }
+                }
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] filtered in
+                self?.items = filtered
+                self?.tableView.reloadData()
             })
             .disposed(by: disposeBag)
     }
     
-    private func applyPointHistory(point: UserPoint) {
-        pointValueLabel.setPoints(point.point, numberStyle: Typography.Heading02.semiBold, numberColor: .main, suffixStyle: Typography.Heading02.semiBold, suffixColor: .grayScale7)
-        
-        self.items = mapHistory(point.getPointHistoryRes)
-        print("items.count : \(self.items.count)")
-        tableView.reloadData()
-    }
-    
     // MARK: - Actions
     private func setActions() {
+        setupFilterBinding()
+        
         eventButton.addTarget(self, action: #selector(didTapEventButton), for: .touchUpInside)
         pointButton.addTarget(self, action: #selector(didTapPointButton), for: .touchUpInside)
+    }
+    
+    private func setupFilterBinding() {
+        filterBar.onChange = { [weak self] newFilter in
+            self?.filterRelay.accept(newFilter)
+        }
     }
     
     @objc private func didTapEventButton() {
@@ -279,33 +300,11 @@ extension PointViewController: UITableViewDataSource, UITableViewDelegate {
     func mapHistory(_ histories: [PointHistory]) -> [PointHistoryItem] {
         let parsed: [PointHistoryItem] = histories.compactMap { h in
             let date = DateHelper.parseServerDate(h.createdAt) ?? Date()
-            let isEarn = h.pointAction.uppercased() == "EARN"
+            let isEarn = h.pointAction.trimmingCharacters(in: .whitespacesAndNewlines)
+                .caseInsensitiveCompare("EARN") == .orderedSame
             let delta = isEarn ? +h.amount : -h.amount
-            
-            return PointHistoryItem(
-                date: date,
-                title: h.pointCategory,
-                delta: delta,
-                balance: h.balance
-            )
+            return PointHistoryItem(date: date, title: h.pointCategory, delta: delta, balance: h.balance)
         }
-        
-        // 최신순(내림차순) 정렬
         return parsed.sorted { $0.date > $1.date }
-    }
-    
-    private static func makeDate(_ s: String) -> Date {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.calendar = Calendar(identifier: .gregorian)
-        f.timeZone = TimeZone(secondsFromGMT: 0)              // 서버가 UTC라면
-        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"  
-        
-        guard let date = f.date(from: s) else {
-            print("설마?")
-            return Date()
-        }
-        
-        return f.date(from: s) ?? Date()
     }
 }

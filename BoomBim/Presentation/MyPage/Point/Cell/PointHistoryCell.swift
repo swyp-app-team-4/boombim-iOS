@@ -170,9 +170,7 @@ final class PointHistoryCell: UITableViewCell {
         // 좌
         dateLabel.setText(Self.dayFormatter.string(from: item.date), style: Typography.Caption.regular)
         dateLabel.alpha = showDate ? 1.0 : 0.0
-
-        print("item.date : \(item.date)")
-        print("Self.timeFormatter.string(from: item.date) : \(Self.timeFormatter.string(from: item.date))")
+        
         // 중앙
         titleLabel.setText(item.title, style: Typography.Body03.medium)
         timeLabel.setText(Self.timeFormatter.string(from: item.date), style: Typography.Caption.regular)
