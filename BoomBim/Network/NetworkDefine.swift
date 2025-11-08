@@ -30,6 +30,7 @@ enum NetworkDefine {
         static let answer = "api/member/my-answer"
         static let question = "api/member/my-question"
         static let alarm = "api/alarm/status"
+        static let history = "api/app/member/congestion"
     }
     
     enum Point {

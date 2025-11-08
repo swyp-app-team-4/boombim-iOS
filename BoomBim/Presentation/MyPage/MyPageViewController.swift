@@ -174,7 +174,6 @@ final class MyPageViewController: BaseViewController {
     }
     
     private func configurePageViewController() {
-//        pageViewController.setViewControllers([pages[currentPageIndex]], direction: .forward, animated: false, completion: nil)
         pageViewController.dataSource = self
         pageViewController.delegate = self
         
@@ -271,6 +270,9 @@ final class MyPageViewController: BaseViewController {
         let favoriteViewModel = FavoriteViewModel(items: output.favorite)
         let favoriteViewController = FavoriteViewController(viewModel: favoriteViewModel)
         
+        let historyViewModel = HistoryViewModel(items: output.history)
+        let historyViewController = HistoryViewController(viewModel: historyViewModel)
+        
 //        let voteViewModel = VoteViewModel(items: output.answer)
 //        let voteViewController = VoteViewController(viewModel: voteViewModel)
 //        
@@ -278,7 +280,7 @@ final class MyPageViewController: BaseViewController {
 //        let questionViewController = QuestionViewController(viewModel: questionViewModel)
         
         /// 1.0.1 version 적용 내역) 투표와 질문이 사라짐.
-        self.pages = [favoriteViewController/*, voteViewController, questionViewController*/]
+        self.pages = [favoriteViewController, historyViewController]
         
         // 현재 인덱스가 범위를 벗어나지 않게 보정
         self.currentPageIndex = min(self.currentPageIndex, max(self.pages.count - 1, 0))

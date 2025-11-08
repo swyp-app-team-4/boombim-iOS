@@ -51,6 +51,8 @@ struct QuestionItem: Hashable {
 
 typealias MyFavorite = FavoritePlaceInfo
 
+typealias MyHistory = HistoryResponse
+
 struct AnswerInfo: Decodable {
     let voteId: Int
     let profile: [String]

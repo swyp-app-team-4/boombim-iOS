@@ -370,6 +370,12 @@ struct AiMessageData: Decodable {
     let generatedCongestionMessage: String
 }
 
+struct HistoryResponse: Decodable {
+    let posName: String
+    let congestionLevel: String
+    let createdAt: String
+}
+
 final class PlaceService: Service {
     static let shared = PlaceService()
     override private init() {}
@@ -530,5 +536,17 @@ final class PlaceService: Service {
         }
         
         return request(url, method: .post, header: headers, body: body)
+    }
+    
+    // MARK: - 마이페이지 혼잡도 내역 조회 API
+    func getReportHistory() -> Single<[HistoryResponse]> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Profile.history
+        
+        var headers: HTTPHeaders = ["Accept": "application/json"]
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
     }
 }

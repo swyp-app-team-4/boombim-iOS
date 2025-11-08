@@ -19,12 +19,12 @@ enum DateHelper {
             if let d = iso8601.date(from: s)   { return d }
             return nil
         }
-
+        
         // 2) 타임존이 없으면(naive) 분수초(소수부) 자릿수를 6자리로 정규화 후, 지정 TZ로 파싱
         let normalized = normalizeFractionTo6Digits(s)
         return posixNaive(naiveTimeZone).date(from: normalized)
     }
-
+    
     // MARK: - 기존 공개 API (그대로 유지 가능)
     static func minutes(from observedAt: String,
                         defaultTimeZone: TimeZone = TimeZone(identifier: "Asia/Seoul")!) -> Int? {
@@ -33,13 +33,13 @@ enum DateHelper {
         let diff = Date().timeIntervalSince(date)
         return max(0, Int(diff / 60.0)) // 미래 시간이면 0으로 클램프
     }
-
+    
     static func getHour(from forecastTime: String) -> Int? {
         // "2025-10-30T18:00:00" ← 타임존 표기 없음 → 정책에 맞춰 해석(여기서는 UTC로 가정)
         guard let date = parseServerDate(forecastTime, naiveTimeZone: TimeZone(secondsFromGMT: 0)!) else { return nil }
         return Calendar.current.component(.hour, from: date)
     }
-
+    
     /// "방금 전 / N분 전 / N시간 전 / N일 전"
     static func displayString(from observedAt: String,
                               defaultTimeZone: TimeZone = TimeZone(identifier: "Asia/Seoul")!) -> String {
@@ -51,7 +51,7 @@ enum DateHelper {
         let days = hours / 24
         return "\(days)일 전"
     }
-
+    
     // 필요시 유지: 고정 포맷 파서들
     static let iso6: DateFormatter = {
         let df = DateFormatter()
@@ -69,7 +69,7 @@ enum DateHelper {
         df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
         return df
     }()
-
+    
     static func parse(_ s: String) -> Date? {
         if let d = iso6.date(from: s) { return d }
         if let dot = s.firstIndex(of: ".") {
@@ -78,7 +78,7 @@ enum DateHelper {
         }
         return iso0.date(from: s)
     }
-
+    
     /// "2025-09-07T00:00:00" → "2025년 9월 7일 (일)"
     static func koreanFullDate(_ isoString: String,
                                defaultTimeZone: TimeZone = TimeZone(identifier: "Asia/Seoul")!) -> String {
@@ -91,9 +91,9 @@ enum DateHelper {
                 return posixNaive(defaultTimeZone).date(from: normalizeFractionTo6Digits(isoString))
             }
         }()
-
+        
         guard let d = date else { return "-" }
-
+        
         let out = DateFormatter()
         out.locale = Locale(identifier: "ko_KR")
         out.timeZone = defaultTimeZone
@@ -101,7 +101,7 @@ enum DateHelper {
         out.dateFormat = "yyyy년 M월 d일 (E)"
         return out.string(from: d)
     }
-
+    
     /// "2025-09-07T00:00:00" → "yyyy-MM-dd HH:mm"
     static func fullDate(_ isoString: String,
                          defaultTimeZone: TimeZone = TimeZone(identifier: "Asia/Seoul")!) -> String {
@@ -112,9 +112,9 @@ enum DateHelper {
                 return posixNaive(defaultTimeZone).date(from: normalizeFractionTo6Digits(isoString))
             }
         }()
-
+        
         guard let d = date else { return "-" }
-
+        
         let out = DateFormatter()
         out.locale = Locale(identifier: "ko_KR")
         out.timeZone = defaultTimeZone
@@ -122,9 +122,9 @@ enum DateHelper {
         out.dateFormat = "yyyy-MM-dd HH:mm"
         return out.string(from: d)
     }
-
+    
     // MARK: - Private helpers/formatters
-
+    
     /// 타임존 표기(Z, +09:00, -0300 등) 감지
     private static func hasExplicitTimeZone(in s: String) -> Bool {
         if s.hasSuffix("Z") { return true }
@@ -132,7 +132,7 @@ enum DateHelper {
         let pattern = #"([+-]\d{2}(:?\d{2})?)$"#
         return s.range(of: pattern, options: .regularExpression) != nil
     }
-
+    
     /// 소수부(분수초) 자릿수를 6자리(마이크로초)로 정규화
     private static func normalizeFractionTo6Digits(_ s: String) -> String {
         guard let dot = s.firstIndex(of: ".") else {
@@ -149,21 +149,21 @@ enum DateHelper {
         }
         return head + "." + frac
     }
-
+    
     /// ISO8601 파서(분수초 포함)
     private static let iso8601FS: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return f
     }()
-
+    
     /// ISO8601 파서(분수초 없음)
     private static let iso8601: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime]
         return f
     }()
-
+    
     /// naive(타임존 없는) 문자열을 특정 타임존 기준 현지시각으로 해석하는 포맷터
     private static func posixNaive(_ tz: TimeZone) -> DateFormatter {
         let f = DateFormatter()
@@ -173,5 +173,57 @@ enum DateHelper {
         f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
         return f
     }
+    
+    // MARK: - KST 표기용 공통 자원
+    private static let kstTZ = TimeZone(identifier: "Asia/Seoul")!
+    private static let gregorian = Calendar(identifier: .gregorian)
+    
+    /// 섹션 헤더: "yyyy. MM. dd (E)"
+    static let headerKST: DateFormatter = {
+        let f = DateFormatter()
+        f.locale   = Locale(identifier: "ko_KR")
+        f.calendar = gregorian
+        f.timeZone = kstTZ
+        f.dateFormat = "yyyy. MM. dd (E)"
+        return f
+    }()
+    
+    /// 셀 시간: "HH:mm"
+    static let timeKST: DateFormatter = {
+        let f = DateFormatter()
+        f.locale   = Locale(identifier: "ko_KR")
+        f.calendar = gregorian
+        f.timeZone = kstTZ
+        f.dateFormat = "HH:mm"
+        return f
+    }()
+    
+    /// 날짜 → "yyyy. MM. dd (E)"
+    static func formatHeaderKST(_ date: Date) -> String {
+        headerKST.string(from: date)
+    }
+    
+    /// 날짜 → "HH:mm"
+    static func formatTimeKST(_ date: Date) -> String {
+        timeKST.string(from: date)
+    }
+    
+    /// 서버 ISO 문자열 → "yyyy. MM. dd (E)"
+    static func formatHeaderKST(from isoString: String) -> String {
+        guard let d = parseServerDate(isoString) else { return "-" }
+        return headerKST.string(from: d)
+    }
+    
+    /// 서버 ISO 문자열 → "HH:mm"
+    static func formatTimeKST(from isoString: String) -> String {
+        guard let d = parseServerDate(isoString) else { return "-" }
+        return timeKST.string(from: d)
+    }
+    
+    /// KST 기준으로 해당 날짜의 00:00:00
+    static func startOfDayKST(for date: Date) -> Date {
+        var cal = gregorian
+        cal.timeZone = kstTZ
+        return cal.startOfDay(for: date)
+    }
 }
-

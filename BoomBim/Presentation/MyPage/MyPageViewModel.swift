@@ -19,6 +19,7 @@ final class MyPageViewModel {
         let profile: Driver<UserProfile>
         let point: Driver<UserPoint>
         let favorite: Driver<[MyFavorite]>
+        let history: Driver<[MyHistory]>
         let answer: Driver<[MyAnswer]>
         let question: Driver<[MyQuestion]>
     }
@@ -28,6 +29,7 @@ final class MyPageViewModel {
     private let profileRelay = BehaviorRelay<UserProfile?>(value: nil)
     private let pointRelay = BehaviorRelay<UserPoint?>(value: nil)
     private let favoriteRelay = BehaviorRelay<[MyFavorite]?>(value: nil)
+    private let historyRelay = BehaviorRelay<[MyHistory]?>(value: nil)
     private let answerRelay = BehaviorRelay<[MyAnswer]?>(value: nil)
     private let questionRelay = BehaviorRelay<[MyQuestion]?>(value: nil)
     private let disposeBag = DisposeBag()
@@ -60,6 +62,7 @@ final class MyPageViewModel {
             profile: profileRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
             point: pointRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
             favorite: favoriteRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
+            history: historyRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
             answer: answerRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
             question: questionRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty())
         )
@@ -95,6 +98,17 @@ final class MyPageViewModel {
             .subscribe(onSuccess: { [weak self] p in
                 self?.loading.accept(false)
                 self?.favoriteRelay.accept(p.data)
+            }, onFailure: { [weak self] err in
+                self?.loading.accept(false)
+                self?.errorRelay.accept(err.localizedDescription)
+            })
+            .disposed(by: disposeBag)
+        
+        PlaceService.shared.getReportHistory()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onSuccess: { [weak self] p in
+                self?.loading.accept(false)
+                self?.historyRelay.accept(p)
             }, onFailure: { [weak self] err in
                 self?.loading.accept(false)
                 self?.errorRelay.accept(err.localizedDescription)
