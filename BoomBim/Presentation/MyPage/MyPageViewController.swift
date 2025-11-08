@@ -271,6 +271,7 @@ final class MyPageViewController: BaseViewController {
         let favoriteViewController = FavoriteViewController(viewModel: favoriteViewModel)
         
         let historyViewModel = HistoryViewModel(items: output.history)
+        historyViewModel.goToCongestionReportView = viewModel.goToCongestionReportView
         let historyViewController = HistoryViewController(viewModel: historyViewModel)
         
 //        let voteViewModel = VoteViewModel(items: output.answer)

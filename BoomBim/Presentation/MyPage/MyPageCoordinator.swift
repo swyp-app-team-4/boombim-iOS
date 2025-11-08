@@ -32,6 +32,9 @@ final class MyPageCoordinator: Coordinator {
         viewModel.goToPointView = { [weak self] point in
             self?.showPoint(point: point)
         }
+        viewModel.goToCongestionReportView = { [weak self] in
+            self?.router.showCongestionReport(selectedPlace: nil, origin: .myPage)
+        }
         
         navigationController.setViewControllers([viewController], animated: false)
     }

@@ -90,6 +90,7 @@ final class HistoryViewController: UIViewController {
         super.viewDidLoad()
         setupView()
         bind()
+        setActions()
     }
     
     private func setupView() {
@@ -160,6 +161,15 @@ final class HistoryViewController: UIViewController {
         return grouped
             .map { Section(day: $0.key, rows: $0.value.sorted(by: { $0.date > $1.date })) }
             .sorted(by: { $0.day > $1.day })
+    }
+    
+    // MARK: - Actions
+    private func setActions() {
+        emptyButton.addTarget(self, action: #selector(didTapNoticeButton), for: .touchUpInside)
+    }
+    
+    @objc private func didTapNoticeButton() {
+        viewModel.goToCongestionReportView?()
     }
 }
 

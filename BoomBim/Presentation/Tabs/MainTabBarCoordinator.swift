@@ -79,7 +79,7 @@ final class MainTabBarCoordinator: Coordinator, ReportRouting {
                 switch reportCoord.origin {
                 case .map:
                     break
-                case .home, .myPagePoint, .myPageEvent:
+                case .home, .myPage, .myPagePoint, .myPageEvent:
                     self.tabBarController.selectedIndex = self.mapTabIndex
                     
                     if let nav = self.tabBarController.viewControllers?[self.mapTabIndex] as? UINavigationController,

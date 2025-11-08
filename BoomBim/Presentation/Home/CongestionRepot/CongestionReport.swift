@@ -8,6 +8,7 @@
 enum ReportOrigin {
     case home
     case map
+    case myPage
     case myPagePoint
     case myPageEvent
 }

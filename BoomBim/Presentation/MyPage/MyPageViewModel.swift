@@ -37,6 +37,7 @@ final class MyPageViewModel {
     var goToSettingsView: (() -> Void)?
     var goToProfileView: (() -> Void)?
     var goToPointView: ((UserPoint) -> Void)?
+    var goToCongestionReportView: (() -> Void)?
     
     private var pointData: UserPoint?
     

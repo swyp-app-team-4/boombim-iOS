@@ -9,6 +9,9 @@ import RxSwift
 import RxCocoa
 
 final class HistoryViewModel {
+    
+    var goToCongestionReportView: (() -> Void)?
+    
     struct Output {
         let items: Driver<[MyHistory]>
     }
