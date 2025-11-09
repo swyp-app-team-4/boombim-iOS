@@ -9,19 +9,17 @@ import UIKit
 
 final class PointCoordinator: Coordinator {
     var navigationController: UINavigationController
-    private let initialPoint: UserPoint
     private let router: ReportRouting
     
-    init(navigationController: UINavigationController, initialPoint: UserPoint, router: ReportRouting) {
+    init(navigationController: UINavigationController, router: ReportRouting) {
         self.navigationController = navigationController
-        self.initialPoint = initialPoint
         self.router = router
     }
     
     var pointViewModel: PointViewModel?
 
     func start() {
-        let viewModel = PointViewModel(initialPoint: initialPoint)
+        let viewModel = PointViewModel()
         let viewController = PointViewController(viewModel: viewModel)
         viewController.hidesBottomBarWhenPushed = true
         

@@ -253,17 +253,8 @@ final class MyPageViewController: BaseViewController {
             .drive(onNext: { [weak self] p in
                 guard let self else { return }
                 
-                self.profileView.configure(
-                    name: p.name,
-                    profile: p.profile)
-            })
-            .disposed(by: disposeBag)
-        
-        output.point
-            .drive(onNext: { [weak self] p in
-                guard let self else { return }
-                
-                setPoint(point: p.point)
+                self.profileView.configure(name: p.name, profile: p.profile)
+                self.setPoint(point: p.Point)
             })
             .disposed(by: disposeBag)
         

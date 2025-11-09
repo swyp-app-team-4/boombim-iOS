@@ -29,8 +29,8 @@ final class MyPageCoordinator: Coordinator {
         viewModel.goToProfileView = { [weak self] in
             self?.showProfile()
         }
-        viewModel.goToPointView = { [weak self] point in
-            self?.showPoint(point: point)
+        viewModel.goToPointView = { [weak self] in
+            self?.showPoint()
         }
         viewModel.goToCongestionReportView = { [weak self] in
             self?.router.showCongestionReport(selectedPlace: nil, origin: .myPage)
@@ -55,8 +55,8 @@ final class MyPageCoordinator: Coordinator {
         navigationController.pushViewController(viewController, animated: true)
     }
     
-    private func showPoint(point: UserPoint) {
-        let coordinator = PointCoordinator(navigationController: navigationController, initialPoint: point, router: self.router)
+    private func showPoint() {
+        let coordinator = PointCoordinator(navigationController: navigationController, router: self.router)
         
         self.pointCoordinator = coordinator
         coordinator.start()

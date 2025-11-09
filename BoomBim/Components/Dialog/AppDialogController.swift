@@ -159,11 +159,11 @@ final class AppDialogController: UIViewController {
 
     private func applyConfig() {
         if let t = config.title, !t.isEmpty {
-            titleLabel.text = t
+            titleLabel.setText(t, style: Typography.Body01.semiBold)
             vstack.addArrangedSubview(titleLabel)
         }
         if let m = config.message, !m.isEmpty {
-            messageLabel.text = m
+            messageLabel.setText(m, style: Typography.Caption.medium)
             vstack.addArrangedSubview(messageLabel)
             
             vstack.setCustomSpacing(4, after: titleLabel)

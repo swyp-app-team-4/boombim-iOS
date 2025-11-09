@@ -17,8 +17,7 @@ struct UserProfile: Decodable {
     let profile: String?
     let email: String
     let socialProvider: String
-    let voteCnt: Int
-    let questionCnt: Int
+    let Point: Int
 }
 
 typealias UserPoint = PointResponse

@@ -19,6 +19,8 @@ final class PointViewController: BaseViewController {
     private let filterRelay   = BehaviorRelay<PointFilter>(value: .all)
     private var items: [PointHistoryItem] = []
     
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
+    
     private let headerContainerView: UIView = {
         let view = UIView()
         view.backgroundColor = .grayScale1
@@ -224,8 +226,27 @@ final class PointViewController: BaseViewController {
     
     // MARK: - bind
     private func bind() {
-        viewModel.pointRelay
-            .asDriver()
+        // 1) Input: 화면 등장 시점 (원하면 .take(1)로 최초 1회만)
+        let appear = rx.methodInvoked(#selector(UIViewController.viewWillAppear(_:)))
+            .map { _ in () }
+            .asSignal(onErrorSignalWith: .empty())
+        
+        let input = PointViewModel.Input(appear: appear)
+        let output = viewModel.transform(input)
+        
+        // 2) 로딩 인디케이터 + 입력 비활성화
+        output.isLoading
+            .drive(activityIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        // 3) 에러 알림
+        output.error
+            .emit(onNext: { [weak self] msg in
+                self?.presentAlert(title: "오류", message: msg)
+            })
+            .disposed(by: disposeBag)
+        
+        output.point
             .drive(onNext: { [weak self] point in
                 guard let self else { return }
                 
