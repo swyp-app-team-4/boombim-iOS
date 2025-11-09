@@ -103,32 +103,4 @@ final class MainTabBarCoordinator: Coordinator, ReportRouting {
         reportNav.modalPresentationStyle = .fullScreen
         (tabBarController.selectedViewController ?? tabBarController).present(reportNav, animated: true)
     }
-    
-//    func showCongestionReport(selectedPlace: Place? = nil) {
-//        let service = KakaoLocalService()
-//        let locationRepo = LocationRepository()
-//        let viewModel = CongestionReportViewModel(service: service, selectedPlace: selectedPlace)
-//        let viewController = CongestionReportViewController(viewModel: viewModel)
-////        navigationController.pushViewController(viewController, animated: true)
-//        
-//        // 모달 형식 구현시 사용 예정
-//        let navigationController = UINavigationController(rootViewController: viewController)
-//        
-//        let childCoordinator = CongestionReportCoordinator(navigationController: navigationController,
-//                                                           selectedPlace: selectedPlace,
-//                                                           service: service,
-//                                                           locationRepo: locationRepo)
-//        
-//        childCoordinator.onFinish = { [weak self, weak childCoordinator] in
-//            guard let self, let childCoordinator else { return }
-//            self.childCoordinators.removeAll { $0 === childCoordinator }
-//            self.navigationController.presentedViewController?.dismiss(animated: true)
-//        }
-//        childCoordinators.append(childCoordinator)
-//        childCoordinator.start()
-//        
-//        navigationController.modalPresentationStyle = .fullScreen
-//        
-//        self.navigationController.present(navigationController, animated: true)
-//    }
 }

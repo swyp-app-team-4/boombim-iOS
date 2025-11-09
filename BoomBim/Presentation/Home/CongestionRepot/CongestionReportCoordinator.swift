@@ -35,8 +35,6 @@ final class CongestionReportCoordinator: Coordinator {
     }
     
     func start() {
-        print("CongestionReportCoordinator start")
-//        guard let service = self.service else { return }
         let viewModel = CongestionReportViewModel(service: service, selectedPlace: selectedPlace)
         let viewController = CongestionReportViewController(viewModel: viewModel)
         rootViewModel = viewModel
@@ -49,23 +47,12 @@ final class CongestionReportCoordinator: Coordinator {
             viewModel.goToSearchPlaceView = nil
         }
         
-//        viewModel.goToMapPickerView = { [weak self] location in
-//            print("goToMapPickerView")
-//            self?.showMapPicker(location)
-//        }
-//
-//        viewModel.goToSearchPlaceView = { [weak self] in
-//            print("goToSearchPlaceView")
-//            self?.showSearchPlace()
-//        }
-        
         viewModel.backToHome = { [weak self] in
             print("backToHome")
             self?.onFinish?()
         }
         
         navigationController.setViewControllers([viewController], animated: false)
-        debugPrint(navigationController)
     }
     
     func showMapPicker(_ currentLocation: CLLocationCoordinate2D) {

@@ -10,7 +10,7 @@ import RxCocoa
 import CoreLocation
 
 final class MapViewModel {
-    var goToSearchView: (() -> Void)?
+    var goToSearchView: ((CLLocationCoordinate2D?) -> Void)?
     
     struct Input {
         let cameraRect: Observable<ViewportRect>
@@ -189,7 +189,7 @@ final class MapViewModel {
             .catch { _ in .just(false) }
     }
     
-    func didTapSearch() {
-        goToSearchView?()
+    func didTapSearch(coord: CLLocationCoordinate2D?) {
+        goToSearchView?(coord)
     }
 }

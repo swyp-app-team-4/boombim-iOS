@@ -31,6 +31,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     private let mapReady = PublishRelay<Void>()
     private let modeRelay = BehaviorRelay<OverlayGroup>(value: .realtime)
     private let reloadTrigger = PublishRelay<Void>()
+    private let myCoordRelay = BehaviorRelay<CLLocationCoordinate2D?>(value: nil) // 사용자 위치
     
     private let activityIndicator = UIActivityIndicatorView(style: .large)
 
@@ -77,20 +78,6 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         view.backgroundColor = .clear
         return view
     }()
-
-    /// 해당 기능은 제거
-//    private let favoriteButton: UIButton = {
-//        let button = UIButton(type: .custom)
-//        button.setImage(.buttonUnselectedFavorite, for: .normal)
-//        button.setImage(.buttonSelectedFavorite,  for: .selected)
-//        return button
-//    }()
-//
-//    private let dividerView: UIView = {
-//        let view = UIView()
-//        view.backgroundColor = .grayScale6
-//        return view
-//    }()
 
     private lazy var publicButton: UIButton = {
         let button = UIButton()
@@ -231,21 +218,21 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
 
     private func buildUI() {
         // 검색창 - 현재는 기능 구현이 되지 않아 비활성화
-//        view.addSubview(searchTextField)
-//        searchTextField.translatesAutoresizingMaskIntoConstraints = false
-//        NSLayoutConstraint.activate([
-//            searchTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-//            searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-//            searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-//            searchTextField.heightAnchor.constraint(equalToConstant: 44)
-//        ])
+        view.addSubview(searchTextField)
+        searchTextField.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            searchTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            searchTextField.heightAnchor.constraint(equalToConstant: 44)
+        ])
 
         // 버튼 컨테이너(즐겨찾기 | 구분선 | [공식, 실시간])
         view.addSubview(buttonsContainer)
         buttonsContainer.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-//            buttonsContainer.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 8),
-            buttonsContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            buttonsContainer.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 8),
+//            buttonsContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             buttonsContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             buttonsContainer.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16),
             buttonsContainer.heightAnchor.constraint(equalToConstant: 34)
@@ -321,7 +308,9 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         searchTextField.addGestureRecognizer(searchTap)
         searchTap.rx.event
             .bind(onNext: { [weak self] _ in
-                self?.openSearch()
+                guard let self else { return }
+                let coord = self.myCoordRelay.value
+                self.openSearch(coord: coord)
             })
             .disposed(by: disposeBag)
 
@@ -498,6 +487,12 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
             .compactMap { $0 }
             .share(replay: 1, scope: .whileConnected)
         
+        // 사용자의 좌표 보관
+        coordStream
+            .map { Optional.some($0) }
+            .bind(to: myCoordRelay)
+            .disposed(by: disposeBag)
+        
         output.isLoading
             .drive(activityIndicator.rx.isAnimating)
             .disposed(by: disposeBag)
@@ -632,9 +627,9 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
     }
 
     // MARK: - Actions
-    private func openSearch() {
+    private func openSearch(coord: CLLocationCoordinate2D?) {
         // 코디네이터 라우팅 지점
-        viewModel.didTapSearch()
+        viewModel.didTapSearch(coord: coord)
     }
 
     private func didTapCurrentLocation() {

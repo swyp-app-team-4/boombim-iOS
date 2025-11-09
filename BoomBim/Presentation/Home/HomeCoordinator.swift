@@ -45,45 +45,11 @@ final class HomeCoordinator: Coordinator {
         navigationController.setViewControllers([viewController], animated: false)
     }
     
-    // MARK: - 사용자 공유 장소에서 사용하기 위해 팩토리 메서드 사용
-//    func makeUserPlaceDetailViewController() -> UserPlaceDetailViewController {
-//        let vc = UserPlaceDetailViewController()
-//        return vc
-//    }
-    
-//    func showCongestionReport(selectedPlace: Place? = nil) {
-//        let service = KakaoLocalService()
-//        let locationRepo = LocationRepository()
-//        let viewModel = CongestionReportViewModel(service: service, selectedPlace: selectedPlace)
-//        let viewController = CongestionReportViewController(viewModel: viewModel)
-////        navigationController.pushViewController(viewController, animated: true)
-//        
-//        // 모달 형식 구현시 사용 예정
-//        let navigationController = UINavigationController(rootViewController: viewController)
-//        
-//        let childCoordinator = CongestionReportCoordinator(navigationController: navigationController,
-//                                                           selectedPlace: selectedPlace,
-//                                                           service: service,
-//                                                           locationRepo: locationRepo)
-//        
-//        childCoordinator.onFinish = { [weak self, weak childCoordinator] in
-//            guard let self, let childCoordinator else { return }
-//            self.childCoordinators.removeAll { $0 === childCoordinator }
-//            self.navigationController.presentedViewController?.dismiss(animated: true)
-//        }
-//        childCoordinators.append(childCoordinator)
-//        childCoordinator.start()
-//        
-//        navigationController.modalPresentationStyle = .fullScreen
-//        
-//        self.navigationController.present(navigationController, animated: true)
-//    }
-    
     func showSearch() {
-        let service = KakaoLocalService()
-        let viewModel = SearchViewModel(service: service)
-        let viewController = SearchViewController(viewModel: viewModel)
-        navigationController.pushViewController(viewController, animated: true)
+//        let service = KakaoLocalService()
+//        let viewModel = SearchViewModel(service: service)
+//        let viewController = SearchViewController(viewModel: viewModel)
+//        navigationController.pushViewController(viewController, animated: true)
     }
     
     func showNotification() {
