@@ -26,6 +26,15 @@ final class MyHeaderView: UIView {
         return button
     }()
     
+    private let historyButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("my.page.header.history".localized(), for: .normal)
+        button.titleLabel?.font = Typography.Body02.medium.font
+        button.setTitleColor(.grayScale8, for: .normal)
+        
+        return button
+    }()
+    
     private let voteButton: UIButton = {
         let button = UIButton()
         button.setTitle("my.page.header.vote".localized(), for: .normal)
@@ -77,7 +86,7 @@ final class MyHeaderView: UIView {
     }
     
     private func configureButton() {
-        [favoriteButton/*, voteButton, questionButton*/].forEach { button in
+        [favoriteButton, historyButton].forEach { button in
             button.translatesAutoresizingMaskIntoConstraints = false
             stackView.addArrangedSubview(button)
         }
@@ -115,24 +124,30 @@ final class MyHeaderView: UIView {
     // MARK: - Action
     private func setupAction(){
         favoriteButton.addTarget(self, action: #selector(tapFavorite), for: .touchUpInside)
-        voteButton.addTarget(self, action: #selector(tapVote), for: .touchUpInside)
-        questionButton.addTarget(self, action: #selector(tapQuestion), for: .touchUpInside)
+        historyButton.addTarget(self, action: #selector(tapHistory), for: .touchUpInside)
+        
+//        voteButton.addTarget(self, action: #selector(tapVote), for: .touchUpInside)
+//        questionButton.addTarget(self, action: #selector(tapQuestion), for: .touchUpInside)
     }
 
     @objc private func tapFavorite()   {
         onSelectIndex?(0)
     }
     
-    @objc private func tapVote() {
+    @objc private func tapHistory() {
         onSelectIndex?(1)
     }
     
-    @objc private func tapQuestion() {
-        onSelectIndex?(2)
-    }
+//    @objc private func tapVote() {
+//        onSelectIndex?(1)
+//    }
+//    
+//    @objc private func tapQuestion() {
+//        onSelectIndex?(2)
+//    }
 
     func updateSelection(index: Int, animated: Bool) {
-        let buttons: [UIButton] = [favoriteButton, voteButton, questionButton]
+        let buttons: [UIButton] = [favoriteButton, historyButton]
         
         for (i, button) in buttons.enumerated() {
             let isSelected = (i == index)

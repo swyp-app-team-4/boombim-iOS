@@ -108,4 +108,63 @@ extension UILabel {
         numberOfLines = 0
         attributedText = m
     }
+    
+    func setPoints(
+            _ value: Int,
+            numberStyle: TextStyle,
+            numberColor: UIColor,
+            suffix: String = " P",
+            suffixStyle: TextStyle = Typography.Body03.medium,
+            suffixColor: UIColor = .grayScale8,
+            alignment: NSTextAlignment? = nil,
+            kern: CGFloat? = nil,
+            includeSign: Bool = false,     // ✅ 부호 출력 여부
+            zeroSign: String = "+"        // ✅ 0일 때 부호(원하면 "" 로)
+        ) {
+            // 부호 결정 (+, −, 0일 때는 zeroSign)
+            let sign: String = {
+                guard includeSign else { return "" }
+                if value < 0 { return "−" }     // 대시 대신 U+2212
+                if value > 0 { return "+" }
+                return zeroSign
+            }()
+
+            // 절댓값으로 3자리 콤마 포맷
+            let nf = NumberFormatter()
+            nf.locale = Locale(identifier: "en_US_POSIX")
+            nf.numberStyle = .decimal
+            nf.usesGroupingSeparator = true
+            nf.groupingSeparator = ","
+            nf.groupingSize = 3
+            nf.maximumFractionDigits = 0
+            let absValue = abs(value)
+            let grouped = nf.string(from: NSNumber(value: absValue)) ?? "\(absValue)"
+
+            // 최종 숫자 문자열 = 부호 + 포맷된 숫자
+            let signedNumberText = sign + grouped
+            // print("signedNumberText:", signedNumberText) // 예: +32,020 / −20
+
+            // 스타일 적용
+            let align = alignment ?? self.textAlignment
+            let numberAttr = numberStyle.attributed(
+                signedNumberText,
+                color: numberColor,
+                alignment: align,
+                kern: kern
+            )
+            let pAttr = suffixStyle.attributed(
+                suffix,
+                color: suffixColor,
+                alignment: align,
+                kern: kern
+            )
+
+            // 합치기
+            let result = NSMutableAttributedString()
+            result.append(numberAttr)
+            result.append(pAttr)
+
+            numberOfLines = 1
+            attributedText = result
+        }
 }

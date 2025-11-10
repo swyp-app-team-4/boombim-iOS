@@ -10,7 +10,8 @@ import RxCocoa
 import CoreLocation
 
 final class MapViewModel {
-    var goToSearchView: (() -> Void)?
+    var goToSearchView: ((CLLocationCoordinate2D?) -> Void)?
+    let focusPlace = PublishRelay<Place>() // 검색 후 선택한 장소
     
     struct Input {
         let cameraRect: Observable<ViewportRect>
@@ -26,6 +27,7 @@ final class MapViewModel {
         let officialPlace: Observable<[OfficialPlaceItem]>
         let officialPlaceDetail: Signal<OfficialPlaceDetailInfo>
         let myCoordinate: Observable<Coordinate?> // 뷰에서 카메라 이동 등에 활용
+        let focus: Signal<Place>
         let isLoading: Driver<Bool>
         let error: Signal<String>
     }
@@ -173,12 +175,15 @@ final class MapViewModel {
                 }
                 .do(onNext: { _ in self.loadingRelay.accept(false) })
         
+        let focusSignal = focusPlace.asSignal(onErrorSignalWith: .empty())
+        
         return Output(
             places: userPlaces,
             userPlaceDetail: userDetail,
             officialPlace: officialPlace,
             officialPlaceDetail: officialDetail,
             myCoordinate: myCoord,
+            focus: focusSignal,
             isLoading: loadingRelay.asDriver(),
             error: errorRelay.asSignal())
     }
@@ -189,7 +194,7 @@ final class MapViewModel {
             .catch { _ in .just(false) }
     }
     
-    func didTapSearch() {
-        goToSearchView?()
+    func didTapSearch(coord: CLLocationCoordinate2D?) {
+        goToSearchView?(coord)
     }
 }

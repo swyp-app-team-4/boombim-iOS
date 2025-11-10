@@ -13,9 +13,8 @@ final class SearchViewController: BaseViewController {
     private let viewModel: SearchViewModel
     private let disposeBag = DisposeBag()
 
-//    private let searchBar = UISearchBar()
-//    private let tableView = UITableView()
     private let selectedPlace = BehaviorRelay<Place?>(value: nil)
+    var onPlaceSelected: ((Place) -> Void)?
     
     private var results: [SearchItem] = []
     
@@ -32,6 +31,7 @@ final class SearchViewController: BaseViewController {
         let tv = UITableView(frame: .zero, style: .grouped)
         tv.separatorStyle = .none
         tv.backgroundColor = .white
+        tv.keyboardDismissMode = .onDrag
         return tv
     }()
     
@@ -60,6 +60,12 @@ final class SearchViewController: BaseViewController {
         
         setupView()
         bindViewModel()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        searchTextField.becomeFirstResponder()
     }
     
     private func setupView() {
@@ -140,7 +146,11 @@ final class SearchViewController: BaseViewController {
         
         // 4) 셀 선택 처리 (선택 상태/버튼 상태)
         tableView.rx.modelSelected(Place.self)
-            .bind(to: selectedPlace)
+            .subscribe(onNext: { [weak self] place in
+                guard let self else { return }
+                self.selectedPlace.accept(place)     // 내부 상태(버튼/텍스트 동기화)
+                self.onPlaceSelected?(place)         // 외부로 통지 (Coordinator/Presenter에서 dismiss+카메라)
+            })
             .disposed(by: disposeBag)
         
         tableView.rx.itemSelected
@@ -198,7 +208,7 @@ final class SearchViewController: BaseViewController {
     }
     
     @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
+        dismiss(animated: true)
     }
 }
 

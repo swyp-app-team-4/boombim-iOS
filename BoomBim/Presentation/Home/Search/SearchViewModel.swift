@@ -7,6 +7,7 @@
 
 import RxSwift
 import RxCocoa
+import CoreLocation
 
 final class SearchViewModel {
     let disposeBag = DisposeBag()
@@ -22,9 +23,11 @@ final class SearchViewModel {
     }
     
     private let service: KakaoLocalService
+    private let userCoordinate: CLLocationCoordinate2D?
     
-    init(service: KakaoLocalService) {
+    init(service: KakaoLocalService, coord: CLLocationCoordinate2D?) {
         self.service = service
+        self.userCoordinate = coord
     }
 
     func transform(input: Input) -> Output {
@@ -32,11 +35,23 @@ final class SearchViewModel {
             .skip(1)
             .distinctUntilChanged()
             .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
-            .flatMapLatest { [service] query -> Observable<[Place]> in
+            .flatMapLatest { [service, userCoordinate] query -> Observable<[Place]> in
                 guard !query.isEmpty else { return .just([]) }
-                return service.searchByKeyword(query: query)
+                if let coord = userCoordinate {
+                    // 사용자 위치 기준 검색
+                    return service.searchByKeyword(
+                        query: query,
+                        x: coord.longitude,
+                        y: coord.latitude
+                    )
                     .asObservable()
                     .catchAndReturn([])
+                } else {
+                    // 일반 키워드 검색
+                    return service.searchByKeyword(query: query)
+                        .asObservable()
+                        .catchAndReturn([])
+                }
             }
             .do(onNext: { [weak self] in self?.results.accept($0) }) // 기존 BehaviorRelay도 유지하고 싶으면
             .share(replay: 1, scope: .whileConnected)

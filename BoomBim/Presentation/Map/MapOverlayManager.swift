@@ -8,11 +8,13 @@
 import KakaoMapsSDK
 import UIKit
 import CoreLocation
+import RxSwift
 
 enum OverlayGroup: String, CaseIterable {
     case official
     case favorite
     case realtime
+    case search
 }
 
 /// 2) 그룹별 스타일 설정값
@@ -60,6 +62,12 @@ final class MapOverlayManager {
     
     // 탭 핸들러 해제 관리(메모리 누수 방지)
     private var poiTapDisposers: [String: DisposableEventHandler] = [:]
+    private var clearOnMoveDisposer: Disposable?   // 한 번용
+    
+    // ✅ v2 이벤트 핸들러 보관(한 번만 클리어 후 해제)
+    private var cameraWillMoveHandler: DisposableEventHandler?
+    private var cameraStoppedHandler: DisposableEventHandler?
+    private var mapTapHandler: DisposableEventHandler?
 
     // ----- ID 생성 규칙 (그룹별로 유니크) -----
     private func poiStyleID(_ g: OverlayGroup) -> String { "poi.style.\(g.rawValue)" }
@@ -135,6 +143,7 @@ final class MapOverlayManager {
                  items: [POIItem],
                  visual: GroupVisual,
                  iconProvider: IconProvider,
+                 clearOnUserMove: Bool = false,
                  onTapID: ((OverlayGroup, String) -> Void)? = nil)
     {
         ensureResources(for: g, visual: visual)
@@ -184,7 +193,77 @@ final class MapOverlayManager {
             }
             layer.visible = true
         }
+        if clearOnUserMove {
+            clearOnMoveDisposer?.dispose()
+            clearOnMoveDisposer = subscribeUserMoveOnce { [weak self] in
+                guard let self, let layer = self.poiLayers[g]?[.place] else { return }
+                layer.clearAllItems()
+                self.clearTapHandlers(prefix: "\(g.rawValue).\(POIKind.place.rawValue).")
+                self.clearOnMoveDisposer?.dispose()
+                self.clearOnMoveDisposer = nil
+            }
+        }
     }
+    
+    private func clearTapHandlers(prefix: String) {
+            let keys = poiTapDisposers.keys.filter { $0.hasPrefix(prefix) }
+            for k in keys { poiTapDisposers[k]?.dispose(); poiTapDisposers.removeValue(forKey: k) }
+        }
+
+        // ✅ KakaoMap v2: 카메라/탭 이벤트를 "한 번만" 구독하는 헬퍼
+        private func subscribeUserMoveOnce(_ onMove: @escaping () -> Void) -> Disposable {
+            guard let map = map else { return Disposables.create() }
+
+            // 1) 카메라 이동 시작(유저 제스처 유발 시)
+            cameraWillMoveHandler?.dispose()
+            cameraWillMoveHandler = map.addCameraWillMovedEventHandler(target: self) { [weak self] me in
+                return { param in
+                    // MoveBy.notUserAction이 아니면 사용자 상호작용으로 간주
+                    if param.by != .notUserAction {
+                        onMove()
+                        self?.disposeCameraHandlers()
+                    }
+                }
+            }
+
+            // 2) (선택) 카메라 이동 종료 시점에 지우고 싶다면 이쪽으로 대체
+            cameraStoppedHandler?.dispose()
+            cameraStoppedHandler = map.addCameraStoppedEventHandler(target: self) { [weak self] me in
+                return { param in
+                    if param.by != .notUserAction {
+                        onMove()
+                        self?.disposeCameraHandlers()
+                    }
+                }
+            }
+
+            // 3) (옵션) 탭만으로도 클리어하고 싶을 때
+            mapTapHandler?.dispose()
+            mapTapHandler = map.addMapTappedEventHandler(target: self) { [weak self] me in
+                return { _ in
+                    onMove()
+                    self?.disposeTapHandler()
+                }
+            }
+
+            // Rx 쪽에서 한 번에 정리 가능하도록 래핑
+            return Disposables.create { [weak self] in
+                self?.disposeCameraHandlers()
+                self?.disposeTapHandler()
+            }
+        }
+
+        private func disposeCameraHandlers() {
+            cameraWillMoveHandler?.dispose()
+            cameraStoppedHandler?.dispose()
+            cameraWillMoveHandler = nil
+            cameraStoppedHandler = nil
+        }
+
+        private func disposeTapHandler() {
+            mapTapHandler?.dispose()
+            mapTapHandler = nil
+        }
     
     /// Clustering
     func setPOIs(for g: OverlayGroup,

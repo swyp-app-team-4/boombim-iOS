@@ -18,6 +18,7 @@ final class MyPageViewModel {
         let error: Signal<String>
         let profile: Driver<UserProfile>
         let favorite: Driver<[MyFavorite]>
+        let history: Driver<[MyHistory]>
         let answer: Driver<[MyAnswer]>
         let question: Driver<[MyQuestion]>
     }
@@ -26,20 +27,21 @@ final class MyPageViewModel {
     private let errorRelay = PublishRelay<String>()
     private let profileRelay = BehaviorRelay<UserProfile?>(value: nil)
     private let favoriteRelay = BehaviorRelay<[MyFavorite]?>(value: nil)
+    private let historyRelay = BehaviorRelay<[MyHistory]?>(value: nil)
     private let answerRelay = BehaviorRelay<[MyAnswer]?>(value: nil)
     private let questionRelay = BehaviorRelay<[MyQuestion]?>(value: nil)
     private let disposeBag = DisposeBag()
     
     var goToSettingsView: (() -> Void)?
     var goToProfileView: (() -> Void)?
+    var goToPointView: (() -> Void)?
+    var goToCongestionReportView: (() -> Void)?
     
-    func didTapSettings() {
-        goToSettingsView?()
-    }
+    private var pointData: UserPoint?
     
-    func didTapProfile() {
-        goToProfileView?()
-    }
+    func didTapSettings() { goToSettingsView?() }
+    func didTapProfile() { goToProfileView?() }
+    func didTapPoint() { goToPointView?() }
     
     func transform(_ input: Input) -> Output {
         input.appear
@@ -51,6 +53,7 @@ final class MyPageViewModel {
             error: errorRelay.asSignal(),
             profile: profileRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
             favorite: favoriteRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
+            history: historyRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
             answer: answerRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty()),
             question: questionRelay.compactMap { $0 }.asDriver(onErrorDriveWith: .empty())
         )
@@ -69,11 +72,33 @@ final class MyPageViewModel {
             })
             .disposed(by: disposeBag)
         
+//        AuthService.shared.getPoint()
+//            .observe(on: MainScheduler.instance)
+//            .subscribe(onSuccess: { [weak self] p in
+//                self?.loading.accept(false)
+//                self?.pointRelay.accept(p)
+//            }, onFailure: { [weak self] err in
+//                self?.loading.accept(false)
+//                self?.errorRelay.accept(err.localizedDescription)
+//            })
+//            .disposed(by: disposeBag)
+        
         PlaceService.shared.getFavoritePlace()
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] p in
                 self?.loading.accept(false)
                 self?.favoriteRelay.accept(p.data)
+            }, onFailure: { [weak self] err in
+                self?.loading.accept(false)
+                self?.errorRelay.accept(err.localizedDescription)
+            })
+            .disposed(by: disposeBag)
+        
+        PlaceService.shared.getReportHistory()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onSuccess: { [weak self] p in
+                self?.loading.accept(false)
+                self?.historyRelay.accept(p)
             }, onFailure: { [weak self] err in
                 self?.loading.accept(false)
                 self?.errorRelay.accept(err.localizedDescription)

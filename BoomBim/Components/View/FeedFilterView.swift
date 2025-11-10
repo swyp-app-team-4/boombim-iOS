@@ -23,7 +23,7 @@ enum FeedFilter: CaseIterable {
 
 final class FilterBarView: UIView {
     var onChange: ((FeedFilter) -> Void)?
-    private var buttons: [FeedFilter: FeedChipButton] = [:]
+    private var buttons: [FeedFilter: DefaultChipButton] = [:]
 
     private let scroll = UIScrollView()
     private let stack  = UIStackView()
@@ -64,7 +64,7 @@ final class FilterBarView: UIView {
 
         // 3) 버튼 추가
         FeedFilter.allCases.forEach { filter in
-            let b = FeedChipButton(title: filter.title)
+            let b = DefaultChipButton(title: filter.title)
             b.addTarget(self, action: #selector(tap(_:)), for: .touchUpInside)
 
             // 칩이 가로로 절대 줄지 않게
@@ -80,7 +80,7 @@ final class FilterBarView: UIView {
 
     required init?(coder: NSCoder) { fatalError() }
 
-    @objc private func tap(_ sender: FeedChipButton) {
+    @objc private func tap(_ sender: DefaultChipButton) {
         guard let (filter, _) = buttons.first(where: { $0.value === sender }) else { return }
         select(filter)
         onChange?(filter)

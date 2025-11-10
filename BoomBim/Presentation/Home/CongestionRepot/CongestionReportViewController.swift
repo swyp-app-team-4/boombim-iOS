@@ -553,7 +553,6 @@ final class CongestionReportViewController: BaseViewController {
         output.completed
             .emit(onNext: { [weak self] in
                 guard let self else { return }
-                // self?.viewModel.didTapPost() // 라우팅/닫기 등
                 print("self.locationTextField.text : \(self.locationTextField.text)")
                 self.presentRegisterDialog(on: self, place: self.locationTextField.text ?? "")
             })

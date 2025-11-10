@@ -153,12 +153,6 @@
         }
       }
     },
-    "grid" : {
-
-    },
-    "hour" : {
-    
-    },
     "dialog.button.confirm" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -191,6 +185,12 @@
           }
         }
       }
+    },
+    "grid" : {
+
+    },
+    "hour" : {
+
     },
     "login.button.kakao" : {
       "extractionState" : "manual",
@@ -298,6 +298,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "관심"
+          }
+        }
+      }
+    },
+    "my.page.header.history" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "활동 기록"
           }
         }
       }

@@ -38,6 +38,41 @@ typealias ProfileResponse = UserProfile
 typealias MyAnswerResponse = MyAnswer
 typealias MyQuestionResponse = MyQuestion
 
+struct PointResponse: Decodable {
+    let point: Int
+    let getPointHistoryRes: [PointHistory]
+}
+
+struct PointHistory: Decodable {
+    let pointHistoryId: Int
+    let balance: Int // 거래 후잔액
+    let amount: Int // 거래량 여기서 USE면 마이너스, EARN이면 플러스
+    let createdAt: String // "2025-10-16T13:28:08.831Z"
+    let pointAction: String // USE면 사용된거, EARN이면 적립 내역
+    let pointCategory: String // CONGESTION 이면 혼잡도 알리기임, EVENT 사용
+}
+
+struct EventResponse: Decodable {
+    let eventCampaignId: Int
+    let eventStartDate: String
+    let eventEndDate: String
+    let winnerAnnouncementDate: String // // 당첨자 발표
+    let memberPoint: Int // 포인트
+    let currentTicket: Int // 이벤트 응모한 티켓수
+}
+
+struct EventTicketRequest: Encodable {
+    let eventCampaignId: Int // 해당 이벤트 ID
+    let amount: Int // 이벤트 차감 포인트
+}
+
+struct EventTicketResponse: Decodable {
+    let status: Int
+    let code: Int
+    let message: String
+    let time: String
+}
+
 final class AuthService: Service {
     static let shared = AuthService()
     private override init() {}
@@ -199,5 +234,43 @@ final class AuthService: Service {
         }
         
         return requestPatch(url, header: headers)
+    }
+    
+    // MARK: - Point
+    func getPoint() -> Single<PointResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Point.point
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
+    }
+    
+    // MARK: - Event
+    func getEvent() -> Single<EventResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Event.check
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return requestGet(url, method: .get, header: headers)
+    }
+    
+    func purchaseTicket(body: EventTicketRequest) -> Single<EventTicketResponse> {
+        let url = NetworkDefine.apiHost + NetworkDefine.Event.purchase
+        
+        var headers: HTTPHeaders = ["Content-Type": "application/json"]
+        headers["Accept"] = "application/json"
+        if let token = TokenManager.shared.currentAccessToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+
+        return request(url, method: .patch, header: headers, body: body)
     }
 }

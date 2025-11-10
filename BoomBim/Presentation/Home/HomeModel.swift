@@ -19,7 +19,7 @@ struct RegionItem: Hashable {
 }
 
 struct RecommendPlaceItem: Hashable {
-    let id = UUID()
+    let placeId: Int
     let image: String
     let title: String
     let address: String
@@ -36,7 +36,7 @@ struct FavoritePlaceItem: Hashable {
 }
 
 struct CongestionRankPlaceItem: Hashable {
-    let id = UUID()
+    let placeId: Int
     let rank: Int
     let image: String
     let title: String
@@ -90,8 +90,22 @@ enum HomeSection: Int, CaseIterable {
 
 enum HomeItem: Hashable {
     case region([RegionItem])
+    case regionEmpty
     case recommendPlace(RecommendPlaceItem)
     case favoritePlace(FavoritePlaceItem)
     case favoriteEmpty
     case congestionRank(CongestionRankPlaceItem)
+    
+    private var stableID: String {
+        switch self {
+        case .region:                       return "region"
+        case .regionEmpty:                  return "regionEmpty"
+        case .recommendPlace(let m):        return "recommend:\(m.placeId)"   // ← 섹션 네임스페이스
+        case .favoritePlace(let m):         return "favorite:\(m.placeId)"    // ← 섹션 네임스페이스
+        case .favoriteEmpty:                return "favoriteEmpty"
+        case .congestionRank(let m):        return "rank:\(m.placeId)"
+        }
+    }
+    func hash(into h: inout Hasher) { h.combine(stableID) }
+    static func == (l: Self, r: Self) -> Bool { l.stableID == r.stableID }
 }

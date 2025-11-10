@@ -10,9 +10,13 @@ import UIKit
 final class MyPageCoordinator: Coordinator {
     var navigationController: UINavigationController
     var settingsCoordinator: SettingCoordinator?
+    var pointCoordinator: PointCoordinator?
 
-    init(navigationController: UINavigationController) {
+    private let router: ReportRouting
+
+    init(navigationController: UINavigationController, router: ReportRouting) {
         self.navigationController = navigationController
+        self.router = router
     }
 
     func start() {
@@ -25,19 +29,23 @@ final class MyPageCoordinator: Coordinator {
         viewModel.goToProfileView = { [weak self] in
             self?.showProfile()
         }
+        viewModel.goToPointView = { [weak self] in
+            self?.showPoint()
+        }
+        viewModel.goToCongestionReportView = { [weak self] in
+            self?.router.showCongestionReport(selectedPlace: nil, origin: .myPage)
+        }
         
         navigationController.setViewControllers([viewController], animated: false)
     }
     
     private func showSettings() {
-        let viewModel = SettingsViewModel()
-        let viewController = SettingsViewController(viewModel: viewModel)
+//        let viewModel = SettingsViewModel()
+//        let viewController = SettingsViewController(viewModel: viewModel)
         let coordinator = SettingCoordinator(navigationController: navigationController)
         
         self.settingsCoordinator = coordinator
         coordinator.start()
-        
-//        navigationController.pushViewController(viewController, animated: true)
     }
     
     private func showProfile() {
@@ -45,5 +53,12 @@ final class MyPageCoordinator: Coordinator {
         let viewController = ProfileViewController(viewModel: viewModel)
         viewController.hidesBottomBarWhenPushed = true
         navigationController.pushViewController(viewController, animated: true)
+    }
+    
+    private func showPoint() {
+        let coordinator = PointCoordinator(navigationController: navigationController, router: self.router)
+        
+        self.pointCoordinator = coordinator
+        coordinator.start()
     }
 }

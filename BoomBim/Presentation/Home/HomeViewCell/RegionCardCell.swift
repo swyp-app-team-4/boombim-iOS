@@ -35,9 +35,9 @@ final class RegionCardCell: UICollectionViewCell {
         view.backgroundColor = .clear
         
         view.layer.masksToBounds = false
-        view.layer.shadowColor = UIColor.grayScale10.cgColor
-        view.layer.shadowOpacity = 0.06
-        view.layer.shadowRadius = 3
+        view.layer.shadowColor = UIColor.shadow.cgColor
+        view.layer.shadowOpacity = 0.4
+        view.layer.shadowRadius = 4
         view.layer.shadowOffset  = .zero
         
         return view

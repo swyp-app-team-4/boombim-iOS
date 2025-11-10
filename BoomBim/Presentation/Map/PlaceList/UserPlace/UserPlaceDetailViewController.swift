@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreLocation
 import RxSwift
 import RxCocoa
 import SafariServices
@@ -13,6 +14,9 @@ import SafariServices
 typealias FeedItem = MemberCongestionItem
 
 final class UserPlaceDetailViewController: UIViewController {
+    weak var reportRouter: ReportRouting?
+    var origin: ReportOrigin = .map
+    
     // MARK: - State
     private let disposeBag = DisposeBag()
     private let filterRelay = BehaviorRelay<FeedFilter>(value: .latest)
@@ -58,6 +62,15 @@ final class UserPlaceDetailViewController: UIViewController {
         return label
     }()
     
+    public lazy var backButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.iconLeftArrow, for: .normal)
+        button.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
+        button.isHidden = true
+        
+        return button
+    }()
+    
     private let favoriteButton: UIButton = {
         let button = UIButton()
         button.setImage(.iconUnselectedFavorite, for: .normal)
@@ -75,9 +88,7 @@ final class UserPlaceDetailViewController: UIViewController {
         return view
     }()
     
-    private var headerView = PlaceHeaderView(
-        title: "—", update: "—", address: "-", currentLevel: .normal
-    )
+    private lazy var headerView = PlaceHeaderView()
     public let tableView = UITableView(frame: .zero, style: .plain)
     private let filterBar = FilterBarView()
     
@@ -133,11 +144,25 @@ final class UserPlaceDetailViewController: UIViewController {
         placeTypeRelay.accept(.MEMBER_PLACE)
         favoriteState.accept(data.memberPlaceSummary.isFavorite)
         
+        let placeInfo: Place = .init(
+            id: String(data.memberPlaceSummary.memberPlaceId),
+            name: data.memberPlaceSummary.name,
+            coord: CLLocationCoordinate2D(latitude: data.memberPlaceSummary.latitude, longitude: data.memberPlaceSummary.longitude),
+            address: data.memberPlaceSummary.address,
+            distance: nil)
+        
         headerView.update(
             title: data.memberPlaceSummary.name,
             update: DateHelper.displayString(from: data.memberCongestionItems.first?.createdAt ?? ""),
             address: data.memberPlaceSummary.address,
-            level: CongestionLevel(ko: data.memberCongestionItems.first?.congestionLevelName ?? "여유") ?? .relaxed)
+            level: CongestionLevel(ko: data.memberCongestionItems.first?.congestionLevelName ?? "여유") ?? .relaxed,
+            place: placeInfo
+        )
+        
+        headerView.onTapReport = { [weak self] place in
+            guard let self else { return }
+            self.reportRouter?.showCongestionReport(selectedPlace: place, origin: origin)
+        }
         
         // 목록 데이터 반영
         allItemsRelay.accept(data.memberCongestionItems)
@@ -159,7 +184,7 @@ final class UserPlaceDetailViewController: UIViewController {
     }
     
     private func configureTitle() {
-        [viewTitleLabel, favoriteButton].forEach { view in
+        [backButton, viewTitleLabel, favoriteButton].forEach { view in
             view.translatesAutoresizingMaskIntoConstraints = false
             self.view.addSubview(view)
         }
@@ -169,6 +194,11 @@ final class UserPlaceDetailViewController: UIViewController {
             viewTitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             viewTitleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             viewTitleLabel.heightAnchor.constraint(equalToConstant: 46),
+            
+            backButton.centerYAnchor.constraint(equalTo: viewTitleLabel.centerYAnchor),
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            backButton.widthAnchor.constraint(equalToConstant: 34),
+            backButton.heightAnchor.constraint(equalToConstant: 34),
             
             favoriteButton.centerYAnchor.constraint(equalTo: viewTitleLabel.centerYAnchor),
             favoriteButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
@@ -297,5 +327,11 @@ final class UserPlaceDetailViewController: UIViewController {
         }))
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         present(alert, animated: true)
+    }
+    
+    // MARK: - Action
+    /// 전체화면으로 표시됬을 때 표시 유무
+    @objc private func didTapClose() {
+        dismiss(animated: true)
     }
 }

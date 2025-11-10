@@ -7,7 +7,11 @@
 
 import UIKit
 
-final class MainTabBarCoordinator: Coordinator {
+protocol ReportRouting: AnyObject {
+    func showCongestionReport(selectedPlace: Place?, origin: ReportOrigin)
+}
+
+final class MainTabBarCoordinator: Coordinator, ReportRouting {
     var navigationController = UINavigationController()
     let tabBarController = UITabBarController()
     
@@ -15,6 +19,12 @@ final class MainTabBarCoordinator: Coordinator {
     private var mapCoordinator: MapCoordinator?
 //    private var chatCoordinator: ChatCoordinator?
     private var myPageCoordinator: MyPageCoordinator?
+    
+    private let homeTabIndex = 0
+    private let mapTabIndex  = 1
+    private let myPageTabIndex  = 2
+    
+    var childCoordinators: [Coordinator] = []
 
     func start() {
         let homeNC = UINavigationController()
@@ -22,10 +32,10 @@ final class MainTabBarCoordinator: Coordinator {
 //        let chatNC = UINavigationController()
         let myPageNC = UINavigationController()
 
-        let homeCoordinator = HomeCoordinator(navigationController: homeNC)
-        let mapCoordinator = MapCoordinator(navigationController: mapNC)
+        let homeCoordinator = HomeCoordinator(navigationController: homeNC, router: self)
+        let mapCoordinator = MapCoordinator(navigationController: mapNC, router: self)
 //        let chatCoordinator = ChatCoordinator(navigationController: chatNC)
-        let myPageCoordinator = MyPageCoordinator(navigationController: myPageNC)
+        let myPageCoordinator = MyPageCoordinator(navigationController: myPageNC, router: self)
         
         self.homeCoordinator = homeCoordinator
         self.mapCoordinator = mapCoordinator
@@ -43,5 +53,54 @@ final class MainTabBarCoordinator: Coordinator {
         myPageCoordinator.start()
 
         tabBarController.viewControllers = [homeNC, mapNC, /*chatNC,*/ myPageNC]
+    }
+    
+    func showCongestionReport(selectedPlace: Place? = nil, origin: ReportOrigin) {
+        let origin: ReportOrigin = origin
+        
+        let reportNav = UINavigationController()
+        let reportCoord = CongestionReportCoordinator(
+            origin: origin,
+            navigationController: reportNav,
+            selectedPlace: selectedPlace,
+            service: KakaoLocalService(),
+            locationRepo: LocationRepository()
+        )
+        
+        reportCoord.onFinish = { [weak self, weak reportCoord] in
+            guard let self, let reportCoord else { return }
+            self.childCoordinators.removeAll { $0 === reportCoord }
+
+            let presented = self.tabBarController.presentedViewController ?? self.tabBarController.selectedViewController?.presentedViewController
+
+            presented?.dismiss(animated: true, completion: { [weak self] in
+                guard let self else { return }
+
+                switch reportCoord.origin {
+                case .map:
+                    break
+                case .home, .myPage, .myPagePoint, .myPageEvent:
+                    self.tabBarController.selectedIndex = self.mapTabIndex
+                    
+                    if let nav = self.tabBarController.viewControllers?[self.mapTabIndex] as? UINavigationController,
+                       let mapVC = nav.viewControllers.first(where: { $0 is MapViewController }) as? MapViewController {
+                        mapVC.setPreferredInitialMode(.user) // 현장피드로 시작
+                    }
+                }
+                
+                // (옵션) 마이페이지 스택도 리셋
+                if let myNav = self.tabBarController.viewControllers?[self.myPageTabIndex] as? UINavigationController {
+                    myNav.popToRootViewController(animated: false)
+                }
+            })
+        }
+        
+        // 3) 보관 + 시작
+        childCoordinators.append(reportCoord)
+        reportCoord.start()
+        
+        // 4) 현재 선택된 탭 위에서 present (⭐ 핵심)
+        reportNav.modalPresentationStyle = .fullScreen
+        (tabBarController.selectedViewController ?? tabBarController).present(reportNav, animated: true)
     }
 }
