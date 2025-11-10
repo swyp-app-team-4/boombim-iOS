@@ -526,6 +526,30 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
                 self?.moveCamera(to: coord, level: 16)
             })
             .disposed(by: disposeBag)
+        
+        output.focus
+            .emit(onNext: { [weak self] place in
+                guard let self else { return }
+                
+                let coord = place.coord
+                self.moveCamera(to: coord, level: 18)
+                
+                let item = POIItem(
+                    id: String(place.id),
+                    point: MapPoint(longitude: coord.longitude, latitude: coord.latitude),
+                    styleKey: "congestion.default"
+                )
+                
+                self.overlay.setPOIs(
+                    for: .search,
+                    items: [item],
+                    visual: self.visual(for: .search),
+                    iconProvider: iconForStyleKey,
+                    clearOnUserMove: true   // ← 사용자 이동 감지 후 자동 clear
+                )
+
+            })
+            .disposed(by: disposeBag)
     }
     
     private func styleKey(for p: OfficialPlaceItem) -> String {
@@ -558,7 +582,7 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         case "congestion.normal":  return .iconBlueMapPoi
         case "congestion.busy":    return .iconYellowMapPoi
         case "congestion.crowded": return .iconRedMapPoi
-        default:                   return .iconGreenMapPoi
+        default:                   return .iconMapPoint
         }
     }
 
@@ -599,6 +623,13 @@ final class MapViewController: BaseViewController, FloatingPanelControllerDelega
         case .realtime:
             return .init(
                 icon: .iconRedMapPoi,
+                fill: UIColor.systemOrange.withAlphaComponent(0.2),
+                stroke: .systemOrange,
+                zPOI: 2400, zShape: 1900
+            )
+        case .search:
+            return .init(
+                icon: .iconMapPoint,
                 fill: UIColor.systemOrange.withAlphaComponent(0.2),
                 stroke: .systemOrange,
                 zPOI: 2400, zShape: 1900

@@ -12,10 +12,10 @@ import CoreLocation
 
 final class MapCoordinator: Coordinator {
     var navigationController: UINavigationController
-    
     var childCoordinators: [Coordinator] = []
-
     weak var router: ReportRouting?
+    
+    private var mapViewModel: MapViewModel!
 
     init(navigationController: UINavigationController, router: ReportRouting) {
         self.navigationController = navigationController
@@ -26,6 +26,7 @@ final class MapCoordinator: Coordinator {
         let service = KakaoLocalService()
         let locationRepo = LocationRepository()
         let viewModel = MapViewModel(service: service, locationRepo: locationRepo)
+        self.mapViewModel = viewModel
         
         viewModel.goToSearchView = { [weak self] place in
             self?.showSearch(coord: place)
@@ -51,6 +52,7 @@ final class MapCoordinator: Coordinator {
         searchCoordinator.onFinish = { [weak self, weak searchCoordinator] place in
             guard let self else { return }
             print("선택한 장소 : \(place)")
+            self.mapViewModel.focusPlace.accept(place)
             
             if let searchCoordinator {
                 self.childCoordinators.removeAll { $0 === searchCoordinator }
